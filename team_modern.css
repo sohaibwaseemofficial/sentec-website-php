@@ -1,0 +1,192 @@
+/* --- MODERN TEAM CARD DESIGN --- */
+:root {
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --card-hover: rgba(0, 255, 148, 0.15);
+    --accent-glow: #00FF94;
+}
+
+.team-section {
+    padding: 80px 20px;
+    min-height: 100vh;
+}
+
+/* Filter Buttons */
+.filter-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 50px;
+}
+
+.filter-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--card-border);
+    color: #fff;
+    padding: 10px 25px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 1px;
+}
+
+.filter-btn:hover, .filter-btn.active {
+    background: var(--accent-glow);
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 255, 148, 0.4);
+    border-color: var(--accent-glow);
+}
+
+/* Grid Layout */
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* The Card */
+.team-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px; /* Rounded Rectangles */
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(10px);
+}
+
+.team-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    border-color: var(--accent-glow);
+}
+
+/* Image Container */
+.img-wrapper {
+    width: 100%;
+    height: 320px; /* Taller rectangle */
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.team-card:hover .img-wrapper img {
+    transform: scale(1.05);
+}
+
+/* Overlay for Socials */
+.social-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: 0.4s ease;
+}
+
+.team-card:hover .social-overlay {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.social-icon {
+    color: #fff;
+    font-size: 1.2rem;
+    background: rgba(255,255,255,0.1);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    backdrop-filter: blur(5px);
+    transition: 0.3s;
+    text-decoration: none;
+}
+
+.social-icon:hover {
+    background: var(--accent-glow);
+    color: #000;
+}
+
+/* Text Content */
+.card-content {
+    padding: 25px;
+    text-align: center;
+    position: relative;
+}
+
+.member-name {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.member-role {
+    color: var(--accent-glow);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+}
+
+.member-domain {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.05);
+    color: #aaa;
+    font-size: 0.8rem;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .team-section { padding: 60px 14px; }
+    .team-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+        padding: 0 10px;
+    }
+    
+    /* On mobile, maybe show socials always? Or keep hover for simplicity */
+    .img-wrapper {
+        height: 240px;
+    }
+
+    .filter-container { gap: 10px; margin-bottom: 30px; }
+    .filter-btn { padding: 8px 18px; font-size: 0.9rem; }
+    .card-content { padding: 18px; }
+    .member-name { font-size: 1.2rem; }
+    .member-role { font-size: 0.8rem; letter-spacing: 1px; }
+}
+
+/* Optional: crisper breakpoints for better flow on phones */
+@media (max-width: 600px) {
+    .team-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 380px) {
+    .team-grid { grid-template-columns: 1fr; }
+}

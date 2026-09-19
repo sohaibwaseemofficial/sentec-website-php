@@ -1,0 +1,122 @@
+<?php
+session_start();
+// 1. SECURITY
+if (!isset($_SESSION['admin'])) { 
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']); 
+    exit; 
+}
+
+// 2. CONFIG
+header('Content-Type: application/json');
+include '../db_connection.php';
+require_once __DIR__ . '/../env_loader.php';
+require_once __DIR__ . '/../mailer.php';
+
+$response = ['success' => false, 'message' => 'Unknown error'];
+
+try {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception('Invalid request');
+
+    $id = intval($_POST['id'] ?? 0);
+    $status = $_POST['status'] ?? '';
+
+    if (!in_array($status, ['approved', 'rejected'])) throw new Exception('Invalid status');
+
+    // 3. GET TEAM DATA (Fetch ALL participants)
+    $query = "SELECT team_name, 
+                     participant1_name, participant1_email,
+                     participant2_name, participant2_email,
+                     participant3_name, participant3_email,
+                     participant4_name, participant4_email,
+                     participant5_name, participant5_email,
+                     participant6_name, participant6_email
+              FROM event_registrations WHERE id = ?";
+    
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $data = $stmt->get_result()->fetch_assoc();
+    
+    if (!$data) throw new Exception("Registration not found.");
+
+    // 4. UPDATE STATUS
+    $updateStmt = $conn->prepare("UPDATE event_registrations SET status = ? WHERE id = ?");
+    $updateStmt->bind_param("si", $status, $id);
+
+    if ($updateStmt->execute()) {
+        
+        // 5. PREPARE EMAIL LIST (Smart Logic)
+        $recipients = [];
+        // Always add Leader
+        $recipients[] = ['name' => $data['participant1_name'], 'email' => $data['participant1_email']];
+        
+        // Add others if they exist
+        for ($i = 2; $i <= 6; $i++) {
+            if (!empty($data["participant{$i}_email"])) {
+                $recipients[] = [
+                    'name' => $data["participant{$i}_name"],
+                    'email' => $data["participant{$i}_email"]
+                ];
+            }
+        }
+
+        $teamName = htmlspecialchars($data['team_name']);
+        
+        // Send Loop
+        foreach ($recipients as $r) {
+            try {
+                $mail = sentec_mailer();
+                $mail->addAddress($r['email'], $r['name']);
+
+                if ($status === 'approved') {
+                    $subject = "[APPROVED] Application Status - SENTEC 2025";
+                    $heading = 'Congratulations!';
+                    $bodyHtml = "<p>We are pleased to inform you that your registration for team <strong>" . $teamName . "</strong> has been officially <strong>APPROVED</strong> by the SENTEC administrative committee.</p>" .
+                        "<p>You are now confirmed to participate in the upcoming event at NED University. Please keep an eye on your dashboard for schedule updates and further instructions.</p>";
+                } else {
+                    $subject = "[UPDATE] Application Status - SENTEC 2025";
+                    $heading = 'Application Update';
+                    $bodyHtml = "<p>We appreciate your interest in SENTEC. After careful review, we regret to inform you that the registration for team <strong>" . $teamName . "</strong> could not be approved this time.</p>" .
+                        "<p>You are always welcome to participate in our future events and activities.</p>";
+                }
+
+                $greeting = 'Dear ' . htmlspecialchars($r['name'] ?: 'Participant', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . ',';
+                $dashboardUrl = env('APP_URL', 'https://sentecneduet.live') . '/dashboard.php';
+
+                $mail->Subject = $subject;
+                $mail->Body = sentec_build_email_html(
+                    'Application Status',
+                    $heading,
+                    $greeting,
+                    $bodyHtml,
+                    $dashboardUrl,
+                    'Access Dashboard',
+                    null
+                );
+                $mail->AltBody = strip_tags(str_replace('<br>', "\n", $bodyHtml));
+
+                $mail->send();
+            } catch (Exception $e) {
+                // Ignore email errors, just continue to next person
+            }
+        }
+
+        $response['success'] = true;
+        $response['message'] = "Status updated & Emails sent to " . count($recipients) . " members!";
+
+        // Log this action
+        log_admin_action('UPDATE_REGISTRATION_STATUS', "Set status to $status for registration ID $id");
+        
+    } else {
+        throw new Exception('Database update failed.');
+    }
+
+    $stmt->close();
+    $conn->close();
+
+} catch (Exception $e) {
+    $response['message'] = $e->getMessage();
+}
+
+echo json_encode($response);
+?>

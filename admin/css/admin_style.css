@@ -1,0 +1,250 @@
+/* =========================================
+   SENTEC ADMIN - CYBERPUNK GLASS THEME
+   ========================================= */
+
+:root {
+    --bg: #030303;
+    --surface: #0E0E0E;
+    --accent: #00FF94; /* Neon Green */
+    --text-main: #FFFFFF;
+    --text-muted: #cccccc;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: blur(20px);
+    --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    --font-head: 'Outfit', sans-serif;
+    --font-body: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text-main);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    background-image: radial-gradient(circle at 50% 0%, #111a2e 0%, #030303 60%);
+    min-height: 100vh;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--glass-border);
+    width: 260px;
+    height: 100vh;
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 1000;
+    padding-top: 20px;
+    transition: 0.3s;
+}
+
+/* Sidebar mobile toggle state */
+@media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); width: 240px; }
+    .sidebar.open { transform: translateX(0); }
+    .main-content { margin-left: 0; width: 100%; }
+    .admin-overlay { position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 900; display:none; }
+    .admin-overlay.show { display:block; }
+}
+
+.sidebar-header {
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--glass-border);
+    margin-bottom: 20px;
+}
+
+.logo-text {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1.8rem;
+    color: #fff;
+    letter-spacing: -1px;
+}
+.logo-text span { color: var(--accent); font-size: 2.5rem; line-height: 0; }
+
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    color: #aaa;
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.3s;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-menu a:hover, .sidebar-menu a.active {
+    color: #fff;
+    background: rgba(0, 255, 148, 0.05);
+    border-left: 3px solid var(--accent);
+    box-shadow: 10px 0 20px rgba(0, 255, 148, 0.1);
+}
+
+.sidebar-menu a i { margin-right: 15px; width: 20px; text-align: center; }
+
+.sidebar-menu a.logout { color: #ff4444; margin-top: 20px; }
+.sidebar-menu a.logout:hover { background: rgba(255, 68, 68, 0.1); border-left: 3px solid #ff4444; }
+
+/* --- MAIN CONTENT --- */
+.main-content {
+    margin-left: 260px;
+    padding: 40px;
+    width: calc(100% - 260px);
+}
+
+/* --- GLASS PANELS (Cards) --- */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.page-header h2 {
+    font-family: var(--font-head);
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+}
+.page-header p { color: var(--text-muted); }
+
+/* --- STATS BOXES --- */
+.stat-box {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    transition: 0.3s;
+}
+.stat-box:hover { transform: translateY(-5px); border-color: var(--accent); }
+.stat-box h3 { font-size: 2.5rem; font-weight: 700; color: #fff; margin: 0; }
+.stat-box p { color: #aaa; margin: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.stat-box.pending h3 { color: #ffbb33; }
+.stat-box.approved h3 { color: var(--accent); }
+.stat-box.rejected h3 { color: #ff4444; }
+
+/* --- FORMS & INPUTS --- */
+input[type="text"], input[type="email"], input[type="password"], select, textarea {
+    background-color: #0b1120 !important;
+    border: 1px solid #333 !important;
+    color: #fff !important;
+    padding: 12px 20px;
+    border-radius: 10px;
+}
+input:focus, select:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 148, 0.2) !important;
+    outline: none;
+}
+
+/* --- BUTTONS --- */
+.btn-neon {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 10px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-decoration: none;
+    display: inline-block;
+}
+.btn, a.btn, .btn-neon, a.btn-neon, button { text-decoration: none !important; }
+.btn:hover, a.btn:hover, .btn-neon:hover, a.btn-neon:hover, button:hover { text-decoration: none !important; }
+.btn-neon:hover {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 255, 148, 0.4);
+}
+
+.btn-danger-glow {
+    border: 1px solid #ff4444; color: #ff4444; background: transparent;
+    padding: 8px 20px; border-radius: 8px; transition: 0.3s;
+}
+.btn-danger-glow:hover { background: #ff4444; color: #fff; box-shadow: 0 0 20px rgba(255, 68, 68, 0.4); }
+
+/* --- TABS --- */
+.nav-tabs { border-bottom: 1px solid var(--glass-border); }
+.nav-tabs .nav-link { color: #aaa; border: none; }
+.nav-tabs .nav-link.active {
+    background: transparent;
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+}
+
+/* --- MOBILE --- */
+@media (max-width: 768px) {
+    .main-content { margin-left: 0; width: 100%; padding: 20px; }
+}
+
+/* Make admin tables scrollable on small screens instead of squishing */
+@media (max-width: 576px) {
+    .glass-panel { padding: 20px; }
+    .table-responsive { width: 100%; overflow-x: auto; }
+}
+
+/* --- TABLES (Glass Style) --- */
+.table {
+    color: #ccc;
+    vertical-align: middle;
+    margin-top: 10px;
+}
+.table thead th {
+    border-bottom: 2px solid var(--accent);
+    color: var(--accent);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    background: rgba(0, 255, 148, 0.05);
+    padding: 15px;
+}
+.table td {
+    border-bottom: 1px solid var(--glass-border);
+    padding: 15px;
+    background: rgba(0,0,0,0.2);
+}
+.table img {
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    width: 60px; height: 60px; object-fit: cover;
+}
+.table-hover tbody tr:hover td {
+    background: rgba(0, 255, 148, 0.05);
+    color: #fff;
+}
+
+/* --- DARK FILE INPUT STYLE --- */
+input[type="file"] {
+    background-color: #0b1120 !important; /* Dark Blue/Black */
+    color: #ccc !important;               /* Light Grey Text */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 10px !important;
+    border-radius: 10px !important;
+}
+
+/* The "Choose File" Button itself */
+input[type="file"]::file-selector-button {
+    background-color: rgba(0, 255, 148, 0.1) !important;
+    border: 1px solid var(--accent) !important;
+    color: var(--accent) !important;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-right: 15px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background-color: var(--accent) !important;
+    color: #000 !important;
+}

@@ -1,0 +1,299 @@
+/* Event Registration Styles */
+
+.registration-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #6c838f 0%, #546978 100%);
+    padding: 20px 0;
+}
+
+.registration-header h1 {
+    color: #fff;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.registration-header p {
+    color: rgba(255,255,255,0.9);
+    font-size: 1.1rem;
+}
+
+/* Institution Type Selection */
+.institution-btn {
+    background: #fff;
+    border: 3px solid transparent;
+    border-radius: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 180px;
+}
+
+.institution-btn i {
+    font-size: 3rem;
+    color: #6c838f;
+    transition: all 0.3s ease;
+}
+
+.institution-btn h5 {
+    color: #333;
+    margin: 0;
+    font-weight: 600;
+}
+
+.institution-btn:hover {
+    border-color: #6c838f;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(108, 131, 143, 0.3);
+}
+
+.institution-btn:hover i {
+    color: #546978;
+    transform: scale(1.1);
+}
+
+/* Form Sections */
+.form-section {
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 30px;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.section-title {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #6c838f;
+    display: inline-block;
+}
+
+.section-title i {
+    color: #6c838f;
+    margin-right: 10px;
+}
+
+/* Form Controls */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.required {
+    color: #dc3545;
+}
+
+.form-control,
+.form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #6c838f;
+    box-shadow: 0 0 0 0.2rem rgba(108, 131, 143, 0.25);
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #6c838f 0%, #546978 100%);
+    border: none;
+    border-radius: 25px;
+    padding: 12px 40px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(108, 131, 143, 0.4);
+}
+
+.btn-outline-primary {
+    border-color: #6c838f;
+    color: #6c838f;
+    border-radius: 20px;
+}
+
+.btn-outline-primary:hover {
+    background: #6c838f;
+    border-color: #6c838f;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.card-body {
+    background: #fff;
+}
+
+/* Alert */
+.alert-info {
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+    border: none;
+    border-left: 4px solid #0ea5e9;
+    border-radius: 8px;
+}
+
+/* Modal Customization */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+}
+
+.fa-check-circle {
+    animation: scaleIn 0.5s ease;
+}
+
+.fa-exclamation-circle {
+    animation: scaleIn 0.5s ease;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+/* Loading State */
+#submitBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .institution-btn {
+        height: 150px;
+        padding: 20px 15px;
+    }
+    
+    .institution-btn i {
+        font-size: 2rem;
+    }
+    
+    .institution-btn h5 {
+        font-size: 0.9rem;
+    }
+    
+    .registration-header h1 {
+        font-size: 2rem;
+    }
+    
+    .registration-header p {
+        font-size: 1rem;
+    }
+}
+
+/* Participant Sections */
+.participant-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.participant-section.active {
+    border-color: #6c838f;
+    border-style: solid;
+    background: #f0f4f7;
+}
+
+/* File Input Styling */
+input[type="file"] {
+    cursor: pointer;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+    background: linear-gradient(135deg, #6c838f 0%, #546978 100%);
+    color: white;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+input[type="file"]::-webkit-file-upload-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(108, 131, 143, 0.4);
+}
+
+/* Small Text */
+.text-muted {
+    font-size: 0.875rem;
+}
+
+/* Shadow Effects */
+.shadow-lg {
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+}
+
+/* Animation for form appearance */
+#registrationFormContainer {
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Success/Error States */
+.form-control.is-valid {
+    border-color: #28a745;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #6c838f 0%, #546978 100%);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #546978;
+}
