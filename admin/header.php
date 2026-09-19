@@ -9,12 +9,14 @@ ini_set('session.use_strict_mode', 1);
 ini_set('session.gc_maxlifetime', 1800);
 ini_set('session.cookie_lifetime', 1800);
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 require_once __DIR__ . '/../env_loader.php';
 $timeout_duration = 1800; // 30 minutes
 
-if (!isset($_SESSION['admin'])) {
+if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
     header("Location: admin_login.php");
     exit();
 }
@@ -36,18 +38,21 @@ $currentType = strtolower($_GET['type'] ?? '');
  */
 function log_admin_action($action, $details = '') {
     global $conn;
-    if (!isset($_SESSION['admin_id'])) return;
+    if (!isset($_SESSION['admin_id']) || !$conn) return;
     $stmt = $conn->prepare("INSERT INTO admin_logs (admin_id, action, details, ip_address) VALUES (?, ?, ?, ?)");
-    $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-    $stmt->bind_param("isss", $_SESSION['admin_id'], $action, $details, $ip);
-    $stmt->execute();
-    $stmt->close();
+    if ($stmt) {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+        $stmt->bind_param("isss", $_SESSION['admin_id'], $action, $details, $ip);
+        $stmt->execute();
+        $stmt->close();
+    }
 }
 
-// Make database connection available for auto‑logger
-include_once '../db_connection.php';
+// Make database connection available for auto-logger
+include_once __DIR__ . '/../db_connection.php';
+
 // ============================================================
-// Auto‑log all admin POST requests (global action capture)
+// Auto-log all admin POST requests (global action capture)
 // ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['admin_id'])) {
     $page  = basename($_SERVER['PHP_SELF']);
@@ -65,108 +70,168 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['admin_id'])) {
     $details = "POST to $page | " . implode(', ', $params);
     log_admin_action('FORM_SUBMIT', $details);
 }
+
+// Navigation structure
+$navItems = [
+    ['label' => 'Dashboard', 'href' => 'index.php', 'icon' => 'fas fa-th-large'],
+    ['label' => 'Registrations', 'href' => 'manage_registrations.php', 'icon' => 'fas fa-users'],
+    ['label' => 'Social Passes', 'href' => 'manage_social.php', 'icon' => 'fas fa-ticket-alt'],
+    ['label' => 'Events Manager', 'href' => 'add_event.php', 'icon' => 'fas fa-calendar-alt'],
+    ['label' => 'Team', 'href' => 'manage_team.php', 'icon' => 'fas fa-user-friends'],
+    ['label' => 'Gallery', 'href' => 'manage_gallery.php', 'icon' => 'fas fa-images'],
+    ['label' => 'Partners', 'href' => 'admin_partners.php', 'icon' => 'fas fa-handshake'],
+    ['label' => 'Ambassadors', 'href' => 'manage_ambassadors.php', 'icon' => 'fas fa-award'],
+    ['label' => 'Elections', 'href' => 'manage_elections.php', 'icon' => 'fas fa-vote-yea'],
+    ['label' => 'Email Broadcast', 'href' => 'email_center.php', 'icon' => 'fas fa-paper-plane'],
+    ['label' => 'Logs', 'href' => 'view_logs.php', 'icon' => 'fas fa-file-alt'],
+];
+
+if (($_SESSION['admin_role'] ?? '') === 'super_admin') {
+    $navItems[] = ['label' => 'Staff & Access', 'href' => 'manage_admins.php', 'icon' => 'fas fa-shield-alt'];
+}
+
+$tz = getenv('APP_TIMEZONE') ?: 'Asia/Karachi';
+$adminUser = $_SESSION['admin_full_name'] ?? ($_SESSION['admin'] ?? 'Administrator');
+$adminRole = $_SESSION['admin_role'] ?? 'moderator';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" href="favicon2.png" type="image/png">
-    <link rel="shortcut icon" href="favicon2.png" type="image/png">
-    <link rel="apple-touch-icon" href="favicon2.png"  type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Portal | SENTEC</title>
+    <title>SENTEC Admin Portal</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon2.png" type="image/png">
+    <link rel="shortcut icon" href="favicon2.png" type="image/png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap CSS for legacy admin form components -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <!-- Admin Custom Modern Dark Stylesheet -->
     <link rel="stylesheet" href="css/admin_style.css">
 </head>
-<body>
+<body class="bg-[#080b0d] text-[#f4f1eb]">
 
-<div class="sidebar">
+<div class="admin-overlay" id="adminOverlay"></div>
+
+<!-- Sidebar inspired by AdminLayout.tsx -->
+<aside class="sidebar" id="adminSidebar">
     <div class="sidebar-header">
-        <div class="logo-text">SENTEC<span>.</span></div>
+        <a href="index.php" class="logo-lockup">
+            <span class="logo-text">SENTEC</span>
+            <span class="logo-badge">ADMIN</span>
+        </a>
+        <button type="button" class="btn btn-sm btn-link text-muted d-md-none p-0" id="closeSidebarBtn">
+            <i class="fas fa-times text-white"></i>
+        </button>
     </div>
     
-    <div class="sidebar-menu">
-        <a href="index.php" <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'class="active"' : ''; ?>>
-            <i class="fas fa-chart-line"></i> <span>Dashboard</span>
-        </a>
-        <a href="manage_team.php" <?php echo basename($_SERVER['PHP_SELF']) == 'manage_team.php' ? 'class="active"' : ''; ?>>
-            <i class="fas fa-users"></i> <span>Team Members</span>
-        </a>
-        <a href="add_event.php" <?php echo basename($_SERVER['PHP_SELF']) == 'add_event.php' ? 'class="active"' : ''; ?>>
-            <i class="fas fa-calendar-plus"></i> <span>Manage Events</span>
-        </a>
-        <a href="manage_registrations.php" <?php echo basename($_SERVER['PHP_SELF']) == 'manage_registrations.php' ? 'class="active"' : ''; ?>>
-            <i class="fas fa-list-alt"></i> <span>Registrations</span>
-        </a>
-        <a href="manage_gallery.php" <?php echo basename($_SERVER['PHP_SELF']) == 'manage_gallery.php' ? 'class="active"' : ''; ?>>
-            <i class="fas fa-images"></i> <span>Gallery</span>
-        </a>
-        <a href="admin_partners.php" <?php echo basename($_SERVER['PHP_SELF']) == 'admin_partners.php' ? 'class="active"' : ''; ?>>
-            <i class="fas fa-handshake"></i> <span>Partners</span>
-        </a>
-        <a href="manage_ambassadors.php?type=volunteer" <?php echo ($currentPage === 'manage_ambassadors.php' && $currentType !== 'brand') ? 'class="active"' : ''; ?>>
-            <i class="fas fa-hands-helping"></i> <span>Volunteers</span>
-        </a>
-        <a href="manage_ambassadors.php?type=brand" <?php echo ($currentPage === 'manage_ambassadors.php' && $currentType === 'brand') ? 'class="active"' : ''; ?>>
-            <i class="fas fa-user-tie"></i> <span>Brand Ambassadors</span>
-        </a>
-        <a href="manage_social.php" <?php echo basename($_SERVER['PHP_SELF']) == 'manage_social.php' ? 'class="active"' : ''; ?>>
-            <i class="fas fa-music me-2"></i> <span>Social Registrations</span>
-        </a>
-        <a href="manage_elections.php" <?php echo basename($_SERVER['PHP_SELF']) == 'manage_elections.php' ? 'class="active"' : ''; ?>>
-            <i class="fas fa-vote-yea me-2"></i> <span>Elections</span>
-        </a>        
-        <a href="email_center.php" <?php echo basename($_SERVER['PHP_SELF']) == 'email_center.php' ? 'class="active"' : ''; ?>>
-            <i class="fas fa-envelope-open-text"></i> <span>Email</span>
-        </a>
-                <?php if (($_SESSION['admin_role'] ?? '') === 'super_admin'): ?>
-                <a href="manage_admins.php" <?php echo basename($_SERVER['PHP_SELF']) == 'manage_admins.php' ? 'class="active"' : ''; ?>>
-                    <i class="fas fa-user-cog"></i> <span>Manage Admins</span>
-                </a>
-                <a href="view_logs.php" <?php echo basename($_SERVER['PHP_SELF']) == 'view_logs.php' ? 'class="active"' : ''; ?>>
-                    <i class="fas fa-history"></i> <span>Activity Logs</span>
-                </a>
-                <?php endif; ?>
-        <a href="admin_logout.php" class="logout">
-            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
-        </a>
-    </div>
-</div>
+    <nav class="sidebar-menu">
+        <?php foreach ($navItems as $item): 
+            $isActive = ($currentPage === $item['href']);
+        ?>
+            <a href="<?php echo $item['href']; ?>" class="<?php echo $isActive ? 'active' : ''; ?>">
+                <i class="<?php echo $item['icon']; ?>"></i>
+                <span><?php echo $item['label']; ?></span>
+            </a>
+        <?php endforeach; ?>
 
-<div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="d-flex align-items-center gap-3" style="color:#cfd3dc; font-size:0.9rem;">
-            <i class="far fa-clock me-1" style="color:#00e7ff;"></i>
-            <?php $tz = getenv('APP_TIMEZONE') ?: 'Asia/Karachi'; ?>
-            <span><strong id="adminHeaderClock"></strong> <small class="text-muted" style="font-size:0.8em;">(<?php echo htmlspecialchars($tz); ?>)</small></span>
-        </div>
-        <button id="sidebarToggle" class="btn btn-outline-light d-inline-flex d-md-none" style="border-color: var(--glass-border);">
-            <i class="fas fa-bars"></i>
-        </button>
-        <div style="color: #aaa; font-size: 0.9rem;">
-            Logged in as <strong style="color: #fff;"><?php echo htmlspecialchars($_SESSION['admin_full_name'] ?? $_SESSION['admin']); ?></strong>
-            <?php if (($_SESSION['admin_role'] ?? '') === 'super_admin'): ?>
-                <span class="badge bg-warning text-dark ms-1">Super Admin</span>
+        <a href="admin_logout.php" class="logout">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <div>
+                <span style="font-size: 9px; color: var(--text-muted); font-family: var(--font-mono); letter-spacing: 0.1em; display: block;">LOGGED IN AS</span>
+                <span style="font-size: 13px; font-weight: 600; color: #fff;"><?php echo htmlspecialchars($adminUser); ?></span>
+            </div>
+            <?php if ($adminRole === 'super_admin'): ?>
+                <span class="badge bg-warning text-dark font-mono text-[10px]">Super</span>
             <?php endif; ?>
         </div>
+        <a href="../index.php" target="_blank" class="d-flex align-items-center justify-content-center gap-1 text-decoration-none py-1.5 px-2 rounded" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); border: 1px solid var(--line); background: #080b0d;">
+            <span>View Live Website</span>
+            <i class="fas fa-external-link-alt" style="font-size: 9px;"></i>
+        </a>
     </div>
+</aside>
+
+<!-- Main Content Area -->
+<div class="main-content">
+    
+    <!-- Modern Topbar -->
+    <header class="admin-topbar">
+        <div class="d-flex align-items-center gap-3">
+            <button id="sidebarToggle" class="btn btn-sm btn-outline-secondary d-md-none text-white border-0 p-0" style="font-size: 18px;">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="d-none d-sm-flex align-items-center gap-2" style="font-size: 12px; font-family: var(--font-mono); color: var(--text-muted);">
+                <i class="far fa-clock text-warning"></i>
+                <span id="adminHeaderClock">--:--:--</span>
+                <span class="text-muted">(<?php echo htmlspecialchars($tz); ?>)</span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <span class="d-none d-sm-inline-block px-3 py-1 rounded-pill" style="font-size: 11px; font-family: var(--font-mono); color: var(--orange); background: rgba(241, 90, 36, 0.1); border: 1px solid rgba(241, 90, 36, 0.3);">
+                SYSTEM ACTIVE // 2026
+            </span>
+            <div style="font-size: 13px; color: var(--text-muted);">
+                <strong style="color: #fff;"><?php echo htmlspecialchars($adminUser); ?></strong>
+            </div>
+        </div>
+    </header>
 
     <script>
+        // Live Clock Script
         (function(){
             const TZ = <?php echo json_encode($tz); ?>;
-            function tick(){
-                try{
+            function updateClock() {
+                try {
                     const el = document.getElementById('adminHeaderClock');
-                    if(!el) return;
+                    if (!el) return;
                     const now = new Date();
-                    const opts = { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true, timeZone: TZ };
-                    el.textContent = new Intl.DateTimeFormat('en-GB', opts).format(now);
-                }catch(e){}
+                    const str = now.toLocaleTimeString('en-US', { timeZone: TZ, hour12: true });
+                    el.textContent = str;
+                } catch(e) {}
             }
-            tick(); setInterval(tick, 1000);
+            setInterval(updateClock, 1000);
+            updateClock();
         })();
+
+        // Mobile Sidebar Toggle
+        const sidebar = document.getElementById('adminSidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        const closeBtn = document.getElementById('closeSidebarBtn');
+        const overlay = document.getElementById('adminOverlay');
+
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('open');
+                if (overlay) overlay.classList.toggle('show');
+            });
+        }
+        if (closeBtn && sidebar) {
+            closeBtn.addEventListener('click', function() {
+                sidebar.classList.remove('open');
+                if (overlay) overlay.classList.remove('show');
+            });
+        }
+        if (overlay && sidebar) {
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+            });
+        }
     </script>

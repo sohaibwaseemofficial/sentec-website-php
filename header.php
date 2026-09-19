@@ -10,272 +10,251 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Check what type of user is logged in
-$isLoggedIn = isset($_SESSION['user_id']);
-$isAmbassador = isset($_SESSION['ambassador_id']);
-$userName = '';
-$userType = '';
+// Session state detection
+$isUserLoggedIn = isset($_SESSION['user']) || isset($_SESSION['user_id']);
+$isAmbassadorLoggedIn = isset($_SESSION['ambassador_id']);
+$isAdminLoggedIn = isset($_SESSION['admin_logged_in']) || isset($_SESSION['admin']) || 
+                    (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin') || 
+                    (isset($_SESSION['admin_role']) && in_array($_SESSION['admin_role'], ['admin', 'super_admin', 'moderator']));
 
-if ($isLoggedIn) {
-    $userName = $_SESSION['user_name'] ?? 'User';
-    $userType = 'user';
-} elseif ($isAmbassador) {
-    $userName = $_SESSION['ambassador_name'] ?? 'Ambassador';
-    $userType = 'ambassador';
+$displayName = '';
+if (!empty($_SESSION['user']['name'])) {
+    $displayName = $_SESSION['user']['name'];
+} elseif (!empty($_SESSION['user_name'])) {
+    $displayName = $_SESSION['user_name'];
+} elseif (!empty($_SESSION['ambassador_name'])) {
+    $displayName = $_SESSION['ambassador_name'];
 }
+$firstName = $displayName ? htmlspecialchars(explode(' ', trim($displayName))[0]) : 'User';
 
-// Get first name for display
-$firstName = explode(' ', trim($userName))[0];
+// Determine dashboard and logout links
+$dashboardUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_dashboard.php' : 'dashboard.php';
+$logoutUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_logout.php' : 'logout.php';
 ?>
-
 <!doctype html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-    <title>SENTEC | Official Website</title>
-    <link rel="icon" href="/images/favicon2.png" type="image/png">
-    <link rel="shortcut icon" href="/images/favicon2.png" type="image/png">
-    <link rel="apple-touch-icon" href="/images/favicon2.png">
-    
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SENTEC | NED University Official Society</title>
+    
+    <link rel="icon" href="images/favicon2.png" type="image/png">
+    <link rel="shortcut icon" href="images/favicon2.png" type="image/png">
+    <link rel="apple-touch-icon" href="images/favicon2.png">
 
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <link rel="stylesheet" href="css/style.css">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: '#f15a24',
+                            'orange-hover': '#ff6b35',
+                            dark: '#080b0d',
+                            surface: '#101518',
+                            card: '#12161D',
+                            muted: '#8e96a0',
+                            line: 'rgba(255, 255, 255, 0.08)',
+                            'line-strong': 'rgba(255, 255, 255, 0.16)'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
     
-        <style>
-        /* Navigation alignment fixes */
-        .nav-links {
-            display: flex !important;
-            align-items: center !important;
-            gap: 20px !important;
-            list-style: none !important;
-            margin-bottom: 0 !important;
-        }
-        
-        .nav-links li {
-            display: flex !important;
-            align-items: center !important;
-        }
-        
-        .nav-links a {
-            display: flex !important;
-            align-items: center !important;
-            text-decoration: none !important;
-            color: #ddd !important;
-            font-weight: 600 !important;
-            font-size: 0.95rem !important;
-            transition: 0.3s !important;
-            position: relative !important;
-            line-height: 1 !important;
-        }
-        
-        .nav-links > li > a::after {
-            content: '' !important;
-            position: absolute !important;
-            width: 0% !important;
-            height: 2px !important;
-            bottom: -5px !important;
-            left: 0 !important;
-            background-color: var(--accent) !important;
-            transition: 0.3s !important;
-        }
-        
-        .nav-links > li > a:hover::after {
-            width: 100% !important;
-        }
-        
-        /* Dashboard User Button Style - ALIGNED PROPERLY */
-        .nav-user-btn {
-            display: flex !important;
-            align-items: center !important;
-            gap: 6px !important;
-            background: rgba(0, 255, 148, 0.12) !important;
-            border: 1px solid rgba(0, 255, 148, 0.4) !important;
-            color: #fff !important;
-            padding: 6px 14px !important;
-            border-radius: 999px !important;
-            font-weight: 600 !important;
-            transition: 0.3s ease !important;
-            line-height: 1.4 !important;
-            height: auto !important;
-            margin: 0 !important;
-        }
-        
-        .nav-user-btn:hover {
-            background: rgba(0, 255, 148, 0.2) !important;
-            border-color: var(--accent) !important;
-            box-shadow: 0 0 15px rgba(0, 255, 148, 0.3) !important;
-        }
-        
-        .nav-user-btn i {
-            color: var(--accent) !important;
-            font-size: 0.9rem !important;
-        }
-        
-        .nav-user-btn .user-name {
-            color: var(--accent) !important;
-            font-weight: 700 !important;
-        }
-        
-        .nav-user-btn.ambassador i {
-            color: #FFD700 !important;
-        }
-        
-        .nav-user-btn.ambassador .user-name {
-            color: #FFD700 !important;
-        }
-        
-        .nav-user-btn.ambassador {
-            border-color: rgba(255, 215, 0, 0.4) !important;
-        }
-        
-        .nav-user-btn.ambassador:hover {
-            border-color: #FFD700 !important;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3) !important;
-        }
-        
-        /* Login Button - Match alignment */
-        .nav-btn {
-            padding: 6px 16px !important;
-            border: 1px solid var(--accent) !important;
-            border-radius: 999px !important;
-            background: transparent !important;
-            color: var(--accent) !important;
-            font-weight: 600 !important;
-            transition: 0.3s ease !important;
-            line-height: 1.4 !important;
-        }
-        
-        .nav-btn:hover {
-            background: rgba(0, 255, 148, 0.1) !important;
-            box-shadow: 0 0 15px rgba(0, 255, 148, 0.3) !important;
-        }
-        
-        .nav-btn::after {
-            display: none !important;
-        }
-        
-        .nav-user-btn::after {
-            display: none !important;
-        }
-        
-        /* Logout Button - Aligned */
-        .nav-logout-btn {
-            display: flex !important;
-            align-items: center !important;
-            gap: 4px !important;
-            color: #ff6b6b !important;
-            font-weight: 600 !important;
-            padding: 6px 8px !important;
-            transition: 0.3s ease !important;
-            line-height: 1.4 !important;
-        }
-        
-        .nav-logout-btn:hover {
-            color: #ff4444 !important;
-            text-shadow: 0 0 10px rgba(255, 68, 68, 0.5) !important;
-        }
-        
-        .nav-logout-btn::after {
-            display: none !important;
-        }
-        
-        .nav-logout-btn i {
-            font-size: 0.9rem !important;
+    <style>
+        :root {
+            --orange: #f15a24;
+            --dark: #080b0d;
+            --surface: #101518;
+            --line: rgba(255, 255, 255, 0.08);
+            --accent: #f15a24;
         }
 
-        /* Mobile adjustments */
-        @media (max-width: 768px) {
-            .nav-links {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                gap: 10px !important;
-                padding: 20px !important;
-            }
-            
-            .nav-links li {
-                width: 100% !important;
-            }
-            
-            .nav-links a {
-                padding: 8px 0 !important;
-                width: 100% !important;
-            }
-            
-            .nav-user-btn {
-                justify-content: flex-start !important;
-                width: fit-content !important;
-            }
-            
-            .nav-logout-btn {
-                justify-content: flex-start !important;
-                width: fit-content !important;
-            }
-            
-            .nav-btn {
-                display: inline-block !important;
-                width: fit-content !important;
-            }
+        body {
+            background-color: #080b0d;
+            color: #f4f1eb;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Radar & Emblem Slow Rotations */
+        @keyframes spinSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes spinReverseSlow {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+        }
+        .animate-spin-slow {
+            animation: spinSlow 45s linear infinite;
+            transform-origin: center;
+        }
+        .animate-spin-reverse-slow {
+            animation: spinReverseSlow 35s linear infinite;
+            transform-origin: center;
+        }
+
+        /* Ambient scanline and technical grid */
+        .ambient-grid {
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Glass panel utility for legacy compatibility */
+        .glass-panel {
+            background: rgba(16, 21, 24, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+        }
+
+        /* Legacy Button Fallback */
+        .btn-clear {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 22px;
+            background: #f15a24;
+            color: #080b0d !important;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border-radius: 9999px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: none;
+        }
+        .btn-clear:hover {
+            background: #ff6b35;
+            color: #080b0d !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(241, 90, 36, 0.35);
         }
     </style>
 </head>
 
-<body>
-    <nav>
-        <a href="index" class="nav-logo">
-            SENTEC<span>.</span>
-        </a>
+<body class="bg-[#080b0d] text-[#f4f1eb] min-h-screen flex flex-col selection:bg-[#f15a24] selection:text-white">
+    <!-- Top Nav Chrome matching SiteChrome.tsx -->
+    <header class="sticky top-0 z-50 w-full bg-[#080b0d]/90 backdrop-blur-md border-b border-white/[0.08] transition-all duration-200" id="mainHeader">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            
+            <!-- Brand Lockup -->
+            <a href="index.php" class="flex items-center gap-3 group text-decoration-none">
+                <div class="w-10 h-10 rounded-lg bg-[#101518] border border-white/[0.1] flex items-center justify-center p-1.5 transition-transform group-hover:scale-105">
+                    <img src="SENTEC White Logo.png" alt="SENTEC" class="w-full h-full object-contain" onerror="this.src='images/favicon2.png'">
+                </div>
+                <div class="flex items-baseline">
+                    <span class="font-display font-extrabold text-xl sm:text-2xl tracking-tight text-white group-hover:text-white/90 transition-colors">SENTEC</span>
+                    <span class="text-[#f15a24] font-black text-2xl leading-none">.</span>
+                </div>
+            </a>
 
-        <div class="menu-toggle" id="mobile-menu">
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
+            <!-- Desktop Navigation Links -->
+            <nav class="hidden md:flex items-center gap-7 text-xs font-mono tracking-wider text-neutral-300">
+                <a href="index.php" class="hover:text-[#f15a24] transition-colors py-1">HOME</a>
+                <a href="index.php#about" class="hover:text-[#f15a24] transition-colors py-1">ABOUT</a>
+                <a href="team.php" class="hover:text-[#f15a24] transition-colors py-1">TEAM</a>
+                <a href="index.php#events" class="hover:text-[#f15a24] transition-colors py-1">EVENTS</a>
+                <a href="OurPartners.php" class="hover:text-[#f15a24] transition-colors py-1">PARTNERS</a>
+                <a href="gallery.php" class="hover:text-[#f15a24] transition-colors py-1">GALLERY</a>
+                <a href="contact.php" class="hover:text-[#f15a24] transition-colors py-1">CONTACT US</a>
+            </nav>
+
+            <!-- Action Area / Session State Control -->
+            <div class="hidden sm:flex items-center gap-3">
+                <?php if ($isAdminLoggedIn): ?>
+                    <!-- Admin Panel Button -->
+                    <a href="admin/index.php" class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono font-bold tracking-wider text-[#f15a24] bg-[#f15a24]/10 border border-[#f15a24]/40 hover:bg-[#f15a24]/20 hover:border-[#f15a24] rounded-md transition-all">
+                        <i class="fas fa-shield-alt text-xs"></i>
+                        <span>ADMIN PANEL</span>
+                    </a>
+                <?php endif; ?>
+
+                <?php if ($isUserLoggedIn || $isAmbassadorLoggedIn): ?>
+                    <!-- Dashboard Link -->
+                    <a href="<?php echo $dashboardUrl; ?>" class="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-mono font-bold tracking-wider text-[#080b0d] bg-[#f15a24] hover:bg-[#ff6b35] rounded-md transition-all shadow-[0_0_15px_rgba(241,90,36,0.25)]">
+                        <i class="fas fa-user-astronaut text-xs"></i>
+                        <span>DASHBOARD</span>
+                        <span class="opacity-80 font-sans font-medium text-[11px]">(<?php echo $firstName; ?>)</span>
+                    </a>
+                    <!-- Logout Link -->
+                    <a href="<?php echo $logoutUrl; ?>" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono text-neutral-400 hover:text-red-400 transition-colors" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>LOGOUT</span>
+                    </a>
+                <?php else: ?>
+                    <!-- STRICT VISITOR STATE: Render ONLY Login button. No ghost buttons -->
+                    <a href="login.php" class="inline-flex items-center gap-2 px-5 py-2 text-xs font-mono font-bold tracking-wider text-white bg-[#101518] border border-white/[0.12] hover:border-[#f15a24] hover:text-[#f15a24] rounded-md transition-all">
+                        <span>LOGIN</span>
+                        <i class="fas fa-arrow-right text-[10px]"></i>
+                    </a>
+                <?php endif; ?>
+            </div>
+
+            <!-- Mobile Menu Toggle Button -->
+            <div class="flex items-center sm:hidden gap-2">
+                <button id="mobileMenuBtn" type="button" aria-label="Toggle navigation" class="w-10 h-10 flex items-center justify-center text-neutral-300 hover:text-white bg-[#101518] border border-white/[0.1] rounded-md focus:outline-none">
+                    <i class="fas fa-bars text-base" id="mobileMenuIcon"></i>
+                </button>
+            </div>
+
         </div>
 
-        <ul class="nav-links">
-            <li><a href="index">Home</a></li>
-            <li><a href="index#about">About</a></li>
-            <li><a href="team">Team</a></li>
-            <li><a href="index#events">Events</a></li>
-            <li><a href="OurPartners">Partners</a></li>
-            <li><a href="gallery">Gallery</a></li>
-            <li><a href="contact">Contact Us</a></li>
+        <!-- Mobile Dropdown Drawer -->
+        <div id="mobileMenuDropdown" class="hidden sm:hidden bg-[#0d1215] border-b border-white/[0.08] px-5 pt-3 pb-6 space-y-3 font-mono text-xs tracking-wider">
+            <div class="flex flex-col space-y-2.5 pt-2">
+                <a href="index.php" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">HOME</a>
+                <a href="index.php#about" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">ABOUT</a>
+                <a href="team.php" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">TEAM</a>
+                <a href="index.php#events" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">EVENTS</a>
+                <a href="OurPartners.php" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">PARTNERS</a>
+                <a href="gallery.php" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">GALLERY</a>
+                <a href="contact.php" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">CONTACT US</a>
+            </div>
 
-            <?php if ($isLoggedIn): ?>
-                <!-- Regular User Logged In -->
-                <li>
-                    <a href="dashboard" class="nav-user-btn">
-                        <i class="fas fa-user-astronaut"></i>
-                        <span>Dashboard</span>
-                        <span class="user-name"><?php echo htmlspecialchars($firstName); ?></span>
+            <div class="pt-3 flex flex-col gap-2">
+                <?php if ($isAdminLoggedIn): ?>
+                    <a href="admin/index.php" class="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-mono font-bold text-[#f15a24] bg-[#f15a24]/10 border border-[#f15a24]/40 rounded-md">
+                        <i class="fas fa-shield-alt"></i> ADMIN PANEL
                     </a>
-                </li>
-                <li>
-                    <a href="logout" class="nav-logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> Logout
+                <?php endif; ?>
+
+                <?php if ($isUserLoggedIn || $isAmbassadorLoggedIn): ?>
+                    <a href="<?php echo $dashboardUrl; ?>" class="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-mono font-bold text-[#080b0d] bg-[#f15a24] rounded-md">
+                        <i class="fas fa-user-astronaut"></i> DASHBOARD (<?php echo $firstName; ?>)
                     </a>
-                </li>
-            <?php elseif ($isAmbassador): ?>
-                <!-- Ambassador Logged In -->
-                <li>
-                    <a href="ambassador_dashboard" class="nav-user-btn ambassador">
-                        <i class="fas fa-user-tie"></i>
-                        <span>Ambassador</span>
-                        <span class="user-name"><?php echo htmlspecialchars($firstName); ?></span>
+                    <a href="<?php echo $logoutUrl; ?>" class="flex items-center justify-center gap-2 w-full py-2 text-xs font-mono text-red-400 hover:underline">
+                        <i class="fas fa-sign-out-alt"></i> LOGOUT
                     </a>
-                </li>
-                <li>
-                    <a href="ambassador_logout" class="nav-logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> Logout
+                <?php else: ?>
+                    <a href="login.php" class="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-mono font-bold text-white bg-[#101518] border border-[#f15a24]/50 rounded-md">
+                        <span>LOGIN</span> <i class="fas fa-arrow-right text-xs"></i>
                     </a>
-                </li>
-            <?php else: ?>
-                <!-- Not Logged In -->
-                <li><a href="login">Login</a></li>
-            <?php endif; ?>
-        </ul>
-    </nav>
+                <?php endif; ?>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Page Content Container Starts Here -->
+    <div class="flex-grow">

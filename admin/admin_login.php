@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 
 session_start();
 
-// Adjust path if needed
+// Adjust database connection path
 if (file_exists('../db_connection.php')) {
     include '../db_connection.php';
 } else {
@@ -14,21 +14,21 @@ if (file_exists('../db_connection.php')) {
 }
 
 // If already logged in, redirect to dashboard
-if (isset($_SESSION['admin'])) {
+if (isset($_SESSION['admin']) || isset($_SESSION['admin_logged_in'])) {
     header("Location: index.php");
     exit();
 }
 
 $error = "";
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = trim($_POST['username']);
-    $password = $_POST['password'];
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
 
     if (!$conn) {
-        $error = "Database connection missing.";
+        $error = "Database connection unavailable.";
     } else {
-        // SECURED: Use prepared statement
+        // Use prepared statement
         $query = "SELECT * FROM admin_users WHERE username = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("s", $username);
@@ -42,10 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $password_valid = false;
             
             if (password_verify($password, $user['password'])) {
-                // Modern password hash - correct!
                 $password_valid = true;
             } elseif (md5($password) == $user['password']) {
-                // Legacy MD5 - correct, but we should upgrade it
                 $password_valid = true;
                 
                 // Upgrade the password to modern hash automatically
@@ -61,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['admin_id'] = $user['id'];
                 $_SESSION['admin_full_name'] = $user['full_name'] ?? $username;
                 $_SESSION['admin_role'] = $user['role'] ?? 'moderator';
+                $_SESSION['admin_logged_in'] = true;
                 $_SESSION['last_activity'] = time();
 
                 // Update last_login
@@ -71,179 +70,143 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 // Log the login
                 $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-                $logStmt = $conn->prepare("INSERT INTO admin_logs (admin_id, action, details, ip_address) VALUES (?, 'LOGIN', 'Successful login', ?)");
-                $logStmt->bind_param("is", $user['id'], $ip);
-                $logStmt->execute();
-                $logStmt->close();
+                $logStmt = $conn->prepare("INSERT INTO admin_logs (admin_id, action, details, ip_address) VALUES (?, 'LOGIN', 'Successful admin clearance login', ?)");
+                if ($logStmt) {
+                    $logStmt->bind_param("is", $user['id'], $ip);
+                    $logStmt->execute();
+                    $logStmt->close();
+                }
 
                 header("Location: index.php");
                 exit();
             } else {
-                $error = "Invalid credentials.";
+                $error = "Security gateway clearance rejected: Invalid passphrase.";
             }
         } else {
-            $error = "Invalid credentials.";
+            $error = "Security gateway clearance rejected: Administrator not found.";
         }
         $stmt->close();
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" href="favicon2.png" type="image/png">
-    <link rel="shortcut icon" href="favicon2.png" type="image/png">
-    <link rel="apple-touch-icon" href="favicon2.png"  type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Portal | SENTEC</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Admin Clearance | SENTEC</title>
+    <link rel="icon" href="favicon2.png" type="image/png">
+    <link rel="shortcut icon" href="favicon2.png" type="image/png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        :root {
-            --bg: #030303;
-            --accent: #00FF94;
-            --text-main: #FFFFFF;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: '#f15a24',
+                            dark: '#080b0d',
+                            surface: '#101518'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
         }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-image: radial-gradient(circle at 50% 0%, #111a2e 0%, #030303 60%);
-            overflow: hidden;
-        }
-
-        .login-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-            border-radius: 24px;
-            padding: 50px;
-            width: 100%;
-            max-width: 450px;
-            text-align: center;
-            animation: floatUp 0.8s ease-out;
-        }
-
-        @keyframes floatUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .admin-logo {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 10px rgba(0, 255, 148, 0.3));
-        }
-
-        h2 {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 800;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-
-        p { color: #888; font-size: 0.9rem; margin-bottom: 30px; }
-
-        .form-control {
-            background-color: #0b1120 !important;
-            border: 1px solid #333 !important;
-            color: #fff !important;
-            padding: 15px !important;
-            border-radius: 12px !important;
-            margin-bottom: 20px;
-        }
-        .form-control:focus {
-            border-color: var(--accent) !important;
-            box-shadow: 0 0 15px rgba(0, 255, 148, 0.2) !important;
-            outline: none !important;
-        }
-        .form-control::placeholder { color: #555; }
-
-        .btn-neon {
-            background: transparent;
-            border: 2px solid var(--accent);
-            color: #fff;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 15px;
-            border-radius: 12px;
-            width: 100%;
-            transition: 0.3s ease;
-        }
-        .btn-neon:hover {
-            background: var(--accent);
-            color: #000;
-            box-shadow: 0 0 30px rgba(0, 255, 148, 0.4);
-        }
-
-        .alert-danger {
-            background: rgba(255, 68, 68, 0.1);
-            border: 1px solid #ff4444;
-            color: #ff4444;
-            font-size: 0.9rem;
-        }
-
-        .back-link {
-            display: block;
-            margin-top: 30px;
-            color: #666;
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: 0.3s;
-        }
-        .back-link:hover { color: var(--accent); }
-    </style>
+    </script>
 </head>
-<body>
+<body class="bg-[#080b0d] text-[#f4f1eb] min-h-screen flex items-center justify-center p-4 relative overflow-hidden font-sans">
+    
+    <!-- Ambient Radar Background -->
+    <div class="absolute inset-0 pointer-events-none opacity-20" style="background-image: radial-gradient(circle at 50% 50%, #f15a24 0%, transparent 60%);"></div>
+    <div class="absolute inset-0 pointer-events-none opacity-30" style="background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 32px 32px;"></div>
 
-    <div class="login-card">
-        <img src="../SENTEC White Logo.png" alt="Logo" class="admin-logo">
+    <div class="relative w-full max-w-md z-10">
         
-        <h2>ADMIN ACCESS</h2>
-        <p>Restricted Area. Authorized Personnel Only.</p>
-
-        <?php if (isset($error) && $error): ?>
-            <div class="alert alert-danger py-2">
-                <i class="fas fa-exclamation-triangle me-2"></i> <?php echo htmlspecialchars($error); ?>
+        <!-- Dark Card Container matching AdminLogin.tsx -->
+        <div class="p-8 sm:p-10 rounded-2xl bg-[#101518] border border-[#f15a24]/50 shadow-[0_20px_80px_rgba(0,0,0,0.95)]">
+            
+            <!-- Shield Header -->
+            <div class="text-center mb-8">
+                <div class="w-14 h-14 rounded-full bg-[#f15a24]/15 border border-[#f15a24] flex items-center justify-center mx-auto mb-4 text-[#f15a24] shadow-[0_0_20px_rgba(241,90,36,0.3)]">
+                    <i class="fas fa-shield-alt text-2xl"></i>
+                </div>
+                <span class="text-[10px] font-mono text-[#f15a24] uppercase tracking-[0.2em] block mb-1">
+                    SENTEC EXECUTIVE PORTAL
+                </span>
+                <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-white">
+                    Admin Clearance
+                </h2>
+                <p class="text-xs text-neutral-400 mt-1 font-mono">
+                    Restricted Area. Authorized Personnel Only.
+                </p>
             </div>
-        <?php endif; ?>
 
-        <form method="POST">
-            <div class="text-start">
-                <label class="form-label small text-muted ps-2">Username</label>
-                <input type="text" name="username" class="form-control" placeholder="Enter ID" required autofocus>
+            <!-- Error Notification Display -->
+            <?php if ($error): ?>
+                <div class="p-3.5 mb-6 rounded-lg bg-red-500/10 border border-red-500/40 text-red-300 text-xs font-mono flex items-center gap-2.5">
+                    <i class="fas fa-exclamation-triangle text-red-400 text-sm"></i>
+                    <span><?php echo htmlspecialchars($error); ?></span>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" class="space-y-5">
+                <div>
+                    <label class="block text-[11px] font-mono text-neutral-400 uppercase tracking-wider mb-2">
+                        ADMINISTRATOR USERNAME
+                    </label>
+                    <input 
+                        type="text" 
+                        name="username" 
+                        required 
+                        placeholder="Enter username" 
+                        class="w-full px-4 py-3 rounded-lg bg-[#080b0d] border border-white/[0.12] text-white text-sm focus:outline-none focus:border-[#f15a24] focus:ring-1 focus:ring-[#f15a24] transition-all font-sans placeholder:text-neutral-600"
+                        autofocus
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-mono text-neutral-400 uppercase tracking-wider mb-2">
+                        SECURITY PASSPHRASE
+                    </label>
+                    <input 
+                        type="password" 
+                        name="password" 
+                        required 
+                        placeholder="••••••••" 
+                        class="w-full px-4 py-3 rounded-lg bg-[#080b0d] border border-white/[0.12] text-white text-sm focus:outline-none focus:border-[#f15a24] focus:ring-1 focus:ring-[#f15a24] transition-all font-sans placeholder:text-neutral-600"
+                    >
+                </div>
+
+                <button 
+                    type="submit" 
+                    class="w-full py-3.5 px-6 rounded-lg bg-[#f15a24] hover:bg-[#ff6b35] text-[#080b0d] font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_4px_25px_rgba(241,90,36,0.35)] hover:-translate-y-0.5 mt-4"
+                >
+                    <span>Authorize Login</span>
+                    <i class="fas fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-white/[0.08] text-center">
+                <a href="../index.php" class="text-xs font-mono text-neutral-400 hover:text-[#f15a24] inline-flex items-center gap-2 transition-colors">
+                    <i class="fas fa-arrow-left text-[10px]"></i>
+                    <span>Back to Live Website</span>
+                </a>
             </div>
 
-            <div class="text-start">
-                <label class="form-label small text-muted ps-2">Password</label>
-                <input type="password" name="password" class="form-control" placeholder="Enter Password" required>
-            </div>
+        </div>
 
-            <button type="submit" class="btn-neon mt-3">
-                Secure Login <i class="fas fa-lock ms-2"></i>
-            </button>
-        </form>
-
-        <a href="../index.php" class="back-link">
-            <i class="fas fa-arrow-left me-1"></i> Back to Website
-        </a>
     </div>
 
 </body>

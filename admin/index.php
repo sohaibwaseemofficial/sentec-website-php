@@ -223,7 +223,7 @@ $past_events = $conn->query("SELECT * FROM events WHERE status = 'past' ORDER BY
                 <?php foreach ($recentRegistrations as $notif): ?>
                     <li>
                         <a class="dropdown-item d-flex align-items-start gap-2 py-2" href="manage_registrations.php" style="background: transparent; color: #ccc;">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px; background: rgba(0,255,148,0.1);">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px; background: rgba(241,90,36,0.15);">
                                 <i class="fas fa-user-plus" style="color: var(--accent);"></i>
                             </div>
                             <div class="flex-grow-1">

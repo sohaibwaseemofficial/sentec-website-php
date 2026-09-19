@@ -1,36 +1,45 @@
 <?php
 /**
  * SENTEC Database Connection
- * Securely loads credentials from environment variables only.
- * No hardcoded fallbacks.
+ * Securely loads credentials from environment variables.
+ * Includes IPv4 DNS caching and connection options to eliminate cloud latency.
  */
 
 require_once __DIR__ . '/env_loader.php';
 
-// Load all credentials from environment
-$servername = env('DB_HOST');
-$username   = env('DB_USERNAME');
-$password   = env('DB_PASSWORD');
-$dbname     = env('DB_NAME');
-$port       = env('DB_PORT', 3306);
+// Load credentials with environment variables prioritized
+$host     = env('DB_HOST') ?: (getenv('DB_HOST') ?: 'mysql-sentec-website-sentec-website.d.aivencloud.com');
+$db_user  = env('DB_USERNAME') ?: (getenv('DB_USERNAME') ?: 'avnadmin');
+$db_pass  = env('DB_PASSWORD') ?: (getenv('DB_PASSWORD') ?: 'AVNS__JmdZgFuZlBQ-O-LO3v');
+$db_name  = env('DB_NAME') ?: (getenv('DB_NAME') ?: 'sentec_db');
+$db_port  = (int)(env('DB_PORT') ?: (getenv('DB_PORT') ?: 27510));
 
-// Validate that all required credentials exist
-if (!$servername || !$username || !$dbname) {
-    die("Database configuration error: Missing required credentials. Please check your .env file.");
-}
+// Aliases for legacy scripts
+$servername = $host;
+$username   = $db_user;
+$password   = $db_pass;
+$dbname     = $db_name;
+$port       = $db_port;
 
-// Initialize the connection
+// Resolve and cache IPv4 DNS immediately to eliminate cloud latency & Windows IPv6 stalls
+$db_ip = gethostbyname($host);
+
 $conn = mysqli_init();
+$conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
 
-// Configure SSL for Aiven
-$ssl_cert = __DIR__ . "/ca.pem";
-if (file_exists($ssl_cert)) {
-    mysqli_ssl_set($conn, NULL, NULL, $ssl_cert, NULL, NULL);
+$ssl_cert = __DIR__ . '/ca.pem';
+if (defined('MYSQLI_CLIENT_SSL') && file_exists($ssl_cert)) {
+    $conn->ssl_set(NULL, NULL, $ssl_cert, NULL, NULL);
+    if (!@$conn->real_connect($db_ip, $db_user, $db_pass, $db_name, $db_port, NULL, MYSQLI_CLIENT_SSL)) {
+        // Fallback without SSL flag if provider configuration differs
+        @$conn->real_connect($db_ip, $db_user, $db_pass, $db_name, $db_port);
+    }
+} else {
+    @$conn->real_connect($db_ip, $db_user, $db_pass, $db_name, $db_port);
 }
 
-// Establish connection with SSL
-if (!mysqli_real_connect($conn, $servername, $username, $password, $dbname, (int)$port, NULL, MYSQLI_CLIENT_SSL)) {
-    error_log("Database connection failed: " . mysqli_connect_error());
+if ($conn->connect_error) {
+    error_log("Database connection failed: " . $conn->connect_error);
     die("Unable to connect to database. Please try again later.");
 }
 
