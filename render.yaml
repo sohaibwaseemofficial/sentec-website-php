@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: sentec-website-php
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
