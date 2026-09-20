@@ -20,17 +20,36 @@ function sentec_mailer(): PHPMailer {
     $mail->isSMTP();
     $mail->Host       = env('SMTP_HOST', 'smtp.gmail.com');
     $mail->SMTPAuth   = true;
-    $mail->Username   = env('SMTP_USERNAME');
-    $mail->Password   = env('SMTP_PASSWORD');
-    $mail->Port       = (int)env('SMTP_PORT', 587);
+    
+    // Support both SMTP_USERNAME / SMTP_USER and SMTP_PASSWORD / SMTP_PASS
+    $user = env('SMTP_USERNAME') ?: env('SMTP_USER', 'neduetsentec@gmail.com');
+    $pass = env('SMTP_PASSWORD') ?: env('SMTP_PASS', '');
+    // Strip spaces that often exist in copied Google App Passwords
+    $pass = str_replace(' ', '', (string)$pass);
+    
+    $mail->Username   = $user;
+    $mail->Password   = $pass;
+    
+    $port = (int)env('SMTP_PORT', 587);
+    $mail->Port       = $port;
     
     // Set encryption
-    $secure = strtolower(env('SMTP_SECURE', 'tls'));
-    if ($secure === 'ssl') {
+    $secure = strtolower((string)env('SMTP_SECURE', 'tls'));
+    if ($port === 465 || $secure === 'ssl') {
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     } else {
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     }
+    
+    // Prevent long hangs on SMTP connections (12s max)
+    $mail->Timeout = 12;
+    $mail->SMTPOptions = [
+        'ssl' => [
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+            'allow_self_signed' => true
+        ]
+    ];
     
     $mail->CharSet = 'UTF-8';
     $mail->isHTML(true);

@@ -300,7 +300,7 @@ include 'header.php';
                     </svg>
                     <span>ARE YOU BUILDING WITH US?</span>
                 </div>
-                <a href="mailto:neduetsentec@gmail.com">
+                <a href="mailto:info@sentecneduet.live">
                     <span>Start a partnership conversation</span>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--orange);">
                         <line x1="7" y1="17" x2="17" y2="7"></line>

@@ -42,8 +42,8 @@
                     <span class="text-xs font-mono text-[#f15a24] uppercase tracking-widest block mb-4">CONTACT / BASE</span>
                     <div class="text-sm space-y-2">
                         <div>
-                            <a href="mailto:neduetsentec@gmail.com" class="text-white hover:text-[#f15a24] transition-colors font-mono text-xs">
-                                neduetsentec@gmail.com
+                            <a href="mailto:info@sentecneduet.live" class="text-white hover:text-[#f15a24] transition-colors font-mono text-xs">
+                                info@sentecneduet.live
                             </a>
                         </div>
                         <p class="text-xs text-neutral-400">

@@ -107,7 +107,7 @@ include 'recaptcha_config.php';
         border-top: 1px solid var(--line);
         flex-wrap: wrap;
     }
-    .form-actions span {
+    .form-actions .spam-protection-badge {
         display: flex;
         gap: 7px;
         align-items: center;
@@ -115,6 +115,44 @@ include 'recaptcha_config.php';
         font: 9px "IBM Plex Mono", monospace;
         letter-spacing: 0.1em;
         text-transform: uppercase;
+    }
+    .signal-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 10px !important;
+        border: 0 !important;
+        background: #f15a24 !important;
+        color: #080b0d !important;
+        padding: 14px 26px !important;
+        font: 700 12px "IBM Plex Mono", monospace !important;
+        letter-spacing: 0.08em !important;
+        text-transform: uppercase !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+    }
+    .signal-btn span {
+        color: #080b0d !important;
+        font: 700 12px "IBM Plex Mono", monospace !important;
+        letter-spacing: 0.08em !important;
+    }
+    .signal-btn svg {
+        color: #080b0d !important;
+        stroke: #080b0d !important;
+    }
+    .signal-btn:hover {
+        background: #ff7a47 !important;
+        transform: translateY(-1px);
+    }
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    textarea:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0 1000px #151c20 inset !important;
+        -webkit-text-fill-color: #f4f1eb !important;
+        caret-color: #f4f1eb !important;
+        transition: background-color 5000s ease-in-out 0s;
     }
 </style>
 
@@ -163,7 +201,7 @@ include 'recaptcha_config.php';
                         <rect width="20" height="16" x="2" y="4" rx="2"></rect>
                         <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
                     </svg>
-                    <a href="mailto:neduetsentec@gmail.com">neduetsentec@gmail.com</a>
+                    <a href="mailto:info@sentecneduet.live">info@sentecneduet.live</a>
                 </div>
 
                 <div class="contact-detail">
@@ -241,7 +279,7 @@ include 'recaptcha_config.php';
                 <?php endif; ?>
 
                 <div class="form-actions">
-                    <span>
+                    <span class="spam-protection-badge">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--orange);">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                             <path d="m9 12 2 2 4-4"></path>

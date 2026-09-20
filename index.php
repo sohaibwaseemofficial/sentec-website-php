@@ -1456,7 +1456,7 @@ $events = get_cached_data('public_events_data', 600, function() {
                 </div>
                 <div>
                     <div class="contact-item-title">Official Email</div>
-                    <a href="mailto:neduetsentec@gmail.com" class="contact-item-val">neduetsentec@gmail.com</a>
+                    <a href="mailto:info@sentecneduet.live" class="contact-item-val">info@sentecneduet.live</a>
                 </div>
             </div>
 
