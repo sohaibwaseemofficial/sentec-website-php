@@ -19,10 +19,6 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-# Configure Apache to listen on $PORT (set dynamically by Render, defaults to 80)
-RUN sed -i 's/Listen 80/Listen ${PORT:-80}/' /etc/apache2/ports.conf \
-    && sed -i 's/:80/:${PORT:-80}/' /etc/apache2/sites-available/000-default.conf
-
 # Allow .htaccess overrides
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
@@ -44,13 +40,14 @@ RUN { \
     echo 'date.timezone = Asia/Karachi'; \
 } > /usr/local/etc/php/conf.d/custom.ini
 
-# Ensure correct file permissions for web server
+# Ensure correct file permissions for web server and make entrypoint executable
 RUN mkdir -p /var/www/html/storage/cache \
     && mkdir -p /var/www/html/images/uploads/event_registrations \
     && mkdir -p /var/www/html/images/uploads/team \
     && chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage /var/www/html/images/uploads
+    && chmod -R 775 /var/www/html/storage /var/www/html/images/uploads \
+    && chmod +x /var/www/html/entrypoint.sh
 
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+CMD ["/var/www/html/entrypoint.sh"]
