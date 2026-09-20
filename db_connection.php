@@ -53,6 +53,12 @@ if ($conn->character_set_name() !== 'utf8mb4') {
     @mysqli_set_charset($conn, 'utf8mb4');
 }
 
+// Synchronize MySQL session time zone with Pakistan Standard Time (UTC+05:00)
+$tzOffset = env('DB_TIME_OFFSET', '+05:00');
+if ($tzOffset) {
+    @$conn->query("SET time_zone = '$tzOffset'");
+}
+
 // Load cache utilities globally
 require_once __DIR__ . '/cache_utils.php';
 ?>
