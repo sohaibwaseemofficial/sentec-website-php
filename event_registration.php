@@ -67,8 +67,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $institution = getVal('institutionType');
         $teamName    = getVal('teamName');
         $module      = getVal('moduleSelection');
-        $brandCode   = getVal('brand_ambassador_code'); 
-        $feesImg     = "Not Collected"; 
+        $brandCode   = getVal('brand_ambassador_code');
+        
+        // Process fees screenshot if provided
+        $feesImg = isset($_FILES['fees_screenshot']) ? processFile($_FILES, 'fees_screenshot', $targetDir, $publicPrefix) : '';
+        if (empty($feesImg)) {
+            $feesImg = null;
+        }
+        $paymentStatus = !empty($feesImg) ? 'submitted' : 'pending';
 
         // Populate participant array
         $p = [];
@@ -80,8 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'cnic'    => getVal("participant{$i}_cnic"),
                 'roll'    => getVal("participant{$i}_roll_number"),
                 // Only attempt to process files if they exist in the request
-                'face'    => isset($_FILES["participant{$i}_face_image"]) ? processFile($_FILES, "participant{$i}_face_image", $targetDir, $publicPrefix) : '',
-                'card'    => isset($_FILES["participant{$i}_id_card"]) ? processFile($_FILES, "participant{$i}_id_card", $targetDir, $publicPrefix) : ''
+                'face'    => isset($_FILES["participant{$i}_face_image"]) ? processFile($_FILES, "participant{$i}_face_image", $targetDir, $publicPrefix) : null,
+                'card'    => isset($_FILES["participant{$i}_id_card"]) ? processFile($_FILES, "participant{$i}_id_card", $targetDir, $publicPrefix) : null
             ];
         }
 
@@ -126,8 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (empty($p[$i]['email'])) throw new Exception("Participant $i (Email) is required.");
                 if (empty($p[$i]['cnic'])) throw new Exception("Participant $i (CNIC) is required.");
                 if (empty($p[$i]['roll'])) throw new Exception("Participant $i (Roll Number) is required.");
-                if (empty($p[$i]['face'])) throw new Exception("Participant $i (Photo) is required.");
-                if (empty($p[$i]['card'])) throw new Exception("Participant $i (ID Card) is required.");
             }
 
             // Validate maximum participants
@@ -156,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // E. DATABASE INSERTION
         // ---------------------------------------------------------
         $sql = "INSERT INTO event_registrations (
-            user_id, institution_type, team_name, module_selection, brand_ambassador_code, fees_screenshot,
+            user_id, institution_type, team_name, module_selection, brand_ambassador_code, fees_screenshot, payment_proof, payment_status,
             participant1_name, participant1_contact, participant1_email, participant1_cnic, participant1_roll_number, participant1_face_image, participant1_id_card,
             participant2_name, participant2_contact, participant2_email, participant2_cnic, participant2_roll_number, participant2_face_image, participant2_id_card,
             participant3_name, participant3_contact, participant3_email, participant3_cnic, participant3_roll_number, participant3_face_image, participant3_id_card,
@@ -164,13 +168,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             participant5_name, participant5_contact, participant5_email, participant5_cnic, participant5_roll_number, participant5_face_image, participant5_id_card,
             participant6_name, participant6_contact, participant6_email, participant6_cnic, participant6_roll_number, participant6_face_image, participant6_id_card,
             event_label, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
 
         $stmt = $conn->prepare($sql);
         if (!$stmt) throw new Exception("Database Error: " . $conn->error);
 
-        $stmt->bind_param("issssssssssssssssssssssssssssssssssssssssssssssss",
-            $user_id, $institution, $teamName, $module, $brandCode, $feesImg,
+        $stmt->bind_param("issssssssssssssssssssssssssssssssssssssssssssssssss",
+            $user_id, $institution, $teamName, $module, $brandCode, $feesImg, $feesImg, $paymentStatus,
             $p[1]['name'], $p[1]['contact'], $p[1]['email'], $p[1]['cnic'], $p[1]['roll'], $p[1]['face'], $p[1]['card'],
             $p[2]['name'], $p[2]['contact'], $p[2]['email'], $p[2]['cnic'], $p[2]['roll'], $p[2]['face'], $p[2]['card'],
             $p[3]['name'], $p[3]['contact'], $p[3]['email'], $p[3]['cnic'], $p[3]['roll'], $p[3]['face'], $p[3]['card'],
@@ -199,9 +203,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ];
                 }
             }
-            event_attendees_sync($conn, $registrationId, $syncParticipants, 'pending');
+            event_attendees_sync($conn, $registrationId, $syncParticipants, $paymentStatus);
             $response['success'] = true;
             $response['message'] = 'Registration Submitted Successfully!';
+            $response['registrationId'] = $registrationId;
         } else {
             throw new Exception("Database execution failed: " . $stmt->error);
         }
@@ -925,25 +930,30 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                 for (let i = 0; i < fileEntries.length; i++) {
                     const item = fileEntries[i];
                     btnText.textContent = `COMPRESSING IMAGE ${i + 1} OF ${fileEntries.length}...`;
-                    
+
                     const compressedFile = await imageCompression(item.file, options);
                     const newFileName = item.file.name.replace(/\.[^/.]+$/, "") + ".webp";
                     const webpFile = new File([compressedFile], newFileName, {
                         type: "image/webp",
                     });
-                    
+
                     finalFormData.append(item.key, webpFile);
                 }
 
                 btnText.textContent = "TRANSMITTING REGISTRATION...";
-                
+
                 const res = await fetch('event_registration.php', {
                     method: 'POST',
                     body: finalFormData
                 });
-                
-                const data = await res.json();
-                
+
+                const text = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error(text || 'Server responded with status ' + res.status);
+                }
                 if (data.success) {
                     goToStep(5);
                 } else {
