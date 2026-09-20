@@ -4,18 +4,18 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// 2. SECURITY CHECK
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
 include 'header.php';
 include 'db_connection.php';
 require_once __DIR__ . '/social_attendees_helper.php';
 require_once __DIR__ . '/social_registration_settings.php';
 
 $socialOpen = social_registrations_open($conn);
-
-// 2. SECURITY CHECK
-if (!isset($_SESSION['user_id'])) {
-    echo "<script>window.location.href='login.php';</script>";
-    exit;
-}
 $user_id = $_SESSION['user_id'];
 
 // 2b. REGISTRATION WINDOW CHECK
@@ -172,183 +172,482 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 ?>
 
+<?php
+$p1_prefill_name = $_SESSION['user']['name'] ?? $_SESSION['user_name'] ?? '';
+$p1_prefill_email = $_SESSION['user']['email'] ?? '';
+$p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
+?>
+
 <style>
-    /* NEON THEME & BUTTONS */
-    .form-label { color: #fff; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; }
-    .form-control-dark { background: #0b1120; border: 1px solid #333; color: #fff; padding: 12px; }
-    .form-control-dark:focus { background: #0b1120; border-color: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(0, 255, 148, 0.2); }
-    
-    .btn-neon-green {
-        background: #00FF94; /* BRIGHT NEON GREEN */
-        color: #000;
-        font-weight: 800;
-        font-size: 1.1rem;
-        padding: 16px 30px;
-        border: none;
-        border-radius: 50px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        width: 100%;
-        display: block;
-        transition: 0.3s;
-        box-shadow: 0 0 20px rgba(0, 255, 148, 0.4);
+    .social-reg-wrapper {
+        padding: 40px 20px 80px;
+        max-width: 900px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+    }
+    .reg-wizard-card {
+        background: rgba(15, 20, 22, 0.75);
+        border: 1px solid var(--line);
+        padding: 40px 36px;
+        position: relative;
+        box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5);
+    }
+    .reg-wizard-card::before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        width: 14px;
+        height: 14px;
+        border-top: 2px solid var(--orange);
+        border-left: 2px solid var(--orange);
+    }
+    .tier-card-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+    @media (max-width: 768px) {
+        .tier-card-grid {
+            grid-template-columns: 1fr;
+        }
+        .reg-wizard-card {
+            padding: 24px 18px;
+        }
+    }
+    .tier-track-card {
+        padding: 22px 20px;
+        border: 1px solid var(--line);
+        background: rgba(15, 20, 22, 0.6);
+        border-radius: 4px;
         cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        position: relative;
     }
-    .btn-neon-green:hover {
-        background: #00cc7a;
-        box-shadow: 0 0 40px rgba(0, 255, 148, 0.7);
-        transform: translateY(-2px);
+    .tier-track-card:hover {
+        border-color: rgba(241, 90, 36, 0.5);
+        background: rgba(241, 90, 36, 0.04);
     }
-
-    /* TABS */
-    .reg-tabs { display: flex; gap: 10px; margin-bottom: 30px; justify-content: center; }
-    .tab-btn {
-        background: rgba(255,255,255,0.05); border: 1px solid #444; color: #aaa;
-        padding: 15px 25px; border-radius: 12px; cursor: pointer; transition: 0.3s; flex: 1; text-align: center;
+    .tier-track-card.selected {
+        border-color: var(--orange) !important;
+        background: rgba(241, 90, 36, 0.1) !important;
+        box-shadow: 0 0 25px rgba(241, 90, 36, 0.12);
     }
-    .tab-btn.active {
-        background: rgba(0,255,148,0.1); border-color: var(--accent); color: var(--accent); font-weight: bold;
-        box-shadow: 0 0 20px rgba(0, 255, 148, 0.2);
+    .tier-track-card .tier-title {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--paper);
+        margin-bottom: 6px;
     }
-    .tab-price { display: block; font-size: 1.2rem; margin-top: 5px; }
-
-    /* SECTIONS */
-    .member-section { background: rgba(255,255,255,0.03); border: 1px dashed #444; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-    .section-title { color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
-    .upload-box { border: 1px dashed #555; padding: 15px; border-radius: 8px; text-align: center; background: rgba(0,0,0,0.2); }
-    
-    /* PAYMENT CARD */
-    .payment-card {
-        background: rgba(2, 12, 10, 0.6);
-        border: 1px dashed var(--accent);
-        border-radius: 16px;
-        padding: 30px;
-        margin-bottom: 30px;
+    .tier-track-card.selected .tier-title {
+        color: var(--orange);
     }
-    .payment-header { display: flex; align-items: center; gap: 12px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .payment-header i { font-size: 1.5rem; color: var(--accent); }
-    .payment-header h4 { margin: 0; color: #fff; font-weight: 700; font-family: 'Outfit', sans-serif; font-size: 1.3rem; }
-    .detail-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #7c899f; margin-bottom: 6px; font-weight: 600; }
-    .detail-value { font-size: 1.1rem; color: #fff; font-weight: 700; margin-bottom: 24px; font-family: 'Outfit', sans-serif; }
-    .detail-value.highlight { color: var(--accent); font-size: 1.4rem; text-shadow: 0 0 10px rgba(0,255,148,0.3); }
+    .tier-track-card .tier-price {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--paper);
+    }
+    .tier-track-card.selected .tier-price {
+        color: var(--orange);
+    }
+    .tier-track-card .tier-badge {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 4px;
+        font-family: 'Space Grotesk', sans-serif;
+    }
+    .signal-label {
+        display: block;
+        color: var(--muted);
+        font: 600 10px 'IBM Plex Mono', monospace;
+        letter-spacing: 0.14em;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+    }
+    .signal-input {
+        width: 100%;
+        border: 0 !important;
+        border-bottom: 1px solid var(--line) !important;
+        background: transparent !important;
+        color: var(--paper) !important;
+        padding: 12px 0 !important;
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-size: 15px !important;
+        outline: none !important;
+        border-radius: 0 !important;
+        transition: border-color 0.2s ease;
+        box-shadow: none !important;
+    }
+    .signal-input:focus {
+        border-bottom-color: var(--orange) !important;
+        background: transparent !important;
+        color: #fff !important;
+        box-shadow: none !important;
+    }
+    .signal-input::placeholder {
+        color: rgba(255, 255, 255, 0.25) !important;
+    }
+    .participant-section-card {
+        background: rgba(15, 20, 22, 0.5);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 24px;
+        margin-bottom: 24px;
+        position: relative;
+    }
+    .participant-section-card::before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        width: 12px;
+        height: 12px;
+        border-top: 2px solid var(--orange);
+        border-left: 2px solid var(--orange);
+    }
+    .participant-title {
+        color: var(--orange);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .file-upload-block {
+        background: #0a0e11;
+        border: 1px dashed var(--line);
+        padding: 14px 16px;
+        border-radius: 4px;
+        transition: border-color 0.2s ease;
+    }
+    .file-upload-block:hover {
+        border-color: rgba(241, 90, 36, 0.5);
+    }
+    .file-upload-block input[type="file"] {
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-family: 'IBM Plex Mono', monospace;
+        width: 100%;
+        outline: none;
+    }
+    .file-upload-block input[type="file"]::-webkit-file-upload-button {
+        background: #151d21;
+        color: var(--paper);
+        border: 1px solid var(--line);
+        padding: 6px 14px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-right: 12px;
+    }
+    .file-upload-block input[type="file"]::-webkit-file-upload-button:hover {
+        border-color: var(--orange);
+        color: var(--orange);
+    }
+    .payment-details-card {
+        background: rgba(15, 20, 22, 0.85);
+        border: 1px solid var(--orange);
+        border-radius: 6px;
+        padding: 24px;
+        margin-bottom: 28px;
+    }
+    .payment-details-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .payment-details-header i {
+        color: var(--orange);
+        font-size: 18px;
+    }
+    .payment-details-header h4 {
+        margin: 0;
+        font-size: 17px;
+        color: var(--paper);
+        font-family: 'Space Grotesk', sans-serif;
+    }
+    .payment-meta-grid {
+        background: #080b0d;
+        border: 1px solid var(--line);
+        padding: 18px;
+        border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        line-height: 2;
+        color: var(--paper);
+    }
+    .btn-submit-pass {
+        background: var(--orange);
+        color: #000;
+        font-weight: 700;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        padding: 16px 28px;
+        border: 0;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        transition: opacity 0.2s ease;
+    }
+    .btn-submit-pass:hover {
+        opacity: 0.9;
+    }
 </style>
 
-<section style="padding-top: 140px; padding-bottom: 80px;">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-9">
-                <div class="glass-panel p-4 p-md-5">
-                    
-                    <h2 class="text-center text-white mb-2" style="font-family:'Outfit'">Social Night Pass</h2>
-                    <p class="text-center text-muted mb-4">Select your pass type below.</p>
-                    <?php echo $msg; ?>
-
-                    <form method="POST" enctype="multipart/form-data" id="socialForm" action="">
-                        
-                        <div class="reg-tabs">
-                            <div class="tab-btn active" onclick="selectType('standard')" id="btn-standard">
-                                <div>Individual</div>
-                                <span class="tab-price">PKR 500</span>
-                            </div>
-                            <div class="tab-btn" onclick="selectType('participant')" id="btn-participant">
-                                <div>Event Participant</div>
-                                <span class="tab-price">PKR 0</span>
-                            </div>
-                            <div class="tab-btn" onclick="selectType('group')" id="btn-group">
-                                <div>Group (3 People)</div>
-                                <span class="tab-price">PKR 1200</span>
-                            </div>
-                        </div>
-
-                        <input type="hidden" name="reg_type" id="reg_type" value="standard">
-
-                        <div class="mb-4">
-                            <label class="form-label">Brand Ambassador Code (Optional)</label>
-                            <input type="text" name="ambassador_code" class="form-control form-control-dark" placeholder="Enter code if applicable">
-                        </div>
-
-                        <div class="member-section">
-                            <h5 class="section-title">Person 1 (Primary)</h5>
-                            <div class="row g-3">
-                                <div class="col-md-6"><label class="form-label">Full Name</label><input type="text" name="name" class="form-control form-control-dark" required></div>
-                                <div class="col-md-6"><label class="form-label">CNIC</label><input type="text" name="cnic" class="form-control form-control-dark" required></div>
-                                <div class="col-md-6"><label class="form-label">Email</label><input type="email" name="email" class="form-control form-control-dark" required></div>
-                                <div class="col-md-6"><label class="form-label">Phone</label><input type="text" name="phone" class="form-control form-control-dark" required></div>
-                                <div class="col-md-6"><div class="upload-box"><label class="form-label mb-2"><i class="fas fa-camera text-success"></i> Photo</label><input type="file" name="face_image" class="form-control form-control-dark" accept="image/*" required></div></div>
-                                <div class="col-md-6"><div class="upload-box"><label class="form-label mb-2"><i class="fas fa-id-card text-info"></i> ID Card</label><input type="file" name="id_card" class="form-control form-control-dark" accept="image/*" required></div></div>
-                            </div>
-                        </div>
-
-                        <div id="group-fields" style="display:none;">
-                            <div class="member-section">
-                                <h5 class="section-title">Person 2</h5>
-                                <div class="row g-3">
-                                    <div class="col-md-6"><label class="form-label">Full Name</label><input type="text" name="p2_name" class="form-control form-control-dark group-req"></div>
-                                    <div class="col-md-6"><label class="form-label">CNIC</label><input type="text" name="p2_cnic" class="form-control form-control-dark group-req"></div>
-                                    <div class="col-md-6"><label class="form-label">Email</label><input type="email" name="p2_email" class="form-control form-control-dark group-req"></div>
-                                    <div class="col-md-6"><label class="form-label">Phone</label><input type="text" name="p2_phone" class="form-control form-control-dark group-req"></div>
-                                    <div class="col-md-6"><div class="upload-box"><label class="form-label"><i class="fas fa-camera text-success"></i> Photo</label><input type="file" name="p2_face" class="form-control form-control-dark group-req" accept="image/*"></div></div>
-                                    <div class="col-md-6"><div class="upload-box"><label class="form-label"><i class="fas fa-id-card text-info"></i> ID Card</label><input type="file" name="p2_card" class="form-control form-control-dark group-req" accept="image/*"></div></div>
-                                </div>
-                            </div>
-                            <div class="member-section">
-                                <h5 class="section-title">Person 3</h5>
-                                <div class="row g-3">
-                                    <div class="col-md-6"><label class="form-label">Full Name</label><input type="text" name="p3_name" class="form-control form-control-dark group-req"></div>
-                                    <div class="col-md-6"><label class="form-label">CNIC</label><input type="text" name="p3_cnic" class="form-control form-control-dark group-req"></div>
-                                    <div class="col-md-6"><label class="form-label">Email</label><input type="email" name="p3_email" class="form-control form-control-dark group-req"></div>
-                                    <div class="col-md-6"><label class="form-label">Phone</label><input type="text" name="p3_phone" class="form-control form-control-dark group-req"></div>
-                                    <div class="col-md-6"><div class="upload-box"><label class="form-label"><i class="fas fa-camera text-success"></i> Photo</label><input type="file" name="p3_face" class="form-control form-control-dark group-req" accept="image/*"></div></div>
-                                    <div class="col-md-6"><div class="upload-box"><label class="form-label"><i class="fas fa-id-card text-info"></i> ID Card</label><input type="file" name="p3_card" class="form-control form-control-dark group-req" accept="image/*"></div></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="payment-card">
-                            <div class="payment-header"><i class="fas fa-wallet"></i><h4>Bank Details</h4></div>
-                            <div class="row g-3">
-                                <div class="col-md-12"><div class="detail-label">Account Name</div><div class="detail-value">Sohaib Waseem</div></div>
-                                <div class="col-md-6"><div class="detail-label">Bank / Wallet</div><div class="detail-value">NayaPay</div></div>
-                                <div class="col-md-6"><div class="detail-label">Account Number</div><div class="detail-value" style="font-family: monospace;">03132017551</div></div>
-                                <div class="col-12"><div class="detail-label">IBAN</div><div class="detail-value" style="font-family: monospace; color:#ccc;">PK98NAYA1234503132017551</div></div>
-                                <div class="col-12 mt-3 pt-3" style="border-top: 1px dashed rgba(255,255,255,0.2);">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="detail-label mb-0" style="font-size: 1rem; color: #fff;">TOTAL PAYABLE</div>
-                                        <div class="detail-value highlight mb-0" id="display-amount" style="font-size: 1.8rem;">PKR 500</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label">Upload Payment Proof</label>
-                            <input type="file" name="payment_proof" class="form-control form-control-dark" accept="image/*" required>
-                            <small class="text-muted">Please upload clear proof of transaction.</small>
-                        </div>
-
-                        <button type="submit" class="btn-neon-green">SUBMIT REGISTRATION</button>
-
-                    </form>
-                </div>
-            </div>
+<section class="secondary-hero">
+    <div class="secondary-hero-grid">
+        <div>
+            <div class="eyebrow"><i></i> SOCIAL NIGHT // ACCESS PASS</div>
+            <h1>Secure your <em>pass.</em></h1>
+            <p class="secondary-hero-lead">Join the official SENTEC social night, networking reception, and evening banquet at NED University.</p>
+        </div>
+        <div class="secondary-hero-index">
+            <div>PASS.GATE // ACTIVE</div>
+            <div style="color:var(--text-dim); margin-top:4px;">ENTRY VERIFICATION REQUIRED</div>
         </div>
     </div>
 </section>
 
+<div class="social-reg-wrapper">
+    <div class="reg-wizard-card">
+        <?php echo $msg; ?>
+
+        <form method="POST" enctype="multipart/form-data" id="socialForm" action="">
+            <span style="color: var(--orange); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; font-weight: 600; display: block; margin-bottom: 8px;">
+                PASS TIER SELECTION //
+            </span>
+            <h2 style="margin: 0 0 20px; font-size: 24px; font-weight: 500; color: var(--paper); letter-spacing: -0.03em; font-family: 'Space Grotesk', sans-serif;">
+                Choose your entrance pass
+            </h2>
+
+            <div class="tier-card-grid">
+                <div class="tier-track-card selected" onclick="selectType('standard', this)" id="btn-standard">
+                    <div class="tier-title">Individual</div>
+                    <div class="tier-price">PKR 500</div>
+                    <div class="tier-badge">Single attendee entry pass</div>
+                </div>
+                <div class="tier-track-card" onclick="selectType('participant', this)" id="btn-participant">
+                    <div class="tier-title">Event Participant</div>
+                    <div class="tier-price">PKR 0</div>
+                    <div class="tier-badge">Subsidized / arena attendees</div>
+                </div>
+                <div class="tier-track-card" onclick="selectType('group', this)" id="btn-group">
+                    <div class="tier-title">Group (3 People)</div>
+                    <div class="tier-price">PKR 1200</div>
+                    <div class="tier-badge">Package bundle for 3 guests</div>
+                </div>
+            </div>
+
+            <input type="hidden" name="reg_type" id="reg_type" value="standard">
+
+            <div style="margin-bottom: 28px;">
+                <label class="signal-label" for="ambCodeInput">BRAND AMBASSADOR CODE (OPTIONAL)</label>
+                <input type="text" id="ambCodeInput" name="ambassador_code" class="signal-input" placeholder="Enter referral code if applicable" style="text-transform: uppercase;">
+            </div>
+
+            <!-- Person 1 (Primary Attendee) -->
+            <div class="participant-section-card">
+                <div class="participant-title">
+                    <i class="fas fa-user"></i> Person 1 (Primary Attendee)
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="signal-label" for="p1_name">FULL NAME *</label>
+                        <input type="text" id="p1_name" name="name" class="signal-input" required value="<?php echo htmlspecialchars($p1_prefill_name); ?>" placeholder="e.g. Sohaib Waseem">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="signal-label" for="p1_cnic">CNIC / FORM-B (13 DIGITS) *</label>
+                        <input type="text" id="p1_cnic" name="cnic" class="signal-input" required placeholder="42101-xxxxxxx-x">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="signal-label" for="p1_email">EMAIL ADDRESS *</label>
+                        <input type="email" id="p1_email" name="email" class="signal-input" required value="<?php echo htmlspecialchars($p1_prefill_email); ?>" placeholder="name@domain.com">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="signal-label" for="p1_phone">PHONE / WHATSAPP *</label>
+                        <input type="tel" id="p1_phone" name="phone" class="signal-input" required value="<?php echo htmlspecialchars($p1_prefill_phone); ?>" placeholder="03xxxxxxxxx">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="file-upload-block">
+                            <label class="signal-label" style="margin-bottom: 8px;">
+                                <i class="fas fa-camera text-orange-500 me-1"></i> FACE PHOTO (PORTRAIT) *
+                            </label>
+                            <input type="file" name="face_image" accept="image/*" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="file-upload-block">
+                            <label class="signal-label" style="margin-bottom: 8px;">
+                                <i class="fas fa-id-card text-orange-500 me-1"></i> STUDENT ID / CNIC CARD *
+                            </label>
+                            <input type="file" name="id_card" accept="image/*" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group Members (Person 2 & Person 3) -->
+            <div id="group-fields" style="display:none;">
+                <!-- Person 2 -->
+                <div class="participant-section-card">
+                    <div class="participant-title">
+                        <i class="fas fa-user-friends"></i> Person 2 (Group Member)
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="signal-label">FULL NAME *</label>
+                            <input type="text" name="p2_name" class="signal-input group-req" placeholder="Second attendee name">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="signal-label">CNIC / FORM-B *</label>
+                            <input type="text" name="p2_cnic" class="signal-input group-req" placeholder="42101-xxxxxxx-x">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="signal-label">EMAIL ADDRESS *</label>
+                            <input type="email" name="p2_email" class="signal-input group-req" placeholder="member2@domain.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="signal-label">PHONE / WHATSAPP *</label>
+                            <input type="tel" name="p2_phone" class="signal-input group-req" placeholder="03xxxxxxxxx">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="file-upload-block">
+                                <label class="signal-label" style="margin-bottom: 8px;">
+                                    <i class="fas fa-camera text-orange-500 me-1"></i> FACE PHOTO *
+                                </label>
+                                <input type="file" name="p2_face" class="group-req" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="file-upload-block">
+                                <label class="signal-label" style="margin-bottom: 8px;">
+                                    <i class="fas fa-id-card text-orange-500 me-1"></i> STUDENT ID / CNIC *
+                                </label>
+                                <input type="file" name="p2_card" class="group-req" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Person 3 -->
+                <div class="participant-section-card">
+                    <div class="participant-title">
+                        <i class="fas fa-user-friends"></i> Person 3 (Group Member)
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="signal-label">FULL NAME *</label>
+                            <input type="text" name="p3_name" class="signal-input group-req" placeholder="Third attendee name">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="signal-label">CNIC / FORM-B *</label>
+                            <input type="text" name="p3_cnic" class="signal-input group-req" placeholder="42101-xxxxxxx-x">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="signal-label">EMAIL ADDRESS *</label>
+                            <input type="email" name="p3_email" class="signal-input group-req" placeholder="member3@domain.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="signal-label">PHONE / WHATSAPP *</label>
+                            <input type="tel" name="p3_phone" class="signal-input group-req" placeholder="03xxxxxxxxx">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="file-upload-block">
+                                <label class="signal-label" style="margin-bottom: 8px;">
+                                    <i class="fas fa-camera text-orange-500 me-1"></i> FACE PHOTO *
+                                </label>
+                                <input type="file" name="p3_face" class="group-req" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="file-upload-block">
+                                <label class="signal-label" style="margin-bottom: 8px;">
+                                    <i class="fas fa-id-card text-orange-500 me-1"></i> STUDENT ID / CNIC *
+                                </label>
+                                <input type="file" name="p3_card" class="group-req" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Details Card -->
+            <div class="payment-details-card">
+                <div class="payment-details-header">
+                    <i class="fas fa-wallet"></i>
+                    <h4>Payment Details</h4>
+                </div>
+                <div class="payment-meta-grid">
+                    <div><span style="color: var(--muted);">ACCOUNT NAME:</span> <strong style="color: #fff;">Sohaib Waseem</strong></div>
+                    <div><span style="color: var(--muted);">BANK / WALLET:</span> <strong style="color: #fff;">NayaPay</strong></div>
+                    <div><span style="color: var(--muted);">ACCOUNT NUMBER:</span> <strong style="color: #fff;">03132017551</strong></div>
+                    <div><span style="color: var(--muted);">IBAN:</span> <strong style="color: #ccc;">PK98NAYA1234503132017551</strong></div>
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--muted); font-size: 11px;">TOTAL PAYABLE:</span>
+                        <strong id="display-amount" style="color: var(--orange); font-size: 20px;">PKR 500</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Payment Proof -->
+            <div style="margin-bottom: 30px;">
+                <label class="signal-label">UPLOAD PAYMENT PROOF *</label>
+                <div class="file-upload-block">
+                    <input type="file" name="payment_proof" accept="image/*" required>
+                </div>
+                <small style="color: var(--muted); font-size: 11px; font-family: 'IBM Plex Mono', monospace; display: block; margin-top: 6px;">SUPPORTED FORMATS: JPG, PNG, WEBP</small>
+            </div>
+
+            <button type="submit" class="btn-submit-pass">
+                <span>SUBMIT REGISTRATION // CONFIRM PASS</span>
+                <span>&rarr;</span>
+            </button>
+        </form>
+    </div>
+</div>
+
 <script>
-    function selectType(type) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-' + type).classList.add('active');
+    function selectType(type, element) {
+        document.querySelectorAll('.tier-track-card').forEach(b => b.classList.remove('selected'));
+        if (element) {
+            element.classList.add('selected');
+        } else {
+            const el = document.getElementById('btn-' + type);
+            if (el) el.classList.add('selected');
+        }
         document.getElementById('reg_type').value = type;
 
         let amount = 500;
-        if(type === 'participant') amount = 0;
-        if(type === 'group') amount = 1200;
+        if (type === 'participant') amount = 0;
+        if (type === 'group') amount = 1200;
         document.getElementById('display-amount').innerHTML = 'PKR ' + amount;
 
         const groupDiv = document.getElementById('group-fields');
         const groupInputs = document.querySelectorAll('.group-req');
-        if(type === 'group') {
+        if (type === 'group') {
             groupDiv.style.display = 'block';
             groupInputs.forEach(i => i.setAttribute('required', 'true'));
         } else {

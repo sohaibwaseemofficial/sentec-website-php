@@ -81,24 +81,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<section style="padding-top:140px; min-height:80vh; display:flex; align-items:center;">
-  <div class="container">
-    <div class="glass-panel" style="max-width:480px; margin:0 auto;">
-      <h2 class="text-center mb-3 text-white">Forgot Password</h2>
-      <p class="text-center text-muted mb-4">Enter your email and we'll send you a reset link.</p>
-      <?php echo $msg; ?>
-      <form method="post">
-        <div class="mb-3">
-            <label style="color:var(--accent);">Email Address</label>
-            <input class="form-control form-control-dark" type="email" name="email" required>
-        </div>
-        <button class="btn-clear w-100" type="submit">Send Reset Link</button>
-      </form>
-      <p class="text-center mt-3">
-          <a href="login.php" style="color:#888; text-decoration:none;">← Back to Login</a>
-      </p>
-    </div>
-  </div>
-</section>
+<div class="secondary-page">
+    <main>
+        <!-- Top Hero matching SiteChrome.tsx -->
+        <header class="secondary-hero motion-reveal is-visible">
+            <div class="secondary-hero-grid">
+                <div>
+                    <span class="eyebrow">
+                        <i></i>
+                        SECURITY // RECOVERY
+                    </span>
+                    <h1>
+                        Recover your<br>
+                        <em>access.</em>
+                    </h1>
+                    <p>
+                        Initiate a cryptographic password reset dispatch to restore account clearance across the SENTEC portal.
+                    </p>
+                </div>
+                <div class="secondary-hero-index">
+                    <span>SYS.02</span>
+                    <strong>KEY // DISPATCH</strong>
+                    <small>
+                        43°42'18" N<br>
+                        67°08'07" E
+                    </small>
+                </div>
+            </div>
+        </header>
+
+        <!-- Signal Form Section -->
+        <section class="secondary-section" style="max-width: 520px; margin: 0 auto; padding-top: 60px;">
+            <form method="POST" class="signal-form">
+                <span class="section-kicker">CREDENTIAL RECOVERY</span>
+                <h2 style="margin: 14px 0 24px; font-size: 26px; font-weight: 500; color: #f4f1eb; letter-spacing: -0.03em;">
+                    Forgot Password
+                </h2>
+                <p style="color: #9aa3a3; font-size: 14px; margin-bottom: 24px; line-height: 1.6;">
+                    Enter your registered email address and our dispatch server will send you a secure verification link.
+                </p>
+
+                <!-- Status Message -->
+                <?php if (!empty($msg)) echo $msg; ?>
+
+                <div style="margin-bottom: 28px;">
+                    <label for="recoveryEmail">REGISTERED EMAIL ADDRESS</label>
+                    <input 
+                        type="email" 
+                        id="recoveryEmail"
+                        name="email" 
+                        required 
+                        placeholder="you@example.com"
+                        autofocus
+                    >
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line);">
+                    <a href="login.php" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: #9aa3a3; text-decoration: none;">
+                        ← RETURN TO <span style="color: var(--orange); text-decoration: underline;">SIGN IN</span>
+                    </a>
+                    <button type="submit" class="signal-btn">
+                        <span>DISPATCH RESET LINK</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
 
 <?php include 'footer.php'; ?>

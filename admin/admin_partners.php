@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_partner'])) {
             $query = "INSERT INTO partners (name, description, image_url, section) 
                           VALUES ('$name', '$description', '$image_path', '$section')";
             if (mysqli_query($conn, $query)) {
+                if (function_exists('invalidate_cache')) invalidate_cache('public_partners_data');
                 echo "<script>alert('Partner created successfully!');</script>";
                 if (!empty($uploadResult['warning'])) {
                     echo "<script>alert(" . json_encode($uploadResult['warning']) . ");</script>";
@@ -70,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_id'])) {
 
     // Execute the update query
     if (mysqli_query($conn, $updateQuery)) {
+        if (function_exists('invalidate_cache')) invalidate_cache('public_partners_data');
         echo "<script>alert('Partner updated successfully!');</script>";
         echo "<script>window.location.href='admin_partners.php';</script>";
     } else {
@@ -82,7 +84,8 @@ if (isset($_GET['delete'])) {
     $id = mysqli_real_escape_string($conn, $_GET['delete']);
     $query = "DELETE FROM partners WHERE id = '$id'";
     if (mysqli_query($conn, $query)) {
-        echo "<script>alert('Partner deleted successfully!'); window.location.href='admin_partners';</script>";
+        if (function_exists('invalidate_cache')) invalidate_cache('public_partners_data');
+        echo "<script>alert('Partner deleted successfully!'); window.location.href='admin_partners.php';</script>";
     } else {
         echo "<script>alert('Error: " . mysqli_error($conn) . "');</script>";
     }

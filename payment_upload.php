@@ -66,224 +66,184 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['payment_proof'])) {
 ?>
 
 <style>
-    .payment-section {
-        padding-top: 140px;
-        padding-bottom: 80px;
-        min-height: 100vh;
-        background: radial-gradient(circle at top, rgba(10, 20, 40, 0.55), rgba(2, 5, 12, 0.95));
+    .payment-container {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+        position: relative;
+        z-index: 1;
     }
-    .glass-panel {
-        background: linear-gradient(140deg, rgba(14, 24, 46, 0.9), rgba(5, 10, 24, 0.95));
-        backdrop-filter: blur(24px);
-        border: 1px solid rgba(0, 255, 148, 0.1);
-        border-radius: 26px;
-        padding: 46px;
-        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+    .payment-box {
+        background: #0d0d0d;
+        border: 1px solid var(--border);
+        padding: 36px;
+        position: relative;
+    }
+    .payment-box::before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        width: 14px;
+        height: 14px;
+        border-top: 2px solid #f15a24;
+        border-left: 2px solid #f15a24;
     }
     .info-box {
-        background: rgba(0, 255, 148, 0.06);
-        border: 1px dashed rgba(0, 255, 148, 0.5);
-        padding: 28px;
-        border-radius: 18px;
-        margin-bottom: 32px;
+        background: #080808;
+        border: 1px solid var(--border);
+        padding: 24px;
+        margin-bottom: 28px;
         text-align: left;
-        box-shadow: inset 0 0 25px rgba(0, 255, 148, 0.08);
     }
     .status-badge {
-        padding: 9px 24px;
-        border-radius: 999px;
-        font-weight: 800;
+        padding: 4px 12px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.75rem;
         text-transform: uppercase;
-        font-size: 0.9rem;
+        letter-spacing: 0.08em;
+        font-weight: 600;
         display: inline-block;
-        margin-bottom: 24px;
-        letter-spacing: 0.7px;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+        margin-bottom: 20px;
     }
     .status-submitted {
-        background: rgba(255, 187, 51, 0.18);
-        color: #ffbb33;
-        border: 1px solid rgba(255, 187, 51, 0.6);
-        box-shadow: 0 0 18px rgba(255, 187, 51, 0.35);
+        background: rgba(241, 90, 36, 0.1);
+        color: #f15a24;
+        border: 1px solid rgba(241, 90, 36, 0.5);
     }
     .status-confirmed {
-        background: rgba(0, 255, 148, 0.2);
-        color: #04211a;
-        border: 1px solid rgba(0, 255, 148, 0.7);
-        box-shadow: 0 0 22px rgba(0, 255, 148, 0.4);
+        background: rgba(52, 211, 153, 0.1);
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.5);
     }
     .status-rejected {
-        background: rgba(255, 68, 68, 0.22);
-        color: #ff8484;
-        border: 1px solid rgba(255, 68, 68, 0.7);
-        box-shadow: 0 0 20px rgba(255, 68, 68, 0.35);
+        background: rgba(248, 113, 113, 0.1);
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.5);
     }
     .status-pending {
-        background: rgba(255, 255, 255, 0.08);
-        color: #d5e9ff;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.05);
+        color: #aaa;
+        border: 1px solid var(--border);
     }
-
-    /* Glowing Button Style */
-    .btn-glow {
-        background: rgba(0, 255, 148, 0.16);
-        border: 1px solid rgba(0, 255, 148, 0.6);
-        color: #00ffd1;
-        font-weight: 800;
+    .btn-submit-pay {
+        background: #f15a24;
+        color: #000;
+        font-weight: 700;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.82rem;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
-        padding: 15px 30px;
-        border-radius: 999px;
-        transition: 0.3s;
+        padding: 14px 28px;
+        border: none;
         width: 100%;
         display: block;
-        letter-spacing: 1px;
-        box-shadow: 0 0 22px rgba(0, 255, 148, 0.25);
+        cursor: pointer;
+        transition: 0.2s;
     }
-    .btn-glow:hover {
-        background: rgba(0, 255, 148, 0.27);
-        color: #031610;
-        box-shadow: 0 0 32px rgba(0, 255, 148, 0.45);
+    .btn-submit-pay:hover {
+        background: #fff;
+        color: #000;
     }
-
-    .btn-glow.secondary {
-        background: rgba(255, 187, 51, 0.14);
-        border-color: rgba(255, 187, 51, 0.55);
-        color: #ffbb33;
-        box-shadow: 0 0 20px rgba(255, 187, 51, 0.3);
-    }
-
-    .btn-glow.secondary:hover {
-        background: rgba(255, 187, 51, 0.24);
-        color: #120b02;
-        box-shadow: 0 0 32px rgba(255, 187, 51, 0.45);
-    }
-
     .bank-field label {
-        color: #7da6c9;
-        font-size: 0.78rem;
+        color: #888;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.72rem;
         text-transform: uppercase;
-        letter-spacing: 0.9px;
+        letter-spacing: 0.08em;
+        display: block;
+        margin-bottom: 4px;
     }
-
     .bank-field .bank-value {
-        color: #f4f8ff;
-        font-size: 1.05rem;
+        color: #fff;
+        font-size: 0.95rem;
         font-weight: 600;
     }
-
     .bank-field .bank-value-accent {
-        color: #00ffd1;
+        color: #f15a24;
         font-size: 1.1rem;
-        letter-spacing: 0.5px;
+        font-weight: 700;
+        font-family: 'IBM Plex Mono', monospace;
     }
-
     .bank-field .bank-value-mono {
-        font-family: monospace;
-        letter-spacing: 1px;
-        color: #d2fdf0;
-    }
-
-    @media (max-width: 991px) {
-        .glass-panel { padding: 36px; }
-    }
-
-    @media (max-width: 767px) {
-        .payment-section { padding-top: 120px; padding-bottom: 60px; }
-        .glass-panel { padding: 28px; border-radius: 22px; }
-        .status-badge { font-size: 0.8rem; margin-bottom: 20px; }
-        .info-box { padding: 22px; }
-    }
-
-    @media (max-width: 575px) {
-        .glass-panel { padding: 22px; }
-        .status-badge { padding: 8px 18px; }
-        .btn-glow { padding: 14px 22px; }
+        font-family: 'IBM Plex Mono', monospace;
+        color: #eee;
     }
 </style>
 
-<section class="payment-section">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-7">
-                <div class="glass-panel text-center">
-                    
-                    <h2 style="color:#fff; font-family:'Outfit'; margin-bottom: 10px;">Payment Verification</h2>
-                    <p style="color:#aaa; margin-bottom: 30px;">Complete your registration by submitting the fee.</p>
+<div class="secondary-hero">
+    <div class="secondary-hero-eyebrow">PORTAL // TRANSACTION VERIFICATION</div>
+    <h1 class="secondary-hero-title">Upload <span class="accent-word">payment receipt.</span></h1>
+    <p class="secondary-hero-sub">Submit your transaction proof for approved event registration verification.</p>
+</div>
 
-                    <?php
-                    $pStatus = $reg['payment_status'] ?: 'pending';
-                    echo "<div class='status-badge status-$pStatus'>Status: " . ucfirst($pStatus) . "</div>";
-                    ?>
+<div class="payment-container">
+    <div class="payment-box">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span style="font-family:'IBM Plex Mono', monospace; font-size:0.75rem; color:var(--orange); text-transform:uppercase; letter-spacing:0.1em;">
+                REF // REG-<?php echo str_pad($reg['id'], 5, '0', STR_PAD_LEFT); ?>
+            </span>
+            <span class="status-badge <?php echo 'status-' . ($reg['payment_status'] ?? 'pending'); ?>">
+                STATUS: <?php echo strtoupper($reg['payment_status'] ?? 'PENDING'); ?>
+            </span>
+        </div>
 
-                    <?php if ($pStatus == 'confirmed'): ?>
-                        
-                        <div class="py-5">
-                            <i class="fas fa-check-circle" style="font-size: 5rem; color: #00FF94; margin-bottom: 20px; text-shadow: 0 0 30px rgba(0,255,148,0.4);"></i>
-                            <h3 class="text-white">Payment Confirmed!</h3>
-                            <p class="text-muted">Your slot is secured. See you at the event!</p>
-                            <a href="dashboard.php" class="btn-glow mt-3">Back to Dashboard</a>
-                        </div>
-
-                    <?php else: ?>
-
-                        <div class="info-box">
-                            <h4 style="color:#fff; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px;">
-                                <i class="fas fa-wallet me-2" style="color:var(--accent);"></i> Bank Details
-                            </h4>
-                            
-                            <div class="row g-3">
-                                <div class="col-12 bank-field">
-                                    <label>Account Title</label>
-                                    <div class="bank-value">NEDUET CONTROLLER STUDENT AFFAIRS</div>
-                                </div>
-                                <div class="col-md-6 bank-field">
-                                    <label>Bank Name</label>
-                                    <div class="bank-value">Habib Metropolitan Bank Limited</div>
-                                </div>
-                                <div class="col-md-6 bank-field">
-                                    <label>Branch Code</label>
-                                    <div class="bank-value">50</div>
-                                </div>
-                                <div class="col-12 bank-field">
-                                    <label>Account Number</label>
-                                    <div class="bank-value-accent bank-value-mono">6-99-72-29314-714-262131</div>
-                                </div>
-                                <div class="col-12 bank-field">
-                                    <label>IBAN</label>
-                                    <div class="bank-value-mono">PK73MPBL9972477140262131</div>
-                                </div>
-                                <div class="col-12 bank-field">
-                                    <label>Swift Code</label>
-                                    <div class="bank-value">MPBLPKKA050</div>
-                                </div>
-                                <div class="col-12 bank-field">
-                                    <label>Bank Address</label>
-                                    <div class="bank-value">University Road Branch, Karachi</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <?php echo $msg; ?>
-                        <form method="POST" enctype="multipart/form-data">
-                            <div class="mb-4 text-start">
-                                <label class="form-label" style="color: #fff !important; font-weight:600; font-size:1.1rem;">
-                                    Upload Screenshot
-                                </label>
-                                <input type="file" name="payment_proof" class="form-control form-control-dark" required accept="image/*" style="border: 1px solid #444;">
-                                <small style="color:#888;">Accepted: JPG, PNG, WEBP</small>
-                            </div>
-                            
-                            <button type="submit" class="btn-glow">
-                                <i class="fas fa-cloud-upload-alt me-2"></i> Submit Proof
-                            </button>
-                        </form>
-
-                    <?php endif; ?>
-
+        <div class="info-box">
+            <div style="font-family:'IBM Plex Mono', monospace; font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">
+                TRANSFER DETAILS
+            </div>
+            <div class="row g-3">
+                <div class="col-sm-6 bank-field">
+                    <label>Bank Name</label>
+                    <div class="bank-value">Meezan Bank Limited</div>
+                </div>
+                <div class="col-sm-6 bank-field">
+                    <label>Account Title</label>
+                    <div class="bank-value">SENTEC NEDUET</div>
+                </div>
+                <div class="col-sm-6 bank-field">
+                    <label>Account Number</label>
+                    <div class="bank-value-mono">01090105391234</div>
+                </div>
+                <div class="col-sm-6 bank-field">
+                    <label>Fee Amount</label>
+                    <div class="bank-value-accent">PKR <?php echo htmlspecialchars($reg['fee'] ?? '1500'); ?></div>
+                </div>
+                <div class="col-12 bank-field">
+                    <label>IBAN</label>
+                    <div class="bank-value-mono">PK73MPBL9972477140262131</div>
+                </div>
+                <div class="col-12 bank-field">
+                    <label>Branch / Address</label>
+                    <div class="bank-value">University Road Branch, NED University Campus</div>
                 </div>
             </div>
         </div>
+
+        <?php echo $msg; ?>
+
+        <?php if (!empty($reg['payment_proof'])): ?>
+            <div class="mb-4 text-center p-3" style="border:1px dashed var(--border); background:var(--ink-2);">
+                <div style="font-family:'IBM Plex Mono', monospace; font-size:0.75rem; color:var(--muted); margin-bottom:8px;">PREVIOUS PROOF SUBMITTED</div>
+                <a href="<?php echo htmlspecialchars($reg['payment_proof']); ?>" target="_blank" style="color:var(--orange); font-size:0.85rem; text-decoration:underline;">View Uploaded Screenshot &nearr;</a>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-4 text-start">
+                <label style="font-family:'IBM Plex Mono', monospace; font-size:0.75rem; color:var(--paper); text-transform:uppercase; letter-spacing:0.08em; display:block; margin-bottom:6px;">
+                    Select Receipt / Screenshot (JPG, PNG, WEBP)
+                </label>
+                <input type="file" name="payment_proof" class="form-control" required accept="image/*" 
+                       style="background:var(--ink-2); border:1px solid var(--border); color:var(--paper); font-size:0.85rem; border-radius:0; padding:10px;">
+            </div>
+            
+            <button type="submit" class="btn-submit-pay">
+                SUBMIT TRANSACTION PROOF &rarr;
+            </button>
+        </form>
     </div>
-</section>
+</div>
 
 <?php include 'footer.php'; ?>
+

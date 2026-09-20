@@ -19,6 +19,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $stmt->bind_param("i", $event_id);
     
     if ($stmt->execute()) {
+        if (function_exists('invalidate_cache')) invalidate_cache('public_events_data');
         // Redirect back with success message
         header("Location: add_event.php?msg=deleted");
     } else {

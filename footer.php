@@ -8,8 +8,8 @@
                 <!-- Col 1: Brand & Bio -->
                 <div class="md:col-span-5 space-y-4">
                     <a href="index.php" class="flex items-center gap-3 group text-decoration-none inline-flex">
-                        <div class="w-9 h-9 rounded bg-[#101518] border border-white/[0.1] flex items-center justify-center p-1">
-                            <img src="SENTEC White Logo.png" alt="SENTEC" class="w-full h-full object-contain" onerror="this.src='images/favicon2.png'">
+                        <div class="w-9 h-9 rounded-full bg-transparent border border-white/[0.12] flex items-center justify-center p-1 overflow-hidden">
+                            <img src="images/SENTECNEWWHITELOGO.webp" alt="SENTEC" class="w-full h-full object-contain">
                         </div>
                         <div class="flex items-baseline">
                             <span class="font-display font-extrabold text-xl tracking-tight text-white">SENTEC</span>

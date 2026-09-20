@@ -25,7 +25,12 @@ $port       = $db_port;
 $db_ip = gethostbyname($host);
 
 $conn = mysqli_init();
-$conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
+$conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, 4);
+
+// Negotiate UTF-8 during initial handshake to eliminate extra roundtrip
+if (defined('MYSQLI_SET_CHARSET_NAME')) {
+    $conn->options(MYSQLI_SET_CHARSET_NAME, 'utf8mb4');
+}
 
 $ssl_cert = __DIR__ . '/ca.pem';
 if (defined('MYSQLI_CLIENT_SSL') && file_exists($ssl_cert)) {
@@ -43,10 +48,11 @@ if ($conn->connect_error) {
     die("Unable to connect to database. Please try again later.");
 }
 
-// Set MySQL session time zone
-$tzOffset = env('DB_TIME_OFFSET', '+05:00');
-@mysqli_query($conn, "SET time_zone = '" . mysqli_real_escape_string($conn, $tzOffset) . "'");
+// Set UTF-8 charset fallback if options flag unsupported
+if ($conn->character_set_name() !== 'utf8mb4') {
+    @mysqli_set_charset($conn, 'utf8mb4');
+}
 
-// Set UTF-8 charset
-mysqli_set_charset($conn, 'utf8mb4');
+// Load cache utilities globally
+require_once __DIR__ . '/cache_utils.php';
 ?>

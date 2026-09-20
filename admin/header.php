@@ -1,8 +1,9 @@
 <?php
 // Session security settings - MUST be set BEFORE session_start()
 ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 1);
-ini_set('session.cookie_samesite', 'Strict');
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+ini_set('session.cookie_secure', $isHttps ? 1 : 0);
+ini_set('session.cookie_samesite', 'Lax');
 ini_set('session.use_strict_mode', 1);
 
 // Set session lifetime to 30 minutes (1800 seconds)
@@ -54,7 +55,7 @@ include_once __DIR__ . '/../db_connection.php';
 // ============================================================
 // Auto-log all admin POST requests (global action capture)
 // ============================================================
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['admin_id'])) {
+if ((isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') && isset($_SESSION['admin_id'])) {
     $page  = basename($_SERVER['PHP_SELF']);
     $params = [];
     foreach ($_POST as $key => $value) {
@@ -83,6 +84,7 @@ $navItems = [
     ['label' => 'Ambassadors', 'href' => 'manage_ambassadors.php', 'icon' => 'fas fa-award'],
     ['label' => 'Elections', 'href' => 'manage_elections.php', 'icon' => 'fas fa-vote-yea'],
     ['label' => 'Email Broadcast', 'href' => 'email_center.php', 'icon' => 'fas fa-paper-plane'],
+    ['label' => 'Contact Inquiries', 'href' => 'manage_contacts.php', 'icon' => 'fas fa-envelope-open-text'],
     ['label' => 'Logs', 'href' => 'view_logs.php', 'icon' => 'fas fa-file-alt'],
 ];
 

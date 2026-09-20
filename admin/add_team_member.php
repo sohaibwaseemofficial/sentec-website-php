@@ -49,6 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Execute the query and check for success
         if ($stmt->execute()) {
+            if (function_exists('invalidate_cache')) {
+                invalidate_cache('team_members');
+            }
             header("Location: manage_team.php?success=Member added successfully");
             exit;
         } else {

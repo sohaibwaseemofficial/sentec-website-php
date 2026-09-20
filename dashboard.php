@@ -84,125 +84,207 @@ if($checkTable && $checkTable->num_rows > 0) {
 ?>
 
 <style>
-    .dashboard-section {
-        padding-top: 140px;
-        min-height: 100vh;
-        background: radial-gradient(circle at top, rgba(7, 17, 37, 0.6), rgba(3, 5, 13, 0.95));
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+        position: relative;
+        z-index: 1;
     }
-    .dashboard-section .text-muted {
-        color: rgba(255, 255, 255, 0.7) !important;
+    .profile-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        background: #0d0d0d;
+        border: 1px solid var(--border);
+        padding: 24px 28px;
+        margin-bottom: 32px;
+        position: relative;
     }
-    
+    .profile-card::before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        width: 14px;
+        height: 14px;
+        border-top: 2px solid #f15a24;
+        border-left: 2px solid #f15a24;
+    }
+    .user-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(241, 90, 36, 0.12);
+        border: 1px solid #f15a24;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #f15a24;
+        font-size: 1.25rem;
+    }
     .glass-panel {
-        background: linear-gradient(135deg, rgba(12, 20, 42, 0.85), rgba(4, 9, 22, 0.95));
-        backdrop-filter: blur(22px);
-        -webkit-backdrop-filter: blur(22px);
-        border: 1px solid rgba(0, 255, 148, 0.08);
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
-        border-radius: 24px;
-        padding: 40px;
-        margin-bottom: 30px;
-        height: 100%; 
+        background: #0d0d0d;
+        border: 1px solid var(--border);
+        padding: 30px;
+        margin-bottom: 24px;
+        height: 100%;
         display: flex;
         flex-direction: column;
-    }
-
-    .glass-panel h3, .glass-panel h1 { text-shadow: 0 0 18px rgba(0, 255, 148, 0.15); }
-    .glass-panel.highlight { box-shadow: 0 30px 70px rgba(0, 255, 148, 0.15); }
-
-    .btn-clear {
-        display: inline-flex; justify-content: center; align-items: center;
-        padding: 12px 26px; border-radius: 999px;
-        border: 1px solid rgba(0, 255, 148, 0.5);
-        color: #00ffd1; text-transform: uppercase; letter-spacing: 0.7px;
-        transition: 0.3s ease; width: auto; text-decoration: none;
-    }
-    .btn-clear:hover { background: rgba(0, 255, 148, 0.18); color: #fff; box-shadow: 0 0 32px rgba(0, 255, 148, 0.45); }
-
-    .status-badge {
-        padding: 6px 12px; border-radius: 50px; font-weight: 700; font-size: 0.8rem;
-        text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;
-    }
-    .status-pending, .status-submitted {
-        color: #ffbb33; border: 1px solid rgba(255, 187, 51, 0.6);
-        background: radial-gradient(circle, rgba(255, 187, 51, 0.2) 0%, rgba(15, 12, 3, 0.85) 80%);
-    }
-    .status-approved, .status-confirmed, .status-present {
-        color: #00ffd1; border: 1px solid rgba(0, 255, 148, 0.6);
-        background: radial-gradient(circle, rgba(0, 255, 148, 0.2) 0%, rgba(9, 24, 32, 0.85) 80%);
-    }
-    .status-rejected {
-        color: #ff6a6a; border: 1px solid rgba(255, 68, 68, 0.6);
-        background: radial-gradient(circle, rgba(255, 68, 68, 0.2) 0%, rgba(25, 2, 6, 0.85) 80%);
-    }
-
-    @keyframes pulse-green {
-        0% { box-shadow: 0 0 0 0 rgba(0, 255, 148, 0.4); }
-        70% { box-shadow: 0 0 0 12px rgba(0, 255, 148, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(0, 255, 148, 0); }
-    }
-
-    .btn-pay {
-        background: rgba(0, 255, 148, 0.15); color: #00ffd1; border: 1px solid rgba(0, 255, 148, 0.6);
-        font-weight: 700; padding: 9px 22px; border-radius: 999px; text-decoration: none;
-        font-size: 0.82rem; display: inline-flex; align-items: center; justify-content: center;
-        margin-top: 10px; transition: 0.3s; animation: pulse-green 2.5s infinite;
-    }
-    .btn-pay:hover { background: rgba(0, 255, 148, 0.27); color: #fff; }
-
-    .reg-table table { width: 100%; border-collapse: collapse; color: #fff; }
-    .reg-table thead th { border-bottom: 1px solid rgba(0, 255, 148, 0.2); padding: 15px; text-align: left; color: var(--accent); }
-    .reg-table tbody tr { border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-    .reg-table td { padding: 15px; vertical-align: middle; }
-
-    @media (max-width: 767px) {
-        .glass-panel { padding: 24px; }
-        .reg-table thead { display: none; }
-        .reg-table tbody tr { display: block; margin-bottom: 18px; padding: 18px; border-radius: 18px; background: rgba(5, 11, 25, 0.85); border: 1px solid rgba(0, 255, 148, 0.08); }
-        .reg-table tbody tr td { display: flex; justify-content: space-between; padding: 5px 0; border: none; }
-        .reg-table tbody tr td::before { content: attr(data-label); color: rgba(255,255,255,0.5); font-size: 0.8rem; font-weight: bold; }
+        position: relative;
     }
     .panel-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: 20px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 25px;
-        gap: 15px;
-        flex-wrap: nowrap;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 20px;
     }
-
-    .btn-new-reg {
-        padding: 8px 16px !important;
-        font-size: 0.75rem !important;
-        height: 38px;
-        display: flex;
-        align-items: center;
-        background: rgba(0, 255, 148, 0.05) !important;
-        border: 1px solid rgba(0, 255, 148, 0.4) !important;
-        border-radius: 999px;
-        white-space: nowrap;
-        color: #00ffd1 !important;
+    .panel-header h3 {
+        color: #f5f5f5;
+        margin: 0;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+    }
+    .status-badge {
+        padding: 4px 10px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 600;
+        display: inline-block;
+        border-radius: 0;
+    }
+    .status-pending, .status-submitted {
+        color: #f15a24;
+        border: 1px solid rgba(241, 90, 36, 0.4);
+        background: rgba(241, 90, 36, 0.08);
+    }
+    .status-approved, .status-confirmed, .status-present {
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.4);
+        background: rgba(52, 211, 153, 0.08);
+    }
+    .status-rejected {
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.4);
+        background: rgba(248, 113, 113, 0.08);
+    }
+    .btn-action-primary {
+        background: #f15a24;
+        color: #000;
+        font-weight: 700;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 10px 18px;
+        border: none;
         text-decoration: none;
-        transition: 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: 0.2s;
     }
-
-    .btn-new-reg:hover {
-        background: rgba(0, 255, 148, 0.15) !important;
-        box-shadow: 0 0 15px rgba(0, 255, 148, 0.2);
+    .btn-action-primary:hover {
+        background: #fff;
+        color: #000;
+    }
+    .btn-action-outline {
+        background: transparent;
+        color: #ddd;
+        border: 1px solid var(--border);
+        font-weight: 600;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 9px 16px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: 0.2s;
+    }
+    .btn-action-outline:hover {
+        border-color: #f15a24;
+        color: #f15a24;
+    }
+    .btn-pay-now {
+        background: #f15a24;
+        color: #000;
+        font-weight: 700;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        padding: 5px 12px;
+        text-transform: uppercase;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: 0.2s;
+    }
+    .btn-pay-now:hover {
+        background: #fff;
+        color: #000;
     }
 </style>
 
-<section class="dashboard-section">
-    <div class="container">
-        
-        <div class="glass-panel highlight mb-5 text-center" style="height: auto;">
-            <h1 style="font-family: 'Outfit'; font-size: 3rem; color: #fff;">
-                Welcome, <span style="color: var(--accent);"><?php echo htmlspecialchars($user_name); ?></span>!
-            </h1>
-            <p style="color: #ccc;">Manage your event registrations and social activities.</p>
+<section class="secondary-hero">
+    <div class="secondary-hero-grid">
+        <div>
+            <div class="eyebrow">SENTEC // PARTICIPANT PORTAL</div>
+            <h1 class="secondary-hero-title">Participant <span style="color: #f15a24 !important;">Dashboard.</span></h1>
+            <p class="secondary-hero-lead">Welcome back, <?php echo htmlspecialchars($user_name); ?>. Manage your module registrations, social night credentials, and council ballot access.</p>
         </div>
+        <div class="secondary-hero-index">
+            <div>SYS.DASH // ACTIVE</div>
+            <div style="color:var(--text-dim); margin-top:4px;">STATUS: VERIFIED ACCESS</div>
+        </div>
+    </div>
+</section>
+
+<div class="dashboard-container">
+    <!-- Profile Action Card -->
+    <div class="profile-card">
+        <div class="d-flex align-items-center gap-3">
+            <div class="user-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div>
+                <div style="font-size: 1.15rem; font-weight: 700; color: #f5f5f5; font-family:'Space Grotesk', sans-serif;">
+                    <?php echo htmlspecialchars($user_name); ?>
+                </div>
+                <div style="font-size: 0.8rem; color: #888; font-family:'IBM Plex Mono', monospace;">
+                    PARTICIPANT ID: #<?php echo str_pad($user_id, 4, '0', STR_PAD_LEFT); ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <?php if ($eventOpen): ?>
+                <a href="event_registration.php" class="btn-action-primary">
+                    <i class="fas fa-cubes"></i> Register Module
+                </a>
+            <?php endif; ?>
+            <?php if ($socialOpen): ?>
+                <a href="social_register.php" class="btn-action-outline">
+                    <i class="fas fa-ticket-alt"></i> Social Pass
+                </a>
+            <?php endif; ?>
+            <?php if ($electionVisible): ?>
+                <a href="election_portal.php" class="btn-action-outline">
+                    <i class="fas fa-vote-yea"></i> Elections
+                </a>
+            <?php endif; ?>
+        </div>
+    </div>
 
         <?php 
         $eventVisible = event_registrations_visible($conn);
@@ -220,11 +302,12 @@ if($checkTable && $checkTable->num_rows > 0) {
             <div class="<?php echo $colClass; ?>">
                 <div class="glass-panel">
                     <div class="panel-header">
-                        <h3 style="color: #fff; margin:0; font-size: 1.25rem;">
-                            <i class="fas fa-cubes text-warning me-2"></i> Competitions</h3>
+                        <h3 style="margin:0;">
+                            <i class="fas fa-cubes text-orange-500 me-2"></i> Arena Competitions
+                        </h3>
                         <?php if (!empty($registrations) && $eventOpen): ?>
-                            <a href="event_registration.php" class="btn-new-reg">
-                                <i class="fas fa-plus me-2"></i> New Registration
+                            <a href="event_registration.php" class="btn-action-outline">
+                                <i class="fas fa-plus me-1"></i> New Registration
                             </a>
                         <?php endif; ?>
                     </div>
@@ -233,30 +316,30 @@ if($checkTable && $checkTable->num_rows > 0) {
                         <?php if (empty($registrations)): ?>
                             <div class="text-center py-5">
                                 <?php if($eventOpen): ?>
-                                    <i class="fas fa-rocket mb-3" style="font-size:3rem; color:var(--accent);"></i>
+                                    <i class="fas fa-rocket mb-3 text-orange-500" style="font-size:2.8rem;"></i>
                                     <h4 class="text-white">Ready to Compete?</h4>
-                                    <p class="mb-0" style="color: #ccc;">Register your team for the upcoming events.</p>
-                                    <a href="event_registration.php" class="btn-clear mt-3">Register Now</a>
+                                    <p class="mb-3" style="color: #888;">Register your team across software, esports, or engineering modules.</p>
+                                    <a href="event_registration.php" class="btn-action-primary">Register Now</a>
                                 <?php else: ?>
-                                    <i class="fas fa-ban" style="font-size: 3rem; color: #7a1a1a; margin-bottom: 15px;"></i>
-                                    <p class="mb-0" style="color: #ccc;">Team registrations are closed.</p>
+                                    <i class="fas fa-lock" style="font-size: 2.5rem; color: #666; margin-bottom: 15px;"></i>
+                                    <p class="mb-0" style="color: #888;">Team registrations are currently closed.</p>
                                 <?php endif; ?>
                             </div>
                         <?php else: ?>
                             <div class="table-responsive reg-table">
-                                <table class="table table-dark table-hover" style="background: transparent;">
+                                <table class="table table-dark table-hover" style="background: transparent; border-color: var(--border);">
                                     <thead>
-                                        <tr>
-                                            <th>Team / Module</th>
-                                            <th class="text-end">Status</th>
+                                        <tr style="border-bottom: 1px solid var(--border);">
+                                            <th style="font-family:'IBM Plex Mono', monospace; font-size: 0.72rem; text-transform: uppercase; color: #888; letter-spacing: 0.08em;">Team / Module</th>
+                                            <th class="text-end" style="font-family:'IBM Plex Mono', monospace; font-size: 0.72rem; text-transform: uppercase; color: #888; letter-spacing: 0.08em;">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php foreach ($registrations as $reg): ?>
-                                            <tr>
+                                            <tr style="border-bottom: 1px solid var(--border);">
                                                 <td data-label="Event">
-                                                    <strong style="color: #fff; font-size: 1.1rem;"><?php echo htmlspecialchars($reg['team_name']); ?></strong><br>
-                                                    <small style="color: #888;"><?php echo htmlspecialchars($reg['module_selection']); ?></small>
+                                                    <strong style="color: #f5f5f5; font-size: 1rem;"><?php echo htmlspecialchars($reg['team_name']); ?></strong><br>
+                                                    <small style="color: #888; font-family:'IBM Plex Mono', monospace;"><?php echo htmlspecialchars($reg['module_selection']); ?></small>
                                                 </td>
                                                 <td class="text-end" data-label="Status">
                                                     <span class="status-badge status-<?php echo $reg['status']; ?>">
@@ -265,9 +348,9 @@ if($checkTable && $checkTable->num_rows > 0) {
                                                     <?php if ($reg['status'] === 'approved'): ?>
                                                         <div style="margin-top: 8px;">
                                                             <?php if ($reg['payment_status'] === 'confirmed'): ?>
-                                                                <small style="color:#00FF94; font-weight:bold;"><i class="fas fa-check-circle"></i> Paid</small>
+                                                                <small style="color:#34d399; font-weight:600; font-family:'IBM Plex Mono', monospace;"><i class="fas fa-check-circle"></i> Paid</small>
                                                             <?php else: ?>
-                                                                <a href="payment_upload.php?id=<?php echo $reg['id']; ?>" class="btn-pay" style="padding: 6px 15px; font-size: 0.7rem;">Pay Now</a>
+                                                                <a href="payment_upload.php?id=<?php echo $reg['id']; ?>" class="btn-pay-now">Upload Proof</a>
                                                             <?php endif; ?>
                                                         </div>
                                                     <?php endif; ?>
@@ -286,18 +369,18 @@ if($checkTable && $checkTable->num_rows > 0) {
             <?php if ($showSocial): ?> 
             <div class="<?php echo $colClass; ?>">
                 <div class="glass-panel text-center d-flex flex-column justify-content-center">
-                    <h3 style="color: #fff; margin-bottom: 20px;"><i class="fas fa-music me-2" style="color: #00d2ff;"></i> Social Event</h3>
+                    <h3 style="color: #fff; margin-bottom: 20px;"><i class="fas fa-ticket-alt text-orange-500 me-2"></i> Social Night Access</h3>
                     
                     <?php if ($social_reg): ?>
                         <div class="py-4">
                             <?php 
                                 $s_status = strtolower($social_reg['status']);
                                 if($s_status == 'approved' || $s_status == 'confirmed') { 
-                                    echo '<i class="fas fa-check-circle" style="font-size: 4rem; color: #00FF94; margin-bottom: 20px;"></i>';
-                                    echo '<h4 style="color:#00FF94;">E-Pass Issued</h4>';
+                                    echo '<i class="fas fa-check-circle text-orange-500" style="font-size: 3.5rem; margin-bottom: 16px;"></i>';
+                                    echo '<h4 style="color:#f5f5f5;">E-Pass Issued</h4>';
                                 } else {
-                                    echo '<i class="fas fa-clock" style="font-size: 4rem; color: #ffbb33; margin-bottom: 20px;"></i>';
-                                    echo '<h4 style="color:#ffbb33;">Pending Verification</h4>';
+                                    echo '<i class="fas fa-clock" style="font-size: 3.5rem; margin-bottom: 16px; color: #f15a24;"></i>';
+                                    echo '<h4 style="color:#f15a24; font-family:\'Space Grotesk\', sans-serif;">Pending Verification</h4>';
                                 }
                             ?>
                             <div class="mt-3">
@@ -307,13 +390,13 @@ if($checkTable && $checkTable->num_rows > 0) {
                     <?php else: ?>
                         <div class="py-4">
                             <?php if ($socialOpen): ?>
-                                <i class="fas fa-glass-cheers" style="font-size: 4rem; color: #00d2ff; margin-bottom: 20px;"></i>
+                                <i class="fas fa-glass-cheers text-orange-500" style="font-size: 3.5rem; margin-bottom: 16px;"></i>
                                 <h4 class="text-white">Ruh-e-Raqs</h4>
-                                <p style="color: #aaa; margin-bottom: 30px;">Join us for Qawwali and Mushaira.</p>
-                                <a href="social_register.php" class="btn-clear w-100" style="border-color: #00d2ff; color: #00d2ff;">Get Social Pass</a>
+                                <p style="color: #888; margin-bottom: 24px;">Join the annual SENTEC banquet, networking, and cultural evening.</p>
+                                <a href="social_register.php" class="btn-action-primary w-100 justify-content-center">Get Social Pass</a>
                             <?php else: ?>
-                                <i class="fas fa-ban" style="font-size: 3rem; color: #7a1a1a; margin-bottom: 15px;"></i>
-                                <p class="mb-0" style="color: #ccc;">Social registrations are closed.</p>
+                                <i class="fas fa-lock" style="font-size: 2.5rem; color: #666; margin-bottom: 15px;"></i>
+                                <p class="mb-0" style="color: #888;">Social night bookings are closed.</p>
                             <?php endif; ?>
                         </div>
                     <?php endif; ?>
@@ -325,23 +408,23 @@ if($checkTable && $checkTable->num_rows > 0) {
             <div class="col-lg-8 offset-lg-2">
                 <div class="glass-panel text-center">
                     <div class="panel-header">
-                        <h3 style="color: #fff; margin:0; font-size: 1.25rem;">
-                            <i class="fas fa-vote-yea text-info me-2"></i> Student Science Society Poll
+                        <h3 style="margin:0;">
+                            <i class="fas fa-vote-yea text-orange-500 me-2"></i> Student Council Ballot
                         </h3>
                         <span class="status-badge <?php echo $electionOpen ? 'status-approved' : 'status-rejected'; ?>">
-                            <?php echo $electionOpen ? 'Polling Open' : 'Polling Locked'; ?>
+                            <?php echo $electionOpen ? 'Polling Active' : 'Polling Locked'; ?>
                         </span>
                     </div>
                     <div class="py-3">
-                        <i class="fas fa-shield-alt mb-3" style="font-size: 3rem; color: #00d2ff;"></i>
-                        <h4 class="text-white mb-2"><?php echo htmlspecialchars($latestElection['title'] ?? 'Election Portal'); ?></h4>
-                        <p class="text-muted mb-3">Anonymous polling for Student Society Leadership Role.</p>
+                        <i class="fas fa-shield-alt mb-3 text-orange-500" style="font-size: 2.8rem;"></i>
+                        <h4 class="text-white mb-2" style="font-family:'Space Grotesk', sans-serif;"><?php echo htmlspecialchars($latestElection['title'] ?? 'Election Portal'); ?></h4>
+                        <p style="color: #888; margin-bottom: 16px;">Encrypted ballot portal for verified NED University students.</p>
                         <?php if (!empty($latestElection)): ?>
-                            <div class="mb-3 text-muted small">
+                            <div class="mb-3 small" style="color: #888; font-family:'IBM Plex Mono', monospace;">
                                 <?php echo date('M j, g:i A', strtotime($latestElection['start_time'])); ?> to <?php echo date('M j, g:i A', strtotime($latestElection['end_time'])); ?>
                             </div>
                         <?php endif; ?>
-                        <a href="election_portal.php" class="btn-clear" style="border-color:#00d2ff; color:#00d2ff;">
+                        <a href="election_portal.php" class="btn-action-primary">
                             <i class="fas fa-lock me-2"></i> Open Polling Portal
                         </a>
                     </div>
@@ -351,12 +434,12 @@ if($checkTable && $checkTable->num_rows > 0) {
 
             <?php if (!empty($latestElectionResults)): ?>
             <div class="col-lg-8 offset-lg-2">
-                <div class="glass-panel highlight" style="border-color: rgba(0, 210, 255, 0.2);">
+                <div class="glass-panel">
                     <div class="panel-header">
-                        <h3 style="color: #fff; margin:0; font-size: 1.25rem;">
-                            <i class="fas fa-chart-bar text-info me-2"></i> Public Polling Results
+                        <h3 style="margin:0;">
+                            <i class="fas fa-chart-bar text-orange-500 me-2"></i> Official Polling Tally
                         </h3>
-                        <span class="status-badge status-approved">Official Public View</span>
+                        <span class="status-badge status-approved">Verified Count</span>
                     </div>
                     <div class="mb-4 p-3" style="border-radius: 18px; background: linear-gradient(135deg, rgba(0,210,255,0.08), rgba(0,255,148,0.06)); border: 1px solid rgba(0,210,255,0.14);">
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">

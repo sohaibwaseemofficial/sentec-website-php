@@ -4,7 +4,17 @@ ini_set('display_errors', 0);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-session_start();
+ini_set('session.cookie_httponly', 1);
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+ini_set('session.cookie_secure', $isHttps ? 1 : 0);
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.use_strict_mode', 1);
+ini_set('session.gc_maxlifetime', 1800);
+ini_set('session.cookie_lifetime', 1800);
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Adjust database connection path
 if (file_exists('../db_connection.php')) {

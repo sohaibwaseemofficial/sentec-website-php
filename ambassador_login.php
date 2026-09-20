@@ -68,35 +68,90 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 ?>
 
-<section style="padding-top: 140px; min-height: 80vh; display: flex; align-items: center;">
-    <div class="container">
-        <div class="glass-panel" style="max-width: 450px; margin: 0 auto;">
-            <h2 class="text-center mb-4" style="color:#fff;">Login</h2>
-            
-            <?php echo $msg; ?>
+<div class="secondary-page">
+    <main>
+        <!-- Top Hero matching SiteChrome.tsx -->
+        <header class="secondary-hero motion-reveal is-visible">
+            <div class="secondary-hero-grid">
+                <div>
+                    <span class="eyebrow">
+                        <i></i>
+                        AMBASSADOR // NETWORK
+                    </span>
+                    <h1>
+                        Ambassador<br>
+                        <em>access.</em>
+                    </h1>
+                    <p>
+                        Authorized portal for NED campus ambassadors, student liaisons, and outreach coordinators.
+                    </p>
+                </div>
+                <div class="secondary-hero-index">
+                    <span>SYS.02</span>
+                    <strong>AMBASSADOR // CLEARANCE</strong>
+                    <small>
+                        43°42'18" N<br>
+                        67°08'07" E
+                    </small>
+                </div>
+            </div>
+        </header>
 
-            <form method="POST">
-                <div class="mb-3">
-                    <label style="color: var(--accent);">Email / ID</label>
-                    <input type="text" name="email" class="form-control form-control-dark" placeholder="Student Email or Ambassador Code" required>
+        <!-- Signal Form Section -->
+        <section class="secondary-section" style="max-width: 520px; margin: 0 auto; padding-top: 60px;">
+            <form method="POST" class="signal-form">
+                <span class="section-kicker">AMBASSADOR CREDENTIALS</span>
+                <h2 style="margin: 14px 0 24px; font-size: 26px; font-weight: 500; color: #f4f1eb; letter-spacing: -0.03em;">
+                    Ambassador Sign In
+                </h2>
+
+                <!-- Status / Error Notification -->
+                <?php if (!empty($msg)) echo $msg; ?>
+
+                <div style="margin-bottom: 24px;">
+                    <label for="ambEmailInput">EMAIL OR AMBASSADOR CODE</label>
+                    <input 
+                        type="text" 
+                        id="ambEmailInput"
+                        name="email" 
+                        required 
+                        placeholder="e.g. AMB-1002 or you@example.com"
+                        value="<?php echo htmlspecialchars($identity ?? ''); ?>"
+                        autofocus
+                    >
                 </div>
-                <div class="mb-4">
-                    <label style="color: var(--accent);">Password</label>
-                    <input type="password" name="password" class="form-control form-control-dark" required>
+
+                <div style="margin-bottom: 28px;">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <label for="ambPassInput">PASSWORD</label>
+                        <a href="forgot_password.php" style="font-size: 10px; font-family: 'IBM Plex Mono', monospace; color: var(--orange); text-decoration: none; letter-spacing: 0.06em;">
+                            FORGOT PASSWORD?
+                        </a>
+                    </div>
+                    <input 
+                        type="password" 
+                        id="ambPassInput"
+                        name="password" 
+                        required 
+                        placeholder="••••••••"
+                    >
                 </div>
-                
-                <button type="submit" class="btn-clear w-100">Login</button>
-                <div class="d-flex justify-content-between mt-3">
-                    <a href="forgot_password.php" style="color:var(--accent);">Forgot password?</a>
-                    <span></span>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line);">
+                    <a href="login.php" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: #9aa3a3; text-decoration: none;">
+                        PARTICIPANT? <span style="color: var(--orange); text-decoration: underline;">SIGN IN HERE</span>
+                    </a>
+                    <button type="submit" class="signal-btn">
+                        <span>SIGN IN</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
                 </div>
-                
-                <p class="text-center mt-4" style="color:#ccc;">
-                    New here? <a href="signup.php" style="color:var(--accent); font-weight:bold;">Create Account</a>
-                </p>
             </form>
-        </div>
-    </div>
-</section>
+        </section>
+    </main>
+</div>
 
 <?php include 'footer.php'; ?>

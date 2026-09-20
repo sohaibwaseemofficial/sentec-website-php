@@ -36,6 +36,9 @@ if (isset($_GET['id'])) {
         $stmt->bind_param("i", $id);
         
         if ($stmt->execute()) {
+            if (function_exists('invalidate_cache')) {
+                invalidate_cache('team_members');
+            }
             // Success - Go back
             header("Location: manage_team.php?msg=deleted");
             exit();

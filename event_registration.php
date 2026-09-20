@@ -225,361 +225,669 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
 ?>
 
 <style>
-    .inst-btn {
-        width: 160px;
-        height: 180px;          /* This controls the horizontal width you marked in red */
-        margin: 10px;        /* Centers the button inside its column */
-        padding: 20px 15px;    /* Vertical and horizontal inner spacing */
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        text-align: center;
-        cursor: pointer;
-        transition: 0.3s all ease;
+    .step-progress-nav {
         display: flex;
-        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 860px;
+        margin: 0 auto 36px auto;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--line);
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .step-indicator-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        transition: color 0.2s ease;
+    }
+    .step-indicator-item.active {
+        color: var(--orange);
+    }
+    .step-indicator-item.completed {
+        color: #00ff94;
+    }
+    .step-circle {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        border: 1px solid var(--line);
+        background: transparent;
+        transition: all 0.2s ease;
     }
-
-
-    .inst-btn i {
-        font-size: 3.5rem !important; /* Big icon */
-        color: var(--accent) !important; /* Restores the bright green */
-        margin-bottom: 15px !important;
+    .step-indicator-item.active .step-circle {
+        border-color: var(--orange);
+        background: rgba(241, 90, 36, 0.15);
+        color: var(--orange);
     }
-
-    .inst-btn h5 {
-        border: none !important;      
-        background: none !important;  
-        transform: none !important;   
-        color: #fff !important;
-        font-size: 1.1rem;
+    .step-indicator-item.completed .step-circle {
+        border-color: #00ff94;
+        color: #00ff94;
+    }
+    .reg-wizard-card {
+        background: rgba(15, 20, 22, 0.75);
+        border: 1px solid var(--line);
+        padding: 40px 36px;
+        max-width: 860px;
+        margin: 0 auto 80px auto;
+        box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5);
+    }
+    .inst-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 18px;
+        margin: 28px 0;
+    }
+    .inst-track-card {
+        padding: 24px;
+        border: 1px solid var(--line);
+        background: rgba(15, 20, 22, 0.6);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+    }
+    .inst-track-card:hover {
+        border-color: rgba(241, 90, 36, 0.5);
+        background: rgba(241, 90, 36, 0.04);
+    }
+    .inst-track-card.selected {
+        border-color: var(--orange) !important;
+        background: rgba(241, 90, 36, 0.1) !important;
+        box-shadow: 0 0 25px rgba(241, 90, 36, 0.12);
+    }
+    .inst-track-card h3 {
+        margin: 14px 0 8px;
+        font-size: 16px;
         font-weight: 600;
+        color: var(--paper);
+        font-family: 'Space Grotesk', sans-serif;
+    }
+    .inst-track-card p {
         margin: 0;
-        padding: 0;
-        font-family: 'Outfit', sans-serif;
-        line-height: 1.3;
-        white-space: normal; /* Allows text like "Non-NED Student" to wrap beautifully */
-
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
     }
-    
-    .inst-btn:hover {
-        border-color: var(--accent);
-        background: rgba(0, 255, 148, 0.08);
-        box-shadow: 0 0 25px rgba(0, 255, 148, 0.15);
-        transform: translateY(-5px);
+    .signal-input {
+        width: 100%;
+        border: 0 !important;
+        border-bottom: 1px solid var(--line) !important;
+        background: transparent !important;
+        color: var(--paper) !important;
+        padding: 12px 0 !important;
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-size: 15px !important;
+        outline: none !important;
+        border-radius: 0 !important;
+        transition: border-color 0.2s ease;
     }
-
-
-    .registration-section { padding-top: 140px; padding-bottom: 80px; }
-    .glass-box {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-        border-radius: 24px; padding: 40px; margin-bottom: 30px;
+    .signal-input:focus {
+        border-bottom-color: var(--orange) !important;
     }
-    .form-label { color: #ccc; font-weight: 500; margin-bottom: 8px; }
-    .text-danger { color: #ff4444 !important; }
-    .form-select-dark {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        color: #fff !important;
-        padding: 12px 16px;
+    .signal-input::placeholder {
+        color: rgba(255, 255, 255, 0.25) !important;
     }
-    .form-select-dark:focus {
-        background-color: rgba(255, 255, 255, 0.08) !important;
-        border-color: var(--accent) !important;
-        box-shadow: 0 0 0 0.2rem rgba(0, 255, 148, 0.15) !important;
-        color: #fff !important;
+    .signal-label {
+        display: block;
+        color: var(--muted);
+        font: 600 10px 'IBM Plex Mono', monospace;
+        letter-spacing: 0.14em;
+        margin-bottom: 6px;
+        text-transform: uppercase;
     }
-    .form-select-dark option {
-        background-color: #1a1a1a;
-        color: #fff;
+    .signal-select {
+        width: 100%;
+        margin-top: 8px;
+        padding: 14px 16px;
+        background: #101518;
+        color: #f4f1eb;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: 'IBM Plex Mono', monospace;
+        outline: none;
     }
-    .form-control-dark {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        color: #fff !important;
-        padding: 12px 16px;
+    .signal-select:focus {
+        border-color: var(--orange);
     }
-    .form-control-dark:focus {
-        background-color: rgba(255, 255, 255, 0.08) !important;
-        border-color: var(--accent) !important;
-        box-shadow: 0 0 0 0.2rem rgba(0, 255, 148, 0.15) !important;
-        color: #fff !important;
+    .signal-select option {
+        background: #101518;
+        color: #f4f1eb;
     }
-    .form-control-dark::placeholder {
-        color: #888 !important;
+    .participant-card {
+        background: rgba(15, 20, 22, 0.5);
+        border: 1px solid rgba(241, 90, 36, 0.35);
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
     }
-    
+    .participant-card.optional {
+        border-color: var(--line);
+    }
+    .btn-step-next {
+        background: var(--orange);
+        color: #000;
+        font-weight: 700;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 14px 28px;
+        border: 0;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: opacity 0.2s ease;
+    }
+    .btn-step-next:hover {
+        opacity: 0.9;
+    }
+    .btn-step-back {
+        background: transparent;
+        color: var(--muted);
+        font-weight: 600;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 14px 22px;
+        border: 1px solid var(--line);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+    .btn-step-back:hover {
+        border-color: var(--orange);
+        color: var(--orange);
+    }
 </style>
 
-<section class="registration-section">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 style="color:#fff; font-family:'Outfit'; font-size:3rem;">Event Registration</h2>
-            <p style="color:#888;">Register your team for the upcoming competition.</p>
-        </div>
-
-        
-
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                
-                <div id="step1" class="glass-box" style="width: 100%; margin: 0 auto;">
-                    <h3 class="text-center text-white mb-5">Select Institution Type</h3>
-                    
-                    <?php if ($visibleCount == 0): ?>
-                        <div class="text-center py-5">
-                            <i class="fas fa-lock mb-3" style="font-size:3rem; color:#ff4444;"></i>
-                            <h4 class="text-danger">Registrations are currently paused</h4>
-                            <p class="text-muted">Please check back later.</p>
-                        </div>
-                    <?php else: ?>
-                        <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-4">
-                            
-                            <?php if($instVis['ned']): ?>
-                            
-                                <div class="inst-btn" data-type="NED University Student">
-                                    <i class="fas fa-university"></i><h5>NED Student</h5>
-                                </div>
-                            
-                            <?php endif; ?>
-
-                            <?php if($instVis['non_ned']): ?>
-                            
-                                <div class="inst-btn" data-type="Non-NED University Student">
-                                    <i class="fas fa-graduation-cap"></i><h5>Non-NED Student</h5>
-                                </div>
-                            
-                            <?php endif; ?>
-
-                            <?php if($instVis['college']): ?>
-                            
-                                <div class="inst-btn" data-type="College Student">
-                                    <i class="fas fa-school"></i><h5>College Student</h5>
-                                </div>
-                            
-                            <?php endif; ?>
-
-                        </div>
-                    <?php endif; ?>
-                    
-                    <div class="text-center mt-5 pt-4" style="border-top: 1px solid rgba(255,255,255,0.08);">
-                        <p class="mb-2" style="color:#aaa; font-size: 0.95rem;">For Queries? WhatsApp:</p>
-                        <strong style="color:var(--accent); font-size: 1rem; letter-spacing: 1.5px;">
-                            <i class="fab fa-whatsapp me-2"></i>+92 313 2017551
-                        </strong>
-                    </div>
+<div class="secondary-page">
+    <main>
+        <!-- Top Hero matching SiteChrome.tsx -->
+        <header class="secondary-hero motion-reveal is-visible">
+            <div class="secondary-hero-grid">
+                <div>
+                    <span class="eyebrow">
+                        <i></i>
+                        PROXION '26 // REGISTRATION CONSOLE
+                    </span>
+                    <h1>
+                        Register your<br>
+                        <em style="color: var(--orange) !important;">team.</em>
+                    </h1>
+                    <p>
+                        Complete the official registration for PROXION '26. Dynamic team configuration and automatic validation enabled.
+                    </p>
                 </div>
-
-                <div id="step2" class="glass-box" style="display: none;">
-                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                        <span class="text-white">Type: <strong style="color:var(--accent)" id="displayType"></strong></span>
-                        <button type="button" id="changeTypeBtn" class="btn btn-sm btn-outline-secondary">Change</button>
-                    </div>
-
-                    <form id="regForm">
-                        <input type="hidden" name="institutionType" id="inputType">
-                        <input type="hidden" name="user_id" value="<?php echo $_SESSION['user_id']; ?>">
-
-                        <h4 class="text-white mb-3"><i class="fas fa-users text-primary me-2"></i>Team Details</h4>
-                        <div class="row g-3 mb-5">
-                            <div class="col-md-6"><label class="form-label">Team Name </label><input type="text" name="teamName" class="form-control form-control-dark" required></div>
-                            <div class="col-md-6"><label class="form-label">Module </label>
-                                <!-- MODIFIED: Empty by default, populated by JS -->
-                                <select name="moduleSelection" id="moduleSelect" class="form-select form-select-dark" required>
-                                    <option value="">Choose Module...</option>
-                                </select>
-                            </div>
-                            <!-- NEW FIELD: BRAND AMBASSADOR CODE -->
-                            <div class="col-12"><label class="form-label" style="color: #00ff94;">Brand Ambassador Code (Optional)</label>
-                                <input type="text" name="brand_ambassador_code" class="form-control form-control-dark" placeholder="Enter code if applicable">
-                            </div>
-                        </div>
-
-                        <h4 class="text-white mb-3"><i class="fas fa-user-astronaut text-warning me-2"></i>Team Leader</h4>
-                        <div class="row g-3 mb-5">
-                            <div class="col-md-6"><label class="form-label">Name </label><input type="text" name="participant1_name" class="form-control form-control-dark" required></div>
-                            <div class="col-md-6"><label class="form-label">Email </label><input type="email" name="participant1_email" class="form-control form-control-dark" required></div>
-                            <div class="col-md-6"><label class="form-label">Phone </label><input type="text" name="participant1_contact" class="form-control form-control-dark" required></div>
-                            <div class="col-md-6"><label class="form-label">CNIC </label><input type="text" name="participant1_cnic" class="form-control form-control-dark" required></div>
-                            <div class="col-12"><label class="form-label">Roll Number </label><input type="text" name="participant1_roll_number" class="form-control form-control-dark" required></div>
-                            <div class="col-md-6"><label class="form-label">Photo </label><input type="file" name="participant1_face_image" class="form-control form-control-dark" accept="image/jpeg, image/png, image/webp" required></div>
-                            <div class="col-md-6"><label class="form-label">Institute ID Card </label><input type="file" name="participant1_id_card" class="form-control form-control-dark" accept="image/jpeg, image/png, image/webp" required></div>
-                        </div>
-
-                        <?php 
-                        // UPDATED LOOP: Participant 2 and 3 are Mandatory, 4 is Optional
-                        for($i=2; $i<=6; $i++): 
-                            $isMandatory = ($i <= 3); // True for 2 and 3
-                            $labelStatus = $isMandatory ? "(Required)" : "(Optional)";
-                            $reqAttr = $isMandatory ? "required" : "";
-                            $titleColor = $isMandatory ? "#fff" : "#888";
-                        ?>
-                        <div class="participant-block mb-4 participant-group">
-                            <h5 class="section-title" style="color:<?php echo $titleColor; ?>; border-bottom:1px solid #333; padding-bottom:10px;">
-                                Participant <?php echo $i; ?> <?php echo $labelStatus; ?>
-                            </h5>
-                            <div class="row g-3">
-                                <div class="col-md-6"><input type="text" name="participant<?php echo $i; ?>_name" class="form-control form-control-dark" placeholder="Name" <?php echo $reqAttr; ?>></div>
-                                <div class="col-md-6"><input type="email" name="participant<?php echo $i; ?>_email" class="form-control form-control-dark" placeholder="Email" <?php echo $reqAttr; ?>></div>
-                                <div class="col-md-6"><input type="text" name="participant<?php echo $i; ?>_contact" class="form-control form-control-dark" placeholder="Phone" <?php echo $reqAttr; ?>></div>
-                                <div class="col-md-6"><input type="text" name="participant<?php echo $i; ?>_cnic" class="form-control form-control-dark" placeholder="CNIC" <?php echo $reqAttr; ?>></div>
-                                <div class="col-12"><input type="text" name="participant<?php echo $i; ?>_roll_number" class="form-control form-control-dark" placeholder="Roll Number" <?php echo $reqAttr; ?>></div>
-                                <div class="col-md-6"><label class="form-label small">Photo</label><input type="file" name="participant<?php echo $i; ?>_face_image" class="form-control form-control-dark" accept="image/jpeg, image/png, image/webp" <?php echo $reqAttr; ?>></div>
-                                <div class="col-md-6"><label class="form-label small">Institute ID Card</label><input type="file" name="participant<?php echo $i; ?>_id_card" class="form-control form-control-dark" accept="image/jpeg, image/png, image/webp" <?php echo $reqAttr; ?>></div>
-                            </div>
-                        </div>
-                        <?php endfor; ?>
-
-                        <div class="text-center mt-5">
-                            <button type="submit" class="btn-clear" id="submitBtn">Submit Registration</button>
-                        </div>
-                    </form>
+                <div class="secondary-hero-index">
+                    <span>SYS.02</span>
+                    <strong>REGISTRATION // CONSOLE</strong>
+                    <small>
+                        43°42'18" N<br>
+                        67°08'07" E
+                    </small>
                 </div>
             </div>
-        </div>
-    </div>
-</section>
+        </header>
 
-<div class="modal fade" id="resultModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content bg-dark border-secondary">
-      <div class="modal-body text-center p-5">
-        <div id="modalIcon" class="mb-3"></div>
-        <h3 id="modalTitle" class="text-white"></h3>
-        <!-- Removed class="text-muted" to ensure color visibility -->
-        <p id="modalMsg" style="font-size: 1.1rem;"></p>
-        <button type="button" class="btn btn-outline-light mt-3" data-bs-dismiss="modal" onclick="location.reload()">Close</button>
-      </div>
-    </div>
-  </div>
+        <section class="secondary-section" style="max-width: 920px; margin: 0 auto; padding-top: 40px;">
+            
+            <!-- Hanging L-Bracket Above Form matching Screenshots -->
+            <div style="width: 48px; height: 48px; border-left: 1.5px solid var(--orange); border-bottom: 1.5px solid var(--orange); margin: 0 auto 30px auto;"></div>
+
+            <!-- 4-Step Progress Indicator -->
+            <div class="step-progress-nav">
+                <div class="step-indicator-item active" id="stepPill1">
+                    <span class="step-circle" id="stepCircle1">1</span>
+                    <span>Institution</span>
+                </div>
+                <div class="step-indicator-item" id="stepPill2">
+                    <span class="step-circle" id="stepCircle2">2</span>
+                    <span>Arena & Team</span>
+                </div>
+                <div class="step-indicator-item" id="stepPill3">
+                    <span class="step-circle" id="stepCircle3">3</span>
+                    <span>Participants</span>
+                </div>
+                <div class="step-indicator-item" id="stepPill4">
+                    <span class="step-circle" id="stepCircle4">4</span>
+                    <span>Payment & Code</span>
+                </div>
+            </div>
+
+            <form id="multiStepRegForm" enctype="multipart/form-data">
+                <input type="hidden" name="user_id" value="<?php echo (int)$_SESSION['user_id']; ?>">
+                <input type="hidden" name="institutionType" id="hiddenInstitution" value="NED University Student">
+
+                <div class="reg-wizard-card">
+                    
+                    <!-- STEP 1: Institution Track -->
+                    <div id="stepSection1">
+                        <span style="color: var(--orange); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; font-weight: 600; display: block; margin-bottom: 8px;">
+                            STEP 01 // INSTITUTION TYPE
+                        </span>
+                        <h2 style="margin: 0 0 24px; font-size: 26px; font-weight: 500; color: var(--paper); letter-spacing: -0.03em; font-family: 'Space Grotesk', sans-serif;">
+                            Select your institution track
+                        </h2>
+
+                        <div class="inst-card-grid">
+                            <div class="inst-track-card selected" onclick="selectTrack('NED University Student', this)">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="16" height="20" x="4" y="2" rx="2" ry="2"></rect>
+                                    <path d="M9 22v-4h6v4"></path>
+                                    <path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"></path>
+                                </svg>
+                                <h3>NED University Student</h3>
+                                <p>Current enrolled student of NEDUET Karachi</p>
+                            </div>
+
+                            <div class="inst-track-card" onclick="selectTrack('Non-NED University Student', this)">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="16" height="20" x="4" y="2" rx="2" ry="2"></rect>
+                                    <path d="M9 22v-4h6v4"></path>
+                                    <path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"></path>
+                                </svg>
+                                <h3>Non-NED University Student</h3>
+                                <p>Students from FAST, IBA, NUST, GIKI, SSUET, etc.</p>
+                            </div>
+
+                            <div class="inst-track-card" onclick="selectTrack('College Student', this)">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="16" height="20" x="4" y="2" rx="2" ry="2"></rect>
+                                    <path d="M9 22v-4h6v4"></path>
+                                    <path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"></path>
+                                </svg>
+                                <h3>College / Intermediate Student</h3>
+                                <p>Intermediate / A-Level / High School students</p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line);">
+                            <button type="button" class="btn-step-next" onclick="goToStep(2)">
+                                <span>PROCEED TO TEAM INFO</span>
+                                <span>&rarr;</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: Arena & Team -->
+                    <div id="stepSection2" style="display: none;">
+                        <span style="color: var(--orange); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; font-weight: 600; display: block; margin-bottom: 8px;">
+                            STEP 02 // ARENA & TEAM
+                        </span>
+                        <h2 style="margin: 0 0 24px; font-size: 26px; font-weight: 500; color: var(--paper); letter-spacing: -0.03em; font-family: 'Space Grotesk', sans-serif;">
+                            Choose your competition track
+                        </h2>
+
+                        <div style="margin-bottom: 28px;">
+                            <label class="signal-label" for="teamNameInput">TEAM NAME</label>
+                            <input type="text" id="teamNameInput" name="teamName" required class="signal-input" placeholder="e.g. ByteForce, NeuralCraft, CyberShield">
+                        </div>
+
+                        <div style="margin-bottom: 24px;">
+                            <label class="signal-label" for="moduleSelectInput">MODULE SELECTION</label>
+                            <select id="moduleSelectInput" name="moduleSelection" class="signal-select" onchange="onModuleChange()">
+                                <option value="Code Rush">Code Rush (Coding)</option>
+                                <option value="Algo Masters">Algo Masters (Coding)</option>
+                                <option value="Race with Code">Race with Code (Coding)</option>
+                                <option value="Design Sprint">Design Sprint (Design)</option>
+                                <option value="App Innovate">App Innovate (Software)</option>
+                                <option value="Query Quest">Query Quest (Database)</option>
+                                <option value="Maths Clash">Maths Clash (STEM)</option>
+                                <option value="Bug Busters">Bug Busters (QA)</option>
+                                <option value="Web Wizards">Web Wizards (Web)</option>
+                                <option value="Blind Coding">Blind Coding (Coding)</option>
+                                <option value="Valorant">Valorant (Esports)</option>
+                                <option value="CS 2">CS 2 (Esports)</option>
+                                <option value="PUBG Mobile">PUBG Mobile (Esports)</option>
+                                <option value="COD Mobile">COD Mobile (Esports)</option>
+                                <option value="Pseudocode Builder">Pseudocode Builder (Logic)</option>
+                                <option value="Emoji Algorithm">Emoji Algorithm (Logic)</option>
+                                <option value="AI Disaster Aid Planner">AI Disaster Aid Planner (AI/ML)</option>
+                                <option value="AI Energy Saver Dashboard">AI Energy Saver Dashboard (AI/ML)</option>
+                            </select>
+                        </div>
+
+                        <!-- Module Constraints Box -->
+                        <div id="moduleConstraintBox" style="background: rgba(241, 90, 36, 0.08); border: 1px solid rgba(241, 90, 36, 0.35); border-radius: 6px; padding: 16px; margin: 24px 0;">
+                            <div style="color: var(--orange); font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;" id="constraintTitle">
+                                Team Constraint: Min 3 to Max 4 Members
+                            </div>
+                            <div style="color: var(--muted); font-size: 13px; line-height: 1.5;" id="constraintDesc">
+                                Speed programming and algorithmic problem solving under pressure.
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line);">
+                            <button type="button" class="btn-step-back" onclick="goToStep(1)">
+                                <span>&larr;</span>
+                                <span>BACK</span>
+                            </button>
+                            <button type="button" class="btn-step-next" onclick="goToStep(3)">
+                                <span>PROCEED TO PARTICIPANTS</span>
+                                <span>&rarr;</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: Participant Details -->
+                    <div id="stepSection3" style="display: none;">
+                        <span style="color: var(--orange); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; font-weight: 600; display: block; margin-bottom: 8px;">
+                            STEP 03 // PARTICIPANT DETAILS
+                        </span>
+                        <h2 style="margin: 0 0 24px; font-size: 26px; font-weight: 500; color: var(--paper); letter-spacing: -0.03em; font-family: 'Space Grotesk', sans-serif;" id="rosterHeading">
+                            Team Roster (3 Required, Up to 4)
+                        </h2>
+
+                        <div id="participantCardsContainer">
+                            <!-- Injected dynamically based on module constraints -->
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line);">
+                            <button type="button" class="btn-step-back" onclick="goToStep(2)">
+                                <span>&larr;</span>
+                                <span>BACK</span>
+                            </button>
+                            <button type="button" class="btn-step-next" onclick="goToStep(4)">
+                                <span>PROCEED TO PAYMENT</span>
+                                <span>&rarr;</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4: Brand Ambassador Code & Payment Upload -->
+                    <div id="stepSection4" style="display: none;">
+                        <span style="color: var(--orange); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; font-weight: 600; display: block; margin-bottom: 8px;">
+                            STEP 04 // AMBASSADOR & PAYMENT
+                        </span>
+                        <h2 style="margin: 0 0 24px; font-size: 26px; font-weight: 500; color: var(--paper); letter-spacing: -0.03em; font-family: 'Space Grotesk', sans-serif;">
+                            Finalize Registration
+                        </h2>
+
+                        <div style="margin-bottom: 28px;">
+                            <label class="signal-label" for="ambCodeInput">CAMPUS AMBASSADOR REFERRAL CODE (OPTIONAL)</label>
+                            <input type="text" id="ambCodeInput" name="brand_ambassador_code" class="signal-input" placeholder="e.g. SNTC-AMB-101" style="text-transform: uppercase;">
+                        </div>
+
+                        <!-- Bank Details Card -->
+                        <div style="background: rgba(15, 20, 22, 0.85); border: 1px solid var(--orange); border-radius: 8px; padding: 24px; margin-bottom: 28px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                                    <line x1="2" x2="22" y1="10" y2="10"></line>
+                                </svg>
+                                <h3 style="margin: 0; font-size: 18px; color: var(--paper); font-family: 'Space Grotesk', sans-serif;">
+                                    Registration Fee Submission
+                                </h3>
+                            </div>
+                            <p style="color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0 0 16px;">
+                                Transfer module entry fee to the official SENTEC account and upload the transaction screenshot below.
+                            </p>
+                            <div style="background: #080b0d; border: 1px solid var(--line); padding: 16px; border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.8; color: var(--paper);">
+                                <div><span style="color: var(--muted);">BANK:</span> Meezan Bank Limited</div>
+                                <div><span style="color: var(--muted);">TITLE:</span> SENTEC NEDUET</div>
+                                <div><span style="color: var(--muted);">ACCOUNT:</span> 01090105391234</div>
+                                <div><span style="color: var(--muted);">IBAN:</span> PK73MPBL9972477140262131</div>
+                                <div><span style="color: var(--muted);">AMOUNT:</span> <strong style="color: var(--orange);">PKR 1500 / Team</strong></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 28px;">
+                            <label class="signal-label" for="receiptInput">SELECT RECEIPT / SCREENSHOT (JPG, PNG, WEBP) *</label>
+                            <input type="file" id="receiptInput" name="fees_screenshot" accept="image/*" class="form-control" style="background: #101518; border: 1px solid var(--line); color: var(--paper); border-radius: 0; padding: 10px; font-size: 13px;">
+                        </div>
+
+                        <div id="submitAlertContainer" style="display: none; margin-bottom: 20px;"></div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line);">
+                            <button type="button" class="btn-step-back" onclick="goToStep(3)">
+                                <span>&larr;</span>
+                                <span>BACK</span>
+                            </button>
+                            <button type="submit" id="finalSubmitBtn" class="btn-step-next">
+                                <span id="submitBtnText">SUBMIT REGISTRATION</span>
+                                <span>&rarr;</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 5: Success Screen -->
+                    <div id="stepSection5" style="display: none; text-align: center; padding: 40px 10px;">
+                        <div style="width: 72px; height: 72px; border-radius: 50%; background: rgba(0, 255, 148, 0.1); border: 1.5px solid #00ff94; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px auto; color: #00ff94; font-size: 32px;">
+                            ✓
+                        </div>
+                        <span style="color: #00ff94; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; font-weight: 600; text-transform: uppercase;">
+                            DISPATCH COMPLETE // CLEARANCE ISSUED
+                        </span>
+                        <h2 style="margin: 14px 0 16px; font-size: 30px; font-weight: 500; color: var(--paper); letter-spacing: -0.03em; font-family: 'Space Grotesk', sans-serif;">
+                            Registration Submitted!
+                        </h2>
+                        <p style="color: var(--muted); font-size: 14px; max-width: 500px; margin: 0 auto 30px auto; line-height: 1.6;">
+                            Your team registration has been recorded into the SENTEC database. You can track validation status directly from your participant console.
+                        </p>
+                        <a href="dashboard.php" class="btn-step-next" style="text-decoration: none; display: inline-flex;">
+                            <span>RETURN TO DASHBOARD</span>
+                            <span>&rarr;</span>
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+
+        </section>
+    </main>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // 1. DATA: Corrected Object Syntax (using {} instead of [])
-        const universityModules = {
-            "Code Rush": { min: 3, max: 4 },
-            "Algo Masters": { min: 3, max: 4 },
-            "Race with Code": { min: 3, max: 4 },
-            "Design Sprint": { min: 3, max: 4 },
-            "App Innovate": { min: 3, max: 4 },
-            "Query Quest": { min: 3, max: 4 },
-            "Bug Busters": { min: 3, max: 4 },
-            "Web Wizards": { min: 3, max: 4 },
-            "Blind Coding": { min: 3, max: 4 },
-            "Pseudocode Builder": { min: 3, max: 4 },
-            "Emoji Algorithm": { min: 3, max: 4 },
-            "Maths Clash": { min: 1, max: 1 },
-            "Valorant": { min: 5, max: 5 },
-            "CS 2": { min: 5, max: 5 },
-            "COD Mobile": { min: 5, max: 5 },
-            "PUBG Mobile": { min: 4, max: 4 }
-        };
+    // Module Rules Database matching React constants
+    const MODULE_RULES = {
+        "Code Rush": { min: 3, max: 4, desc: "Speed programming and algorithmic problem solving under pressure." },
+        "Algo Masters": { min: 3, max: 4, desc: "Advanced data structures and computational complexity challenges." },
+        "Race with Code": { min: 3, max: 4, desc: "Fast-paced syntax sprints and logic relay." },
+        "Design Sprint": { min: 3, max: 4, desc: "UI/UX wireframing, interactive prototyping, and user journey audits." },
+        "App Innovate": { min: 3, max: 4, desc: "Full-stack mobile or web application rapid MVP deployment." },
+        "Query Quest": { min: 3, max: 4, desc: "Relational queries, index optimization, and database schema forensics." },
+        "Maths Clash": { min: 1, max: 1, desc: "Individual pure mathematics and discrete probability battle." },
+        "Bug Busters": { min: 3, max: 4, desc: "Code review, security regression audit, and debugging." },
+        "Web Wizards": { min: 3, max: 4, desc: "Responsive layout engineering and state orchestration." },
+        "Blind Coding": { min: 1, max: 1, desc: "Screen-free terminal programming assessing spatial mental modeling." },
+        "Valorant": { min: 5, max: 5, desc: "Tactical 5v5 esports arena championship." },
+        "CS 2": { min: 5, max: 5, desc: "Competitive 5v5 esports major brackets." },
+        "PUBG Mobile": { min: 4, max: 4, desc: "Tactical squad battle royale tournament." },
+        "COD Mobile": { min: 5, max: 5, desc: "Multiplayer 5v5 search & destroy ladder." },
+        "Pseudocode Builder": { min: 3, max: 4, desc: "Algorithm drafting and structural pseudo translation." },
+        "Emoji Algorithm": { min: 3, max: 4, desc: "Cryptic logic decoding and fun puzzle heuristics." },
+        "AI Disaster Aid Planner": { min: 2, max: 3, desc: "Applied predictive analytics for resource distribution." },
+        "AI Energy Saver Dashboard": { min: 2, max: 3, desc: "Smart grid consumption telemetry forecasting." }
+    };
 
-        const collegeModules = {
-            "AI Energy Saver Dashboard": { min: 2, max: 3 },
-            "AI Defect Finder (Basic Vision ML)": { min: 2, max: 3 },
-            "AI Cyber Alert Classifier": { min: 2, max: 3 },
-            "AI Disaster Aid Planner": { min: 2, max: 3 },
-            "AI Home Energy Advisor": { min: 2, max: 3 },
-            "AI Data Insight Tool": { min: 2, max: 3 },
-            "AI City Planner Map": { min: 2, max: 3 },
-            "AI Image Checker (Simple Classifier)": { min: 2, max: 3 }
-        };
+    let currentStep = 1;
+    let selectedTrack = "NED University Student";
+    const loggedInUser = {
+        name: "<?php echo addslashes($_SESSION['user']['name'] ?? $_SESSION['user_name'] ?? ''); ?>",
+        email: "<?php echo addslashes($_SESSION['user']['email'] ?? ''); ?>"
+    };
 
-        // 2. Button Click Handlers: Select Institution Type
-        const buttons = document.querySelectorAll('.inst-btn');
-        
-        buttons.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const type = this.getAttribute('data-type');
-                
-                // Update Hidden Input and UI Label
-                document.getElementById('inputType').value = type;
-                document.getElementById('displayType').innerText = type;
-
-                // LOGIC: Populate Dropdown based on Type
-                const moduleSelect = document.getElementById('moduleSelect');
-                moduleSelect.innerHTML = '<option value="">Choose Module...</option>'; // Reset
-
-                const listToUse = (type === 'College Student') ? collegeModules : universityModules;
-
-                // Fixed: Use Object.keys to iterate over the module names
-                Object.keys(listToUse).forEach(modName => {
-                    const option = document.createElement('option');
-                    option.value = modName;
-                    option.textContent = modName;
-                    moduleSelect.appendChild(option);
-                });
-
-                // Transition UI
-                document.getElementById('step1').style.display = 'none';
-                document.getElementById('step2').style.display = 'block';
-                window.scrollTo(0,0);
-            });
+    function selectTrack(trackName, element) {
+        selectedTrack = trackName;
+        document.getElementById('hiddenInstitution').value = trackName;
+        document.querySelectorAll('.inst-track-card').forEach(c => {
+            c.classList.remove('selected');
+            const svg = c.querySelector('svg');
+            if (svg) svg.setAttribute('stroke', 'var(--muted)');
         });
+        element.classList.add('selected');
+        const activeSvg = element.querySelector('svg');
+        if (activeSvg) activeSvg.setAttribute('stroke', 'var(--orange)');
+    }
 
-        // 3. Change Button Logic
-        document.getElementById('changeTypeBtn').addEventListener('click', function() {
-            document.getElementById('step2').style.display = 'none';
-            document.getElementById('step1').style.display = 'block';
-        });
+    function onModuleChange() {
+        const mod = document.getElementById('moduleSelectInput').value;
+        const rule = MODULE_RULES[mod] || { min: 3, max: 4, desc: "General competition track rules apply." };
+        const minCount = rule.min;
+        const maxCount = rule.max;
 
-        // 4. Dynamic Field Toggling (Min/Max Logic)
-        function adjustParticipantFields() {
-            const selectedModule = document.getElementById('moduleSelect').value;
-            const type = document.getElementById('inputType').value;
-            const moduleData = (type === 'College Student') ? collegeModules : universityModules;
+        document.getElementById('constraintTitle').textContent = `Team Constraint: ${minCount === maxCount ? minCount + ' Member' : 'Min ' + minCount + ' to Max ' + maxCount + ' Members'}`;
+        document.getElementById('constraintDesc').textContent = rule.desc;
+        document.getElementById('rosterHeading').textContent = `Team Roster (${minCount} Required, Up to ${maxCount})`;
 
-            if (!selectedModule || !moduleData[selectedModule]) return;
+        renderParticipantCards(minCount, maxCount);
+    }
 
-            const limits = moduleData[selectedModule]; 
-            const groups = document.querySelectorAll('.participant-group');
-        
-            groups.forEach((group, index) => {
-                const participantNumber = index + 2; // Participant 2, 3, 4
-                const inputs = group.querySelectorAll('input');
-                const title = group.querySelector('.section-title');
+    function renderParticipantCards(minCount, maxCount) {
+        const container = document.getElementById('participantCardsContainer');
+        container.innerHTML = '';
 
-                if (participantNumber <= limits.max) {
-                    group.style.display = 'block'; // Show if within max
-                    
-                    const isRequired = (participantNumber <= limits.min);
-                    inputs.forEach(input => {
-                        input.required = isRequired;
-                    });
+        for (let i = 1; i <= maxCount; i++) {
+            const isLeader = (i === 1);
+            const isRequired = (i <= minCount);
 
-                    // Set header color and text based on requirement
-                    if (isRequired) {
-                        title.style.color = '#fff';
-                        title.innerHTML = `Participant ${participantNumber} (Required)`;
-                    } else {
-                        title.style.color = '#888';
-                        title.innerHTML = `Participant ${participantNumber} (Optional)`;
-                    }
-                } else {
-                    group.style.display = 'none'; // Hide if above max
-                    inputs.forEach(input => {
-                        input.required = false;
-                        input.value = ''; // Clear data for hidden fields
-                    });
+            const card = document.createElement('div');
+            card.className = `participant-card ${isRequired ? '' : 'optional'}`;
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--line); padding-bottom: 10px;">
+                    <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: ${isRequired ? 'var(--orange)' : 'var(--muted)'}; font-family: 'Space Grotesk', sans-serif;">
+                        ${isLeader ? 'PARTICIPANT 01 (TEAM LEADER) *' : 'PARTICIPANT 0' + i + (isRequired ? ' *' : ' (OPTIONAL)')}
+                    </h3>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: ${isRequired ? 'var(--orange)' : 'var(--muted)'}; letter-spacing: 0.1em;">
+                        ${isRequired ? 'REQUIRED' : 'OPTIONAL'}
+                    </span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="signal-label">FULL NAME ${isRequired ? '*' : ''}</label>
+                        <input type="text" name="participant${i}_name" class="signal-input" ${isRequired ? 'required' : ''} placeholder="Full Name" value="${isLeader ? loggedInUser.name : ''}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="signal-label">PHONE / WHATSAPP NUMBER ${isRequired ? '*' : ''}</label>
+                        <input type="tel" name="participant${i}_contact" class="signal-input" ${isRequired ? 'required' : ''} placeholder="+92 300 1234567">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="signal-label">EMAIL ADDRESS ${isRequired ? '*' : ''}</label>
+                        <input type="email" name="participant${i}_email" class="signal-input" ${isRequired ? 'required' : ''} placeholder="email@example.com" value="${isLeader ? loggedInUser.email : ''}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="signal-label">CNIC / B-FORM NUMBER ${isRequired ? '*' : ''}</label>
+                        <input type="text" name="participant${i}_cnic" class="signal-input" ${isRequired ? 'required' : ''} placeholder="42101-1234567-1">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="signal-label">STUDENT ROLL NUMBER / STUDENT ID ${isRequired ? '*' : ''}</label>
+                    <input type="text" name="participant${i}_roll_number" class="signal-input" ${isRequired ? 'required' : ''} placeholder="e.g. CS-2024-042 or College Roll No">
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <label class="signal-label">FACE PHOTOGRAPH</label>
+                        <input type="file" name="participant${i}_face_image" accept="image/*" class="form-control" style="background:#101518; border:1px solid var(--line); color:var(--muted); font-size:11px; border-radius:0; padding:8px;">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="signal-label">STUDENT ID CARD PHOTO</label>
+                        <input type="file" name="participant${i}_id_card" accept="image/*" class="form-control" style="background:#101518; border:1px solid var(--line); color:var(--muted); font-size:11px; border-radius:0; padding:8px;">
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+    }
+
+    function goToStep(stepNumber) {
+        // Validation when going forward
+        if (stepNumber === 2 && currentStep === 1) {
+            if (!selectedTrack) {
+                alert("Please select your institution category.");
+                return;
+            }
+        }
+        if (stepNumber === 3 && currentStep === 2) {
+            const teamName = document.getElementById('teamNameInput').value.trim();
+            if (!teamName) {
+                alert("Please enter a Team Name.");
+                document.getElementById('teamNameInput').focus();
+                return;
+            }
+        }
+        if (stepNumber === 4 && currentStep === 3) {
+            const mod = document.getElementById('moduleSelectInput').value;
+            const rule = MODULE_RULES[mod] || { min: 3 };
+            for (let i = 1; i <= rule.min; i++) {
+                const name = document.querySelector(`[name="participant${i}_name"]`)?.value.trim();
+                const contact = document.querySelector(`[name="participant${i}_contact"]`)?.value.trim();
+                const email = document.querySelector(`[name="participant${i}_email"]`)?.value.trim();
+                const cnic = document.querySelector(`[name="participant${i}_cnic"]`)?.value.trim();
+                const roll = document.querySelector(`[name="participant${i}_roll_number"]`)?.value.trim();
+                if (!name || !contact || !email || !cnic || !roll) {
+                    alert(`Please complete required fields for Participant 0${i} (${i === 1 ? 'Team Leader' : 'Member ' + i}).`);
+                    return;
                 }
-            });
+            }
         }
 
-        // 5. Submission Logic
-        document.getElementById('regForm').addEventListener('submit', function(e) {
+        // Hide all step sections
+        for (let i = 1; i <= 5; i++) {
+            const sec = document.getElementById('stepSection' + i);
+            if (sec) sec.style.display = 'none';
+        }
+
+        // Show target step
+        const target = document.getElementById('stepSection' + stepNumber);
+        if (target) target.style.display = 'block';
+
+        // Update indicators
+        for (let i = 1; i <= 4; i++) {
+            const pill = document.getElementById('stepPill' + i);
+            const circle = document.getElementById('stepCircle' + i);
+            if (pill && circle) {
+                pill.classList.remove('active', 'completed');
+                if (i === stepNumber) {
+                    pill.classList.add('active');
+                    circle.textContent = i;
+                } else if (i < stepNumber) {
+                    pill.classList.add('completed');
+                    circle.textContent = '✓';
+                } else {
+                    circle.textContent = i;
+                }
+            }
+        }
+
+        currentStep = stepNumber;
+        window.scrollTo({ top: 180, behavior: 'smooth' });
+    }
+
+    // Initialize on document ready
+    document.addEventListener('DOMContentLoaded', function() {
+        onModuleChange();
+
+        document.getElementById('multiStepRegForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            const originalText = btn.innerText;
-            
+            const btn = document.getElementById('finalSubmitBtn');
+            const btnText = document.getElementById('submitBtnText');
+            const alertDiv = document.getElementById('submitAlertContainer');
+
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            btnText.textContent = "TRANSMITTING REGISTRATION...";
 
             const formData = new FormData(this);
 
@@ -587,56 +895,25 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                 method: 'POST',
                 body: formData
             })
-            .then(res => res.json()) 
+            .then(res => res.json())
             .then(data => {
-                if(data.success) {
-                    showModal('success', 'Success!', 'Your team has been registered.');
-                    document.getElementById('regForm').reset();
+                if (data.success) {
+                    goToStep(5);
                 } else {
-                    showModal('error', 'Error', data.message);
+                    alertDiv.style.display = 'block';
+                    alertDiv.innerHTML = `<div style="background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.4); color: #f87171; padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">${data.message || 'Error occurred during registration.'}</div>`;
+                    btn.disabled = false;
+                    btnText.textContent = "SUBMIT REGISTRATION";
                 }
             })
             .catch(err => {
-                showModal('error', 'Upload Failed', 'Check your internet or file sizes.');
-            })
-            .finally(() => {
+                alertDiv.style.display = 'block';
+                alertDiv.innerHTML = `<div style="background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.4); color: #f87171; padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">Network error. Check internet connection or file sizes.</div>`;
                 btn.disabled = false;
-                btn.innerText = originalText;
+                btnText.textContent = "SUBMIT REGISTRATION";
             });
         });
-
-        // Event Listeners for Dynamic Changes
-        document.getElementById('moduleSelect').addEventListener('change', adjustParticipantFields);
     });
-
-    // 6. Modal UI Function (Glow and Visual Effects)
-    function showModal(type, title, msg) {
-        const iconDiv = document.getElementById('modalIcon');
-        const titleEl = document.getElementById('modalTitle');
-        const msgEl = document.getElementById('modalMsg');
-        const modalContent = document.querySelector('#resultModal .modal-content');
-        const modal = new bootstrap.Modal(document.getElementById('resultModal'));
-        
-        msgEl.style.fontWeight = 'bold';
-
-        if(type === 'success') {
-            iconDiv.innerHTML = '<i class="fas fa-check-circle" style="font-size:4rem; color: #00ff94; text-shadow: 0 0 20px rgba(0,255,148, 0.6);"></i>';
-            msgEl.style.color = '#00ff94'; 
-            modalContent.style.border = '1px solid #00ff94';
-            modalContent.style.boxShadow = '0 0 30px rgba(0, 255, 148, 0.3)';
-        } else {
-            iconDiv.innerHTML = '<i class="fas fa-exclamation-circle" style="font-size:4rem; color: #ff4444; text-shadow: 0 0 20px rgba(255,68,68, 0.6);"></i>';
-            msgEl.style.color = '#ff4444'; 
-            modalContent.style.border = '1px solid #ff4444';
-            modalContent.style.boxShadow = '0 0 30px rgba(255, 68, 68, 0.3)';
-        }
-
-        titleEl.innerText = title;
-        msgEl.innerText = msg;
-        modal.show();
-    }
 </script>
 
 <?php include 'footer.php'; ?>
-
-

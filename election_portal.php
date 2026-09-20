@@ -128,40 +128,152 @@ if ($election) {
 ?>
 
 <style>
-    .dashboard-section { padding-top: 140px; min-height: 100vh; background: radial-gradient(circle at top, rgba(7, 17, 37, 0.6), rgba(3, 5, 13, 0.95)); }
-    .glass-panel { background: linear-gradient(135deg, rgba(12, 20, 42, 0.85), rgba(4, 9, 22, 0.95)); backdrop-filter: blur(22px); border: 1px solid rgba(0, 255, 148, 0.08); border-radius: 24px; padding: 40px; margin-bottom: 30px; color: #fff; }
-    .crypto-banner { background: rgba(0, 255, 148, 0.05); border: 1px solid rgba(0, 255, 148, 0.4); border-radius: 12px; padding: 15px 20px; display: flex; align-items: center; gap: 15px; margin-bottom: 30px; }
-    .candidate-card { border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; transition: 0.3s; cursor: pointer; }
-    .candidate-card:hover { border-color: #00ffd1; background: rgba(0, 255, 148, 0.03); }
-    .candidate-card input[type="radio"]:checked + .card-body { color: #00ffd1; }
-    .btn-neon { background: rgba(0, 255, 148, 0.15); color: #00ffd1; border: 1px solid rgba(0, 255, 148, 0.6); font-weight: 700; padding: 12px 28px; border-radius: 999px; transition: 0.3s; }
-    .btn-neon:hover { background: rgba(0, 255, 148, 0.3); color: #fff; box-shadow: 0 0 25px rgba(0, 255, 148, 0.4); }
-    .category-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(0, 210, 255, 0.35); color: #00d2ff; background: rgba(0, 210, 255, 0.08); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .election-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+        position: relative;
+        z-index: 1;
+    }
+    .glass-panel {
+        background: #0d0d0d;
+        border: 1px solid var(--border);
+        padding: 36px;
+        margin-bottom: 30px;
+        color: #fff;
+        position: relative;
+    }
+    .glass-panel::before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        width: 14px;
+        height: 14px;
+        border-top: 2px solid #f15a24;
+        border-left: 2px solid #f15a24;
+    }
+    .crypto-banner {
+        background: #090909;
+        border: 1px solid var(--border);
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+    .candidate-card {
+        background: #080808;
+        border: 1px solid var(--border);
+        padding: 20px;
+        transition: 0.2s;
+        cursor: pointer;
+        display: block;
+        height: 100%;
+    }
+    .candidate-card:hover {
+        border-color: #f15a24;
+        background: rgba(241, 90, 36, 0.04);
+    }
+    .candidate-card input[type="radio"]:checked + .card-body {
+        color: #f15a24;
+    }
+    .btn-vote-submit {
+        background: #f15a24;
+        color: #000;
+        font-weight: 700;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.84rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 16px 36px;
+        border: none;
+        cursor: pointer;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-vote-submit:hover {
+        background: #fff;
+        color: #000;
+    }
+    .category-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border: 1px solid var(--border);
+        color: #f15a24;
+        background: rgba(241, 90, 36, 0.08);
+        font-size: 0.72rem;
+        font-family: 'IBM Plex Mono', monospace;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .status-badge {
+        padding: 4px 10px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-approved {
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.4);
+        background: rgba(52, 211, 153, 0.08);
+    }
+    .status-rejected {
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.4);
+        background: rgba(248, 113, 113, 0.08);
+    }
 </style>
 
-<section class="dashboard-section">
-    <div class="container">
+<section class="secondary-hero">
+    <div class="secondary-hero-grid">
+        <div>
+            <div class="eyebrow">DEMOCRATIC COUNCIL // ELECTION PORTAL</div>
+            <h1 class="secondary-hero-title">Student <span class="text-orange-500">ballot.</span></h1>
+            <p class="secondary-hero-lead">Elect the next executive leadership of SENTEC. Verified NED students vote for presiding board candidates under transparent cryptographic safeguards.</p>
+        </div>
+        <div class="secondary-hero-index">
+            <div>BALLOT.VOTE // ACTIVE</div>
+            <div style="color:var(--text-dim); margin-top:4px;">CRYPTOGRAPHIC VERIFICATION ON</div>
+        </div>
+    </div>
+</section>
+
+<div class="election-container">
+    <div>
         <?php if (!$portalVisible): ?>
             <div class="glass-panel text-center py-5">
-                <i class="fas fa-vote-yea mb-3" style="font-size:4rem; color:#666;"></i>
-                <h2>Polling Portal Hidden</h2>
-                <p style="color:#ccc;">The polling card is currently hidden by administrators.</p>
+                <i class="fas fa-lock mb-3" style="font-size:3rem; color:#888;"></i>
+                <h2 style="font-family:'Space Grotesk', sans-serif;">Polling Portal Hidden</h2>
+                <p style="color:#888;">The polling card is currently hidden by administrators.</p>
             </div>
         <?php elseif (!$election): ?>
             <div class="glass-panel text-center py-5">
-                <i class="fas fa-vote-yea mb-3" style="font-size:4rem; color:#666;"></i>
-                <h2>No Active Polls</h2>
-                <p style="color:#ccc;">Check back soon for upcoming student science society polls.</p>
+                <i class="fas fa-vote-yea mb-3 text-orange-500" style="font-size:3rem;"></i>
+                <h2 style="font-family:'Space Grotesk', sans-serif;">No Active Polls</h2>
+                <p style="color:#888;">Check back soon for upcoming student science society polls.</p>
             </div>
         <?php elseif ($has_voted && !($portalResultsVisible || $voteWindowClosed || $election['show_results'])): ?>
             <div class="glass-panel text-center py-5">
-                <i class="fas fa-check-circle mb-3" style="font-size:4rem; color:#00ffd1;"></i>
-                <h1 style="font-family: 'Outfit';">Vote Casted Successfully</h1>
-                <p style="color:#ccc;">Your ballot has been securely encrypted and recorded. Results will be published once polling concludes.</p>
+                <i class="fas fa-check-circle mb-3 text-orange-500" style="font-size:3.5rem;"></i>
+                <h1 style="font-family: 'Space Grotesk', sans-serif;">Vote Casted Successfully</h1>
+                <p style="color:#aaa; max-width: 500px; margin: 0 auto;">Your ballot has been securely encrypted and recorded. Results will be published once polling concludes.</p>
             </div>
         <?php elseif ($portalResultsVisible || $voteWindowClosed || $election['show_results']): ?>
             <div class="glass-panel">
-                <h2 class="text-center mb-4" style="color:#00ffd1;"><i class="fas fa-chart-bar me-2"></i> Official Polling Results</h2>
+                <div class="d-flex align-items-center justify-content-between mb-4 pb-3" style="border-bottom: 1px solid var(--border);">
+                    <h2 class="mb-0" style="font-family:'Space Grotesk', sans-serif; font-size:1.4rem;">
+                        <i class="fas fa-chart-bar text-orange-500 me-2"></i> Official Polling Results
+                    </h2>
+                    <span class="status-badge status-approved">Certified Count</span>
+                </div>
                 <?php
                 $res_stmt = $conn->query("SELECT c.name, c.position, COUNT(v.id) AS total_votes 
                                           FROM election_candidates c 
@@ -181,18 +293,18 @@ if ($election) {
                     foreach ($resultsByPosition as $posName => $candidates):
                         $maxPosVotes = max(1, max(array_map(static function ($r) { return (int) $r['total_votes']; }, $candidates)));
                 ?>
-                    <div class="mb-5 p-4" style="background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(0, 255, 148, 0.12);">
-                        <h4 class="text-uppercase mb-4" style="color:#ffbb33; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,187,51,0.2); padding-bottom: 10px;">
-                            <i class="fas fa-award me-2"></i> Position: <?php echo htmlspecialchars($posName); ?>
+                    <div class="mb-4 p-4" style="background: #090909; border: 1px solid var(--border);">
+                        <h4 class="text-uppercase mb-3" style="color:#f15a24; font-family:'IBM Plex Mono', monospace; font-size: 0.9rem; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                            <i class="fas fa-award me-2"></i> Office: <?php echo htmlspecialchars($posName); ?>
                         </h4>
                         <?php foreach ($candidates as $row): ?>
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-1">
-                                    <span style="font-size:1.1rem; font-weight:bold;"><?php echo htmlspecialchars($row['name']); ?></span>
-                                    <span style="color:#00ffd1;"><?php echo (int) $row['total_votes']; ?> Votes</span>
+                                    <span style="font-size:1rem; font-weight:600;"><?php echo htmlspecialchars($row['name']); ?></span>
+                                    <span style="color:#f15a24; font-family:'IBM Plex Mono', monospace; font-size:0.85rem;"><?php echo (int) $row['total_votes']; ?> Votes</span>
                                 </div>
-                                <div class="progress" style="height: 12px; background: rgba(255,255,255,0.05); border-radius: 6px;">
-                                    <div class="progress-bar" style="width: <?php echo max(4, round(((int) $row['total_votes'] / $maxPosVotes) * 100)); ?>%; background: #00ffd1;"></div>
+                                <div class="progress" style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 0;">
+                                    <div class="progress-bar" style="width: <?php echo max(4, round(((int) $row['total_votes'] / $maxPosVotes) * 100)); ?>%; background: #f15a24;"></div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -202,35 +314,35 @@ if ($election) {
             </div>
         <?php elseif (!$voteWindowOpen): ?>
             <div class="glass-panel text-center py-5">
-                <i class="fas fa-clock mb-3" style="font-size:4rem; color:#ffbb33;"></i>
+                <i class="fas fa-clock mb-3" style="font-size:3.5rem; color:#f15a24;"></i>
                 <?php if (!empty($votingNotStarted)): ?>
-                    <h2>Polling Has Not Started Yet</h2>
-                    <p style="color:#ccc;">The ballot opens on <?php echo date('M j, g:i A', strtotime($election['start_time'])); ?>.</p>
+                    <h2 style="font-family:'Space Grotesk', sans-serif;">Polling Has Not Started Yet</h2>
+                    <p style="color:#888;">The ballot opens on <?php echo date('M j, g:i A', strtotime($election['start_time'])); ?>.</p>
                 <?php else: ?>
-                    <h2>Polling Locked</h2>
-                    <p style="color:#ccc;">The polling panel is currently locked by administrators or outside the polling window.</p>
+                    <h2 style="font-family:'Space Grotesk', sans-serif;">Polling Locked</h2>
+                    <p style="color:#888;">The polling panel is currently locked by administrators or outside the voting window.</p>
                 <?php endif; ?>
             </div>
         <?php else: ?>
             <div class="glass-panel">
                 <div class="crypto-banner">
-                    <i class="fas fa-shield-alt fa-2x" style="color: #00ffd1;"></i>
+                    <i class="fas fa-shield-alt fa-2x text-orange-500"></i>
                     <div>
-                        <strong style="color: #00ffd1; display:block;">End-to-End Encrypted & Anonymous Ballot</strong>
-                        <small style="color:#bbb;">Your identification tokens are stripped at the ingress gateway. Your choices remain entirely confidential.</small>
+                        <strong style="color: #f15a24; display:block; font-family:'IBM Plex Mono', monospace; font-size:0.85rem; letter-spacing:0.06em;">End-to-End Encrypted & Anonymous Ballot</strong>
+                        <small style="color:#888;">Identification tokens are decoupled at the ingress gateway. Your choices remain strictly confidential.</small>
                     </div>
                 </div>
 
                 <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
-                    <span class="category-pill"><i class="fas fa-user-secret"></i> Anonymous Polling</span>
-                    <span class="category-pill"><i class="fas fa-lock"></i> Sealed Ballot</span>
+                    <span class="category-pill"><i class="fas fa-user-secret"></i> Anonymous Ballot</span>
+                    <span class="category-pill"><i class="fas fa-lock"></i> Cryptographic Seal</span>
                 </div>
 
-                <h1 class="mb-2" style="font-family: 'Outfit';"><?php echo htmlspecialchars($election['title']); ?></h1>
-                <p style="color: #ccc; margin-bottom: 30px;">Select your preferred candidate for each office position below.</p>
+                <h1 class="mb-2" style="font-family: 'Space Grotesk', sans-serif; font-size:1.8rem;"><?php echo htmlspecialchars($election['title']); ?></h1>
+                <p style="color: #888; margin-bottom: 28px;">Select your designated candidate for each office position below.</p>
 
                 <form method="POST">
-                    <h4 style="color: #00ffd1; margin-bottom: 20px;"><i class="fas fa-user-tie me-2"></i> Select Candidates by Office</h4>
+                    <h4 style="color: #f5f5f5; margin-bottom: 20px; font-family:'Space Grotesk', sans-serif; font-size:1.15rem;"><i class="fas fa-user-tie text-orange-500 me-2"></i> Candidates by Office</h4>
                     
                     <?php
                     $c_stmt = $conn->query("SELECT * FROM election_candidates WHERE election_id = {$election['id']} AND is_active = 1 ORDER BY position ASC, name ASC");
@@ -245,7 +357,7 @@ if ($election) {
                         foreach ($candidatesByPos as $posName => $candidates):
                     ?>
                         <div class="mb-5 p-3" style="background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;">
-                            <h5 class="mb-3 text-uppercase" style="color: #ffbb33; letter-spacing: 0.05em;">
+                            <h5 class="mb-3 text-uppercase" style="color: #f15a24; letter-spacing: 0.05em; font-family:'IBM Plex Mono', monospace;">
                                 <i class="fas fa-user-tag me-2"></i> Select <?php echo htmlspecialchars($posName); ?>
                             </h5>
                             <div class="row g-4">
@@ -267,13 +379,13 @@ if ($election) {
                     endif; ?>
 
                     <div class="text-end mt-4">
-                        <button type="submit" name="cast_vote" class="btn-neon"><i class="fas fa-lock me-2"></i> Encrypt & Cast Ballot</button>
+                        <button type="submit" name="cast_vote" class="btn-vote-submit"><i class="fas fa-lock me-2"></i> ENCRYPT & CAST BALLOT</button>
                     </div>
                 </form>
             </div>
         <?php endif; ?>
     </div>
-</section>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

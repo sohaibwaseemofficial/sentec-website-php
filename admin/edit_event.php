@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($update_stmt) {
         $update_stmt->bind_param('sssssi', $event_title, $event_description, $event_date, $event_link, $category, $event_id);
         if ($update_stmt->execute()) {
+            if (function_exists('invalidate_cache')) invalidate_cache('public_events_data');
             $message = "<div class='alert alert-success'>Event Updated Successfully! 🚀</div>";
             // Refresh event data for the form
             $event['title'] = $event_title;

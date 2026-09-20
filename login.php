@@ -1,11 +1,11 @@
 <?php
 include 'header.php';
-include 'db_connection.php';
 
 // Session is already started in header.php
 $msg = "";
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    require_once __DIR__ . '/db_connection.php';
     // Identity can be student email OR ambassador code/email
     $identity = trim($_POST['email'] ?? '');
     $pass = $_POST['password'] ?? '';
@@ -36,7 +36,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 exit;
             } else {
                 $verifyLink = 'verify.php?email=' . urlencode($identity);
-                $msg = "<div class='p-3.5 mb-5 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-300 text-xs font-mono flex items-center justify-between'>
+                $msg = "<div class='p-3.5 mb-5 rounded-lg bg-[#f15a24]/10 border border-[#f15a24]/40 text-[#ff8050] text-xs font-mono flex items-center justify-between'>
                             <span>Account not verified.</span>
                             <a href='$verifyLink' class='font-bold underline hover:text-white'>Verify Now</a>
                         </div>";
@@ -56,7 +56,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         if ($res2 && $res2->num_rows) {
             $amb = $res2->fetch_assoc();
             if ($amb['status'] !== 'active') {
-                $msg = "<div class='p-3.5 mb-5 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-300 text-xs font-mono'>Account inactive. Contact administrator.</div>";
+                $msg = "<div class='p-3.5 mb-5 rounded-lg bg-[#f15a24]/10 border border-[#f15a24]/40 text-[#ff8050] text-xs font-mono'>Account inactive. Contact administrator.</div>";
             } elseif ($amb['password_hash'] && password_verify($pass, $amb['password_hash'])) {
                 $_SESSION['ambassador_id'] = $amb['id'];
                 $_SESSION['ambassador_name'] = $amb['name'];
@@ -84,87 +84,100 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 }
 ?>
 
-<div class="relative min-h-[calc(100vh-12rem)] flex items-center justify-center py-16 px-4">
-    <div class="ambient-grid absolute inset-0 pointer-events-none opacity-30"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#f15a24]/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="secondary-page">
+    <main>
+        <!-- Top Hero matching Login.tsx & SiteChrome.tsx -->
+        <header class="secondary-hero motion-reveal is-visible">
+            <div class="secondary-hero-grid">
+                <div>
+                    <span class="eyebrow">
+                        <i></i>
+                        AUTHENTICATION // ACCESS
+                    </span>
+                    <h1>
+                        Sign in to<br>
+                        <em>SENTEC.</em>
+                    </h1>
+                    <p>
+                        Access your participant dashboard, check module registration status, and participate in student council ballots.
+                    </p>
+                </div>
+                <div class="secondary-hero-index">
+                    <span>SYS.02</span>
+                    <strong>SECURITY // CLEARANCE</strong>
+                    <small>
+                        43°42'18" N<br>
+                        67°08'07" E
+                    </small>
+                </div>
+            </div>
+        </header>
 
-    <div class="relative w-full max-w-md">
-        
-        <!-- Dark Card Container -->
-        <div class="p-8 sm:p-10 rounded-2xl bg-[#12161D] border border-white/[0.08] shadow-[0_20px_80px_rgba(0,0,0,0.85)]">
+        <!-- Signal Form Section matching Screenshot 1 -->
+        <section class="secondary-section" style="max-width: 480px; margin: 0 auto; padding-top: 50px; padding-bottom: 100px;">
             
-            <!-- Technical Tag & Heading -->
-            <div class="mb-6">
-                <span class="text-[11px] font-mono text-[#f15a24] uppercase tracking-widest block mb-1.5">
-                    USER CREDENTIALS // ACCESS
-                </span>
-                <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-white">
+            <!-- Hanging L-Bracket Above Card -->
+            <div style="width: 48px; height: 48px; border-left: 1.5px solid var(--orange); border-bottom: 1.5px solid var(--orange); margin: 0 auto 24px auto;"></div>
+
+            <form method="POST" class="signal-form" style="background: rgba(15, 20, 22, 0.75); border: 1px solid var(--line); padding: 36px 32px; box-shadow: 0 18px 80px rgba(0, 0, 0, 0.4);">
+                <span class="section-kicker" style="color: var(--orange); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; font-weight: 600; display: block;">USER CREDENTIALS</span>
+                
+                <h2 style="margin: 14px 0 24px; font-size: 26px; font-weight: 500; color: var(--paper); letter-spacing: -0.03em; font-family: 'Space Grotesk', sans-serif;">
                     Welcome back
                 </h2>
-                <p class="text-xs text-neutral-400 mt-1 font-sans">
-                    Access participant dashboard, check module passes, and cast ballots.
-                </p>
-            </div>
 
-            <!-- Error/Status Message Display -->
-            <?php echo $msg; ?>
+                <!-- Status / Error Notification -->
+                <?php if (!empty($msg)) echo $msg; ?>
 
-            <form method="POST" class="space-y-5">
-                <div>
-                    <label class="block text-[11px] font-mono text-neutral-400 uppercase tracking-wider mb-2">
-                        EMAIL ADDRESS OR AMBASSADOR CODE
+                <div style="margin-bottom: 20px;">
+                    <label for="emailInput" style="display: block; color: var(--muted); font: 600 10px 'IBM Plex Mono', monospace; letter-spacing: 0.13em; margin-bottom: 8px; text-transform: uppercase;">
+                        EMAIL ADDRESS
                     </label>
-                    <div class="relative">
-                        <input 
-                            type="text" 
-                            name="email" 
-                            required 
-                            placeholder="you@example.com or AMB-XXXX" 
-                            class="w-full px-4 py-3 rounded-lg bg-[#080b0d] border border-white/[0.12] text-white text-sm focus:outline-none focus:border-[#f15a24] focus:ring-1 focus:ring-[#f15a24] transition-all font-sans placeholder:text-neutral-600"
-                            autofocus
-                        >
-                    </div>
+                    <input 
+                        type="text" 
+                        id="emailInput"
+                        name="email" 
+                        required 
+                        placeholder="you@example.com" 
+                        value="<?php echo htmlspecialchars($identity ?? ''); ?>"
+                        autofocus
+                        style="width: 100%; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--paper); padding: 12px 0; font-family: 'Space Grotesk', sans-serif; font-size: 15px; outline: none; border-radius: 0;"
+                    >
                 </div>
 
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-[11px] font-mono text-neutral-400 uppercase tracking-wider">
-                            PASSWORD
-                        </label>
-                        <a href="forgot_password.php" class="text-[11px] font-mono text-[#f15a24] hover:underline">
-                            Forgot password?
-                        </a>
-                    </div>
-                    <div class="relative">
-                        <input 
-                            type="password" 
-                            name="password" 
-                            required 
-                            placeholder="••••••••" 
-                            class="w-full px-4 py-3 rounded-lg bg-[#080b0d] border border-white/[0.12] text-white text-sm focus:outline-none focus:border-[#f15a24] focus:ring-1 focus:ring-[#f15a24] transition-all font-sans placeholder:text-neutral-600"
-                        >
-                    </div>
+                <div style="margin-bottom: 14px;">
+                    <label for="passInput" style="display: block; color: var(--muted); font: 600 10px 'IBM Plex Mono', monospace; letter-spacing: 0.13em; margin-bottom: 8px; text-transform: uppercase;">
+                        PASSWORD
+                    </label>
+                    <input 
+                        type="password" 
+                        id="passInput"
+                        name="password" 
+                        required 
+                        placeholder="••••••••"
+                        style="width: 100%; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--paper); padding: 12px 0; font-family: 'Space Grotesk', sans-serif; font-size: 15px; outline: none; border-radius: 0;"
+                    >
                 </div>
 
-                <button 
-                    type="submit" 
-                    class="w-full py-3.5 px-6 rounded-lg bg-[#f15a24] hover:bg-[#ff6b35] text-[#080b0d] font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_4px_20px_rgba(241,90,36,0.3)] hover:-translate-y-0.5 mt-2"
-                >
-                    <span>Sign In</span>
-                    <i class="fas fa-sign-in-alt text-xs"></i>
-                </button>
+                <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                    <a href="forgot_password.php" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--orange); text-decoration: none;">
+                        Forgot password?
+                    </a>
+                </div>
+
+                <div class="form-actions" style="margin-top: 24px;">
+                    <button type="submit" style="width: 100%; justify-content: center; background: var(--orange); color: #000; border: 0; padding: 14px 20px; font: 800 12px 'IBM Plex Mono', monospace; letter-spacing: 0.16em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: opacity 0.2s ease;">
+                        <span>SIGN IN</span>
+                        <span style="font-size: 14px; font-weight: 800; font-family: monospace;">&rarr;]</span>
+                    </button>
+                </div>
+
+                <div style="margin-top: 28px; text-align: center; font-size: 13px; color: var(--muted); font-family: 'Space Grotesk', sans-serif; line-height: 1.6;">
+                    Don’t have an account yet? <a href="signup.php" style="color: var(--orange); font-weight: 700; text-decoration: none; display: block; margin-top: 2px;">Create Account</a>
+                </div>
             </form>
-
-            <div class="mt-8 pt-6 border-t border-white/[0.08] text-center text-xs text-neutral-400 font-sans">
-                Don't have an account yet? 
-                <a href="signup.php" class="text-[#f15a24] font-semibold hover:underline ml-1">
-                    Create Account
-                </a>
-            </div>
-
-        </div>
-
-    </div>
+        </section>
+    </main>
 </div>
 
 <?php include 'footer.php'; ?>

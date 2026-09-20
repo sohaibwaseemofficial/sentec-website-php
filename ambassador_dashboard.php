@@ -239,7 +239,7 @@ $recent_regs = array_slice($recent_regs, 0, 10);
         color: #e5e7ff;
         box-shadow: 0 18px 35px rgba(0,0,0,0.35);
     }
-    .payment-chip[data-variant="not-submitted"] { border-color: rgba(255, 187, 51, 0.5); color: #ffbb33; }
+    .payment-chip[data-variant="not-submitted"] { border-color: rgba(241, 90, 36, 0.5); color: #f15a24; }
     .payment-chip[data-variant="submitted"] { border-color: rgba(0, 173, 255, 0.5); color: #00c3ff; }
     .payment-chip[data-variant="confirmed"] { border-color: rgba(0, 255, 148, 0.6); color: #00ff94; }
     .payment-chip span { font-size: 1.2rem; font-weight: 700; margin-left: 8px; }
@@ -268,7 +268,7 @@ $recent_regs = array_slice($recent_regs, 0, 10);
 
         <div class="row g-4 mb-5">
             <div class="col-md-3"><div class="stat-box"><h3><?php echo $totalWithManual; ?></h3><p>Total Referrals</p></div></div>
-            <div class="col-md-3"><div class="stat-box"><h3 style="color:#ffbb33;"><?php echo $stats['pending']; ?></h3><p>Pending</p></div></div>
+            <div class="col-md-3"><div class="stat-box"><h3 style="color:#f15a24;"><?php echo $stats['pending']; ?></h3><p>Pending</p></div></div>
             <div class="col-md-3"><div class="stat-box"><h3 style="color:#00FF94;"><?php echo $approvedWithManual; ?></h3><p>Approved</p></div></div>
             <div class="col-md-3"><div class="stat-box"><h3 style="color:#ff4444;"><?php echo $stats['rejected']; ?></h3><p>Rejected</p></div></div>
         </div>

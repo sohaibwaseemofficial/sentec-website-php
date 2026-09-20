@@ -42,6 +42,7 @@ if ($image && $id) {
         $stmt = $conn->prepare($update_query);
         $stmt->bind_param("si", $updated_images_str, $id);
         if ($stmt->execute()) {
+            if (function_exists('invalidate_cache')) invalidate_cache('public_gallery_data');
             // Redirect back to the edit page
             header("Location: edit_gallery.php?id=$id");
             exit;

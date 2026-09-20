@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bind_param("ssss", $group, $desc, $mainPath, $addStr);
 
             if($stmt->execute()) {
+                if (function_exists('invalidate_cache')) invalidate_cache('public_gallery_data');
                 $msg = "<div class='alert alert-success'>Gallery Added!</div>";
                 if (!empty($warnings)) {
                     $msg .= "<div class='alert alert-warning mt-2'>" . htmlspecialchars(implode(' ', array_unique($warnings))) . "</div>";

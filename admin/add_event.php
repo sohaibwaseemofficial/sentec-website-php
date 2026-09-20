@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bind_param("sssssss", $title, $description, $category, $event_date, $db_path, $event_link, $status);
             
             if ($stmt->execute()) {
+                if (function_exists('invalidate_cache')) invalidate_cache('public_events_data');
                 $message = "<div class='alert alert-success'>Event Published Successfully! 🚀</div>";
             } else {
                 $message = "<div class='alert alert-danger'>DB Error: " . $stmt->error . "</div>";

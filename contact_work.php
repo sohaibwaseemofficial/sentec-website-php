@@ -38,7 +38,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // 2. SEND EMAIL VIA CENTRALIZED MAILER
+    // 2. PERSIST IN DATABASE FIRST
+    $savedToDb = false;
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    if (isset($conn) && !$conn->connect_error) {
+        $stmt = $conn->prepare("INSERT INTO contact_messages (name, email, phone, message, ip_address, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
+        if ($stmt) {
+            $stmt->bind_param("sssss", $fullname, $email, $phone, $message, $ip);
+            if ($stmt->execute()) {
+                $savedToDb = true;
+            }
+            $stmt->close();
+        }
+    }
+
+    // 3. SEND EMAIL NOTIFICATION VIA CENTRALIZED MAILER
     try {
         $mail = sentec_mailer();
         
@@ -92,7 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } catch (Exception $e) {
         sentec_mail_log('contact_form', 'error', $e->getMessage());
-        displayMessage('Sorry, we could not send your message due to a technical error. Please try emailing us directly.', 'danger');
+        if ($savedToDb) {
+            displayMessage('Thank you! Your message has been recorded into our system. We will get back to you shortly.', 'success');
+        } else {
+            displayMessage('Sorry, we could not send your message due to a technical error. Please try emailing us directly.', 'danger');
+        }
     }
 
 } else {
