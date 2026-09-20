@@ -1587,7 +1587,7 @@ $events = get_cached_data('public_events_data', 600, function() {
 </script>
 
 <?php 
-if ($conn) {
+if (isset($conn) && $conn instanceof mysqli && !$conn->connect_error) {
     $conn->close();
 }
 include 'footer.php'; 
