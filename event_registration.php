@@ -21,6 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
     $response = ['success' => false, 'message' => 'Unknown error'];
 
+    // Prevent PHP from failing silently when post_max_size is exceeded
+    if (empty($_POST) && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
+        ob_end_clean();
+        echo json_encode(['success' => false, 'message' => 'Total file upload size exceeded the server limit. Please ensure each image is under 800KB and try again.']);
+        exit;
+    }
+
     try {
         if (!file_exists('db_connection.php')) throw new Exception("Database file missing.");
         include 'db_connection.php';
@@ -53,6 +60,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // B. CORE DATA COLLECTION (MUST HAPPEN BEFORE VALIDATION)
         // ---------------------------------------------------------
         $user_id     = (int)getVal('user_id');
+        if ($user_id <= 0) {
+            throw new Exception("Authentication Error: Missing or invalid user ID. Please log in again.");
+        }
+        
         $institution = getVal('institutionType');
         $teamName    = getVal('teamName');
         $module      = getVal('moduleSelection');
@@ -694,6 +705,7 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
     </main>
 </div>
 
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
 <script>
     // Module Rules Database matching React constants
     const MODULE_RULES = {
@@ -799,11 +811,11 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
 
                 <div class="row g-3 mt-1">
                     <div class="col-md-6">
-                        <label class="signal-label">FACE PHOTOGRAPH</label>
+                        <label class="signal-label">FACE PHOTOGRAPH *</label>
                         <input type="file" name="participant${i}_face_image" accept="image/*" class="form-control" style="background:#101518; border:1px solid var(--line); color:var(--muted); font-size:11px; border-radius:0; padding:8px;">
                     </div>
                     <div class="col-md-6">
-                        <label class="signal-label">STUDENT ID CARD PHOTO</label>
+                        <label class="signal-label">STUDENT ID CARD PHOTO *</label>
                         <input type="file" name="participant${i}_id_card" accept="image/*" class="form-control" style="background:#101518; border:1px solid var(--line); color:var(--muted); font-size:11px; border-radius:0; padding:8px;">
                     </div>
                 </div>
@@ -880,23 +892,58 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
     document.addEventListener('DOMContentLoaded', function() {
         onModuleChange();
 
-        document.getElementById('multiStepRegForm').addEventListener('submit', function(e) {
+        document.getElementById('multiStepRegForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('finalSubmitBtn');
             const btnText = document.getElementById('submitBtnText');
             const alertDiv = document.getElementById('submitAlertContainer');
 
             btn.disabled = true;
-            btnText.textContent = "TRANSMITTING REGISTRATION...";
+            alertDiv.style.display = 'none';
+            btnText.textContent = "PREPARING FILES...";
 
-            const formData = new FormData(this);
+            const rawFormData = new FormData(this);
+            const finalFormData = new FormData();
+            const fileEntries = [];
 
-            fetch('event_registration.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
+            for (const [key, value] of rawFormData.entries()) {
+                if (value instanceof File && value.name !== '') {
+                    fileEntries.push({ key, file: value });
+                } else if (!(value instanceof File)) {
+                    finalFormData.append(key, value);
+                }
+            }
+
+            try {
+                const options = {
+                    maxSizeMB: 0.3,
+                    maxWidthOrHeight: 1600,
+                    useWebWorker: true,
+                    fileType: 'image/webp'
+                };
+
+                for (let i = 0; i < fileEntries.length; i++) {
+                    const item = fileEntries[i];
+                    btnText.textContent = `COMPRESSING IMAGE ${i + 1} OF ${fileEntries.length}...`;
+                    
+                    const compressedFile = await imageCompression(item.file, options);
+                    const newFileName = item.file.name.replace(/\.[^/.]+$/, "") + ".webp";
+                    const webpFile = new File([compressedFile], newFileName, {
+                        type: "image/webp",
+                    });
+                    
+                    finalFormData.append(item.key, webpFile);
+                }
+
+                btnText.textContent = "TRANSMITTING REGISTRATION...";
+                
+                const res = await fetch('event_registration.php', {
+                    method: 'POST',
+                    body: finalFormData
+                });
+                
+                const data = await res.json();
+                
                 if (data.success) {
                     goToStep(5);
                 } else {
@@ -905,13 +952,13 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                     btn.disabled = false;
                     btnText.textContent = "SUBMIT REGISTRATION";
                 }
-            })
-            .catch(err => {
+            } catch (err) {
+                console.error("Compression/Upload error:", err);
                 alertDiv.style.display = 'block';
-                alertDiv.innerHTML = `<div style="background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.4); color: #f87171; padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">Network error. Check internet connection or file sizes.</div>`;
+                alertDiv.innerHTML = `<div style="background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.4); color: #f87171; padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">Compression or Network Error: ${err.message || 'Please check your connection and try again.'}</div>`;
                 btn.disabled = false;
                 btnText.textContent = "SUBMIT REGISTRATION";
-            });
+            }
         });
     });
 </script>
