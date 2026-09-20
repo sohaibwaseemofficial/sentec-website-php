@@ -43,6 +43,9 @@ RUN { \
 # Ensure correct file permissions for web server and make entrypoint executable
 RUN mkdir -p /var/www/html/storage/cache \
     && mkdir -p /var/www/html/images/uploads/event_registrations \
+    && mkdir -p /var/www/html/images/uploads/payments \
+    && mkdir -p /var/www/html/images/uploads/social_registrations \
+    && mkdir -p /var/www/html/images/uploads/receipts \
     && mkdir -p /var/www/html/images/uploads/team \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/images/uploads \

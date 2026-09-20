@@ -8,27 +8,52 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// 2. GET REGISTRATION DATA (Updated for multiple registrations)
+// 2. GET REGISTRATION DATA (Allows pending & approved registrations)
 $user_id = $_SESSION['user_id'];
 $reg_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$isSocial = false;
+$reg = null;
 
 if ($reg_id > 0) {
     // Fetch the SPECIFIC registration the user clicked on
-    $query = "SELECT * FROM event_registrations WHERE id = ? AND user_id = ? AND status = 'approved' LIMIT 1";
+    $query = "SELECT * FROM event_registrations WHERE id = ? AND user_id = ? LIMIT 1";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("ii", $reg_id, $user_id);
+    $stmt->execute();
+    $reg = $stmt->get_result()->fetch_assoc();
 } else {
-    // Fallback: Fetch the most recent approved registration if no ID is provided
-    $query = "SELECT * FROM event_registrations WHERE user_id = ? AND status = 'approved' ORDER BY created_at DESC LIMIT 1";
+    // Fallback: Fetch the most recent event registration if no ID is provided
+    $query = "SELECT * FROM event_registrations WHERE user_id = ? ORDER BY created_at DESC LIMIT 1";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $reg = $stmt->get_result()->fetch_assoc();
 }
 
-$stmt->execute();
-$reg = $stmt->get_result()->fetch_assoc();
+if (!$reg) {
+    // Check social registrations fallback
+    $uEmail = $_SESSION['email'] ?? '';
+    if ($reg_id > 0) {
+        $sStmt = $conn->prepare("SELECT * FROM social_registrations WHERE id = ? AND (user_id = ? OR email = ?) LIMIT 1");
+        $sStmt->bind_param("iis", $reg_id, $user_id, $uEmail);
+    } else {
+        $sStmt = $conn->prepare("SELECT * FROM social_registrations WHERE user_id = ? OR email = ? ORDER BY created_at DESC LIMIT 1");
+        $sStmt->bind_param("is", $user_id, $uEmail);
+    }
+    if ($sStmt) {
+        $sStmt->execute();
+        $sReg = $sStmt->get_result()->fetch_assoc();
+        if ($sReg) {
+            $isSocial = true;
+            $reg = $sReg;
+            $reg['team_name'] = "Social Pass (" . ($reg['registration_type'] ?? 'Single') . ")";
+            $reg['module_selection'] = "SENTEC Social Night Gala";
+        }
+    }
+}
 
 if (!$reg) {
-    echo "<script>alert('Please select an approved registration to pay for.'); window.location='dashboard.php';</script>";
+    echo "<script>alert('Please complete a registration first before submitting payment proof.'); window.location='dashboard.php';</script>";
     exit;
 }
 
@@ -44,20 +69,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['payment_proof'])) {
     $allowed = ['jpg', 'jpeg', 'png', 'webp'];
 
     if ($file['error'] !== UPLOAD_ERR_OK) {
-        $msg = "<div class='alert alert-danger'>Upload Error. Try again.</div>";
+        $msg = "<div class='alert alert-danger'>Upload Error. Please choose a valid image file.</div>";
     } elseif (!in_array($ext, $allowed)) {
         $msg = "<div class='alert alert-danger'>Only JPG, PNG, WEBP allowed.</div>";
     } else {
-        $filename = "pay_" . $reg['id'] . "_" . uniqid() . "." . $ext;
+        $prefix = $isSocial ? 'soc_' : 'evt_';
+        $filename = "pay_" . $prefix . $reg['id'] . "_" . uniqid() . "." . $ext;
         if (move_uploaded_file($file['tmp_name'], $targetDir . $filename)) {
             // Update DB
             $dbPath = "images/uploads/payments/" . $filename;
-            $update = $conn->prepare("UPDATE event_registrations SET payment_proof = ?, payment_status = 'submitted' WHERE id = ?");
-            $update->bind_param("si", $dbPath, $reg['id']);
-            $update->execute();
+            if ($isSocial) {
+                $update = $conn->prepare("UPDATE social_registrations SET payment_proof = ?, payment_status = 'submitted' WHERE id = ?");
+                $update->bind_param("si", $dbPath, $reg['id']);
+                $update->execute();
+                @$conn->query("UPDATE social_attendees SET payment_proof = '" . $conn->real_escape_string($dbPath) . "', payment_status = 'submitted' WHERE registration_id = " . (int)$reg['id']);
+            } else {
+                $update = $conn->prepare("UPDATE event_registrations SET payment_proof = ?, fees_screenshot = ?, payment_status = 'submitted' WHERE id = ?");
+                $update->bind_param("ssi", $dbPath, $dbPath, $reg['id']);
+                $update->execute();
+                @$conn->query("UPDATE event_attendees SET payment_status = 'submitted' WHERE registration_id = " . (int)$reg['id']);
+            }
             
             // Refresh
-            echo "<script>window.location.href='payment_upload.php';</script>";
+            $redirectUrl = 'payment_upload.php' . ($reg_id > 0 ? '?id=' . $reg_id : '');
+            echo "<script>alert('Payment proof uploaded successfully!'); window.location.href='{$redirectUrl}';</script>";
+            exit;
         } else {
             $msg = "<div class='alert alert-danger'>Failed to save file.</div>";
         }
