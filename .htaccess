@@ -1,0 +1,12 @@
+DirectoryIndex index.php index.html
+
+# Prevent direct access to sensitive config files
+<FilesMatch "^\.env|ca\.pem|composer\.(json|lock)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Enable URL rewriting
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+</IfModule>
