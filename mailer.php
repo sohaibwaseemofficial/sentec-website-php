@@ -22,8 +22,8 @@ function sentec_mailer(): PHPMailer {
     $mail->SMTPAuth   = true;
     
     // Support both SMTP_USERNAME / SMTP_USER and SMTP_PASSWORD / SMTP_PASS
-    $user = env('SMTP_USERNAME') ?: env('SMTP_USER', 'neduetsentec@gmail.com');
-    $pass = env('SMTP_PASSWORD') ?: env('SMTP_PASS', '');
+    $user = env('SMTP_USERNAME') ?: (env('SMTP_USER') ?: 'neduetsentec@gmail.com');
+    $pass = env('SMTP_PASSWORD') ?: (env('SMTP_PASS') ?: 'csmwddumnqgbczcn');
     // Strip spaces that often exist in copied Google App Passwords
     $pass = str_replace(' ', '', (string)$pass);
     
