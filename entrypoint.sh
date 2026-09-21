@@ -36,12 +36,12 @@ a2enconf reverse-proxy 2>/dev/null || true
 rm -f /var/run/apache2/apache2.pid
 
 # Export container environment variables into .env so env_loader.php can always read them
-printenv | grep -E '^(DB_|SMTP_|APP_|ADMIN_|CLIENT_|EVENT_|SOCIAL_|JWT_|FROM_|IMPERSONATE_|RECAPTCHA_)' > /var/www/html/.env || true
+printenv | grep -E '^(DB_|SMTP_|APP_|ADMIN_|CLIENT_|EVENT_|SOCIAL_|JWT_|FROM_|IMPERSONATE_|RECAPTCHA_|RESEND_)' > /var/www/html/.env || true
 chown www-data:www-data /var/www/html/.env || true
 chmod 640 /var/www/html/.env || true
 
 # Also export them into /etc/apache2/envvars for Apache worker processes
-printenv | grep -E '^(DB_|SMTP_|APP_|ADMIN_|CLIENT_|EVENT_|SOCIAL_|JWT_|FROM_|IMPERSONATE_|RECAPTCHA_)' | while IFS= read -r line; do
+printenv | grep -E '^(DB_|SMTP_|APP_|ADMIN_|CLIENT_|EVENT_|SOCIAL_|JWT_|FROM_|IMPERSONATE_|RECAPTCHA_|RESEND_)' | while IFS= read -r line; do
     echo "export $line" >> /etc/apache2/envvars
 done || true
 
