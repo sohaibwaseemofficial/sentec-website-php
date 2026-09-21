@@ -7,7 +7,7 @@
                 
                 <!-- Col 1: Brand & Bio -->
                 <div class="md:col-span-5 space-y-4">
-                    <a href="index.php" class="flex items-center gap-3 group text-decoration-none inline-flex">
+                    <a href="index" class="flex items-center gap-3 group text-decoration-none inline-flex">
                         <div class="w-9 h-9 rounded-full bg-transparent border border-white/[0.12] flex items-center justify-center p-1 overflow-hidden">
                             <img src="images/SENTECNEWWHITELOGO.webp" alt="SENTEC" class="w-full h-full object-contain">
                         </div>
@@ -28,12 +28,12 @@
                 <div class="md:col-span-3 space-y-3">
                     <span class="text-xs font-mono text-[#f15a24] uppercase tracking-widest block mb-4">NAVIGATION</span>
                     <ul class="space-y-2.5 text-sm font-sans">
-                        <li><a href="index.php#about" class="hover:text-white transition-colors">About SENTEC</a></li>
-                        <li><a href="team.php" class="hover:text-white transition-colors">Executive Team</a></li>
-                        <li><a href="index.php#events" class="hover:text-white transition-colors">Events & Olympiads</a></li>
-                        <li><a href="OurPartners.php" class="hover:text-white transition-colors">Industry Partners</a></li>
-                        <li><a href="gallery.php" class="hover:text-white transition-colors">Media Gallery</a></li>
-                        <li><a href="contact.php" class="hover:text-white transition-colors">Contact Us</a></li>
+                        <li><a href="index#about" class="hover:text-white transition-colors">About SENTEC</a></li>
+                        <li><a href="team" class="hover:text-white transition-colors">Executive Team</a></li>
+                        <li><a href="index#events" class="hover:text-white transition-colors">Events & Olympiads</a></li>
+                        <li><a href="OurPartners" class="hover:text-white transition-colors">Industry Partners</a></li>
+                        <li><a href="gallery" class="hover:text-white transition-colors">Media Gallery</a></li>
+                        <li><a href="contact" class="hover:text-white transition-colors">Contact Us</a></li>
                     </ul>
                 </div>
 

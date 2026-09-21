@@ -25,7 +25,7 @@ function displayMessage($message, $type = 'danger') {
                     <div style="font-family: \'IBM Plex Mono\', monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; color: #7b9096; margin-bottom: 10px;">' . $tag . '</div>
                     <h2 style="font-family: \'Space Grotesk\', -apple-system, sans-serif; font-size: 32px; font-weight: 600; color: #f4f1eb; margin: 0 0 16px; letter-spacing: -0.02em;">' . $title . '</h2>
                     <p style="font-family: \'Space Grotesk\', -apple-system, sans-serif; color: #9aa3a3; font-size: 15px; line-height: 1.65; margin: 0 0 32px;">' . htmlspecialchars($message) . '</p>
-                    <a href="contact.php" class="signal-btn" style="display: inline-flex; text-decoration: none;">
+                    <a href="contact" class="signal-btn" style="display: inline-flex; text-decoration: none;">
                         <span>RETURN TO CONTACT // OPEN CHANNEL</span>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="19" y1="12" x2="5" y2="12"></line>

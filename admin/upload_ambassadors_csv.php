@@ -169,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                 <button class="btn-neon w-100" type="submit">
                     <i class="fas fa-cloud-upload-alt me-2"></i> Upload & Import
                 </button>
-                                <a href="manage_ambassadors.php?type=<?php echo urlencode($type); ?>" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center" style="text-decoration:none; color:#ccc;">Cancel</a>
+                                <a href="manage_ambassadors?type=<?php echo urlencode($type); ?>" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center" style="text-decoration:none; color:#ccc;">Cancel</a>
             </div>
           </form>
       </div>

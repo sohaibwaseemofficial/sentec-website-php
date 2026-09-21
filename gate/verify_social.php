@@ -237,7 +237,7 @@ if ($attendeeMode && !empty($participants)) {
             <i class="fas fa-check-circle" style="font-size: 6rem; margin-bottom: 20px;"></i>
             <h1 style="margin: 0; font-size: 3.5rem; letter-spacing: 2px;">WELCOME!</h1>
             <p style="color: #000; font-weight: bold; opacity: 0.7; font-size: 1.2rem; margin-top: 10px;">Guest Confirmed</p>
-            <a href="index.php" style="margin-top: 50px; background: #000; color: #00FF94; padding: 15px 40px; border-radius: 50px; font-weight: bold; font-size: 1.1rem; text-transform: uppercase; text-decoration:none;">Scan Next</a>
+            <a href="index" style="margin-top: 50px; background: #000; color: #00FF94; padding: 15px 40px; border-radius: 50px; font-weight: bold; font-size: 1.1rem; text-transform: uppercase; text-decoration:none;">Scan Next</a>
         </div>
     <?php endif; ?>
 
@@ -246,7 +246,7 @@ if ($attendeeMode && !empty($participants)) {
             <i class="fas fa-search" style="font-size: 3rem; color: #333; margin-bottom: 20px;"></i>
             <h3 style="color:#ff4444;">No Record Found</h3>
             <p>Request could not be located.</p>
-            <a href="index.php" class="back-link">Back to Dashboard</a>
+            <a href="index" class="back-link">Back to Dashboard</a>
         <?php else: ?>
             <?php if (count($rosterTabs) > 1): ?>
                 <div class="member-tabs">
@@ -281,7 +281,7 @@ if ($attendeeMode && !empty($participants)) {
                 <p style="font-size:0.8rem; color:#ff4444;">
                     Scanned at: <?php echo $displayEntry ? date('h:i A', strtotime($displayEntry)) : '—'; ?>
                 </p>
-                <a href="index.php" class="back-link">Scan Next</a>
+                <a href="index" class="back-link">Scan Next</a>
             
             <?php else: ?>
                 <div class="badge st-valid">VALID PASS</div>

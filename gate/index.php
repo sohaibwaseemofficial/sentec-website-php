@@ -87,7 +87,7 @@ if (!empty($search)) {
 
     <div class="header">
         <h2 style="margin:0;">SENTEC<span style="color:#00FF94">.</span></h2>
-        <a href="index.php?logout=1" class="logout"><i class="fas fa-sign-out-alt"></i> Exit</a>
+        <a href="index?logout=1" class="logout"><i class="fas fa-sign-out-alt"></i> Exit</a>
     </div>
 
     <div class="card">

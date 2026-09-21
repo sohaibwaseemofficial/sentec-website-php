@@ -122,7 +122,7 @@ if (mysqli_num_rows($checkResult) > 0) {
                 <code>admin/migrate_add_event_link.php</code>
               </div>";
         
-        echo "<p><a href='index.php' class='btn'>Go to Admin Dashboard</a></p>";
+        echo "<p><a href='index' class='btn'>Go to Admin Dashboard</a></p>";
     } else {
         echo "<div class='error'>
                 <strong>❌ Migration Failed</strong><br>

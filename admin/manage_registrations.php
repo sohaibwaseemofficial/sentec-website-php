@@ -368,7 +368,7 @@ function toggleInst(type, val) {
         
         <div class="d-flex gap-2">
             <input type="text" id="searchBox" placeholder="Search Team, Leader, CNIC..." style="background:#0b1120; border:1px solid #333; color:#fff; padding:10px 20px; border-radius:30px; width:300px;">
-            <a href="download_registrations_csv.php" class="btn-neon btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
+            <a href="download_registrations_csv" class="btn-neon btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
         </div>
     </div>
 

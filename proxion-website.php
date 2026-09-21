@@ -246,15 +246,15 @@ $event_data = [
 
     <nav id="navbar">
             <div class="nav-inner">
-                <a href="index.php" class="nav-logo">
+                <a href="index" class="nav-logo">
                     SENTEC<span>.</span>
                 </a>
                 <ul class="nav-links">
-                    <li><a href="index.php">Home</a></li>
+                    <li><a href="index">Home</a></li>
                     <li><a href="#technical-modules">Modules</a></li>
                     <li><a href="#register">How to Join</a></li>
                 </ul>
-                <a href="login.php" class="nav-cta">REGISTER NOW</a>
+                <a href="login" class="nav-cta">REGISTER NOW</a>
             </div>
     </nav>
 
@@ -425,8 +425,8 @@ $event_data = [
             </div>
         </div>
         <div class="register-cta reveal-up">
-            <a href="signup.php" class="btn-primary btn-large">CREATE ACCOUNT TO REGISTER</a>
-            <p class="register-login">Already have an account? <a href="login.php">Login here</a></p>
+            <a href="signup" class="btn-primary btn-large">CREATE ACCOUNT TO REGISTER</a>
+            <p class="register-login">Already have an account? <a href="login">Login here</a></p>
         </div>
         </div>
     </section>
@@ -483,7 +483,7 @@ $event_data = [
                                 </div>
                             </div>
                         </div>
-                        <a href="login.php" 
+                        <a href="login" 
                             class="modal-btn-reg">PROCEED TO REGISTRATION
                         </a>
                     </div>

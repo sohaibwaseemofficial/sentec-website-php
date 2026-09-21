@@ -187,7 +187,7 @@ $socialCount = social_registrations_count($conn);
             <button class="btn btn-outline-info" type="button" id="save-social-limit" data-current="<?php echo $socialLimit ?? ''; ?>">Save</button>
         </div>
         <span class="text-muted small">Current: <?php echo (int) $socialCount; ?> registrations</span>
-        <a href="download_social_registrations_csv.php" class="btn btn-outline-success">
+        <a href="download_social_registrations_csv" class="btn btn-outline-success">
             <i class="fas fa-file-csv me-2"></i>Export CSV
         </a>
     </div>

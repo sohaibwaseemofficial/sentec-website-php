@@ -129,10 +129,10 @@ try {
         </div>
     <?php else: ?>
         <div class="d-flex flex-wrap gap-2 mb-4">
-            <a class="btn <?php echo $type === 'volunteer' ? 'btn-neon' : 'btn-outline-light'; ?>" href="manage_ambassadors.php?type=volunteer" style="min-width:180px;">
+            <a class="btn <?php echo $type === 'volunteer' ? 'btn-neon' : 'btn-outline-light'; ?>" href="manage_ambassadors?type=volunteer" style="min-width:180px;">
                 <i class="fas fa-hands-helping me-2"></i> Volunteers
             </a>
-            <a class="btn <?php echo $type === 'brand' ? 'btn-neon' : 'btn-outline-light'; ?>" href="manage_ambassadors.php?type=brand" style="min-width:180px;">
+            <a class="btn <?php echo $type === 'brand' ? 'btn-neon' : 'btn-outline-light'; ?>" href="manage_ambassadors?type=brand" style="min-width:180px;">
                 <i class="fas fa-user-tie me-2"></i> Brand Ambassadors
             </a>
         </div>
@@ -154,10 +154,10 @@ try {
                 </form>
             </div>
             <div class="d-flex gap-2">
-                <a class="btn-neon" href="upload_ambassadors_csv.php?type=<?php echo urlencode($type); ?>">
+                <a class="btn-neon" href="upload_ambassadors_csv?type=<?php echo urlencode($type); ?>">
                     <i class="fas fa-file-upload me-1"></i> Import CSV
                 </a>
-                <a class="btn-neon" href="export_ambassadors_csv.php?type=<?php echo urlencode($type); ?>">
+                <a class="btn-neon" href="export_ambassadors_csv?type=<?php echo urlencode($type); ?>">
                     <i class="fas fa-file-download me-1"></i> Export CSV
                 </a>
                 <button id="bulkEmailBtn" class="btn-neon" data-type="<?php echo htmlspecialchars($type); ?>">

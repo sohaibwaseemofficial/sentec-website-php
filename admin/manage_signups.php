@@ -19,7 +19,7 @@ if ($result) {
 <div class="glass-panel mb-4">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
         <h4 class="text-white m-0">Total Signups: <?php echo count($users); ?></h4>
-        <a href="download_signups_csv.php" class="btn-neon btn-sm">
+        <a href="download_signups_csv" class="btn-neon btn-sm">
             <i class="fas fa-file-csv"></i> Download CSV
         </a>
     </div>

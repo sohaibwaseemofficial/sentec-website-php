@@ -100,10 +100,10 @@ if ($result->num_rows > 0) {
 echo "<hr style='border-color:#333; margin:30px 0;'>
     <h3>🔧 Bulk Fix</h3>
     <p>Click below to fix ALL payment statuses at once (sets empty status to 'submitted')</p>
-    <a href='fix_payment.php?bulk=1' class='btn btn-warning' onclick='return confirm(\"Fix ALL payment statuses?\")'>Bulk Fix All</a>
+    <a href='fix_payment?bulk=1' class='btn btn-warning' onclick='return confirm(\"Fix ALL payment statuses?\")'>Bulk Fix All</a>
     
     <hr style='border-color:#333; margin:30px 0;'>
-    <p><a href='manage_registrations.php' class='btn btn-outline-light'>← Back to Registrations</a></p>
+    <p><a href='manage_registrations' class='btn btn-outline-light'>← Back to Registrations</a></p>
     </div>
 </body>
 </html>";

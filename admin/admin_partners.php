@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_id'])) {
     if (mysqli_query($conn, $updateQuery)) {
         if (function_exists('invalidate_cache')) invalidate_cache('public_partners_data');
         echo "<script>alert('Partner updated successfully!');</script>";
-        echo "<script>window.location.href='admin_partners.php';</script>";
+        echo "<script>window.location.href='admin_partners';</script>";
     } else {
         echo "<p class='text-danger'>Error updating partner: " . mysqli_error($conn) . "</p>";
     }
@@ -85,7 +85,7 @@ if (isset($_GET['delete'])) {
     $query = "DELETE FROM partners WHERE id = '$id'";
     if (mysqli_query($conn, $query)) {
         if (function_exists('invalidate_cache')) invalidate_cache('public_partners_data');
-        echo "<script>alert('Partner deleted successfully!'); window.location.href='admin_partners.php';</script>";
+        echo "<script>alert('Partner deleted successfully!'); window.location.href='admin_partners';</script>";
     } else {
         echo "<script>alert('Error: " . mysqli_error($conn) . "');</script>";
     }

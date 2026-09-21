@@ -127,7 +127,7 @@ $adminRole = $_SESSION['admin_role'] ?? 'moderator';
 <!-- Sidebar inspired by AdminLayout.tsx -->
 <aside class="sidebar" id="adminSidebar">
     <div class="sidebar-header">
-        <a href="index.php" class="logo-lockup">
+        <a href="index" class="logo-lockup">
             <span class="logo-text">SENTEC</span>
             <span class="logo-badge">ADMIN</span>
         </a>
@@ -146,7 +146,7 @@ $adminRole = $_SESSION['admin_role'] ?? 'moderator';
             </a>
         <?php endforeach; ?>
 
-        <a href="admin_logout.php" class="logout">
+        <a href="admin_logout" class="logout">
             <i class="fas fa-sign-out-alt"></i>
             <span>Logout</span>
         </a>
@@ -162,7 +162,7 @@ $adminRole = $_SESSION['admin_role'] ?? 'moderator';
                 <span class="badge bg-warning text-dark font-mono text-[10px]">Super</span>
             <?php endif; ?>
         </div>
-        <a href="../index.php" target="_blank" class="d-flex align-items-center justify-content-center gap-1 text-decoration-none py-1.5 px-2 rounded" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); border: 1px solid var(--line); background: #080b0d;">
+        <a href="../index" target="_blank" class="d-flex align-items-center justify-content-center gap-1 text-decoration-none py-1.5 px-2 rounded" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); border: 1px solid var(--line); background: #080b0d;">
             <span>View Live Website</span>
             <i class="fas fa-external-link-alt" style="font-size: 9px;"></i>
         </a>

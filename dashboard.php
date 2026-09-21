@@ -269,17 +269,17 @@ if($checkTable && $checkTable->num_rows > 0) {
 
         <div class="d-flex gap-2 flex-wrap">
             <?php if ($eventOpen): ?>
-                <a href="event_registration.php" class="btn-action-primary">
+                <a href="event_registration" class="btn-action-primary">
                     <i class="fas fa-cubes"></i> Register Module
                 </a>
             <?php endif; ?>
             <?php if ($socialOpen): ?>
-                <a href="social_register.php" class="btn-action-outline">
+                <a href="social_register" class="btn-action-outline">
                     <i class="fas fa-ticket-alt"></i> Social Pass
                 </a>
             <?php endif; ?>
             <?php if ($electionVisible): ?>
-                <a href="election_portal.php" class="btn-action-outline">
+                <a href="election_portal" class="btn-action-outline">
                     <i class="fas fa-vote-yea"></i> Elections
                 </a>
             <?php endif; ?>
@@ -306,7 +306,7 @@ if($checkTable && $checkTable->num_rows > 0) {
                             <i class="fas fa-cubes text-orange-500 me-2"></i> Arena Competitions
                         </h3>
                         <?php if (!empty($registrations) && $eventOpen): ?>
-                            <a href="event_registration.php" class="btn-action-outline">
+                            <a href="event_registration" class="btn-action-outline">
                                 <i class="fas fa-plus me-1"></i> New Registration
                             </a>
                         <?php endif; ?>
@@ -319,7 +319,7 @@ if($checkTable && $checkTable->num_rows > 0) {
                                     <i class="fas fa-rocket mb-3 text-orange-500" style="font-size:2.8rem;"></i>
                                     <h4 class="text-white">Ready to Compete?</h4>
                                     <p class="mb-3" style="color: #888;">Register your team across software, esports, or engineering modules.</p>
-                                    <a href="event_registration.php" class="btn-action-primary">Register Now</a>
+                                    <a href="event_registration" class="btn-action-primary">Register Now</a>
                                 <?php else: ?>
                                     <i class="fas fa-lock" style="font-size: 2.5rem; color: #666; margin-bottom: 15px;"></i>
                                     <p class="mb-0" style="color: #888;">Team registrations are currently closed.</p>
@@ -393,7 +393,7 @@ if($checkTable && $checkTable->num_rows > 0) {
                                 <i class="fas fa-glass-cheers text-orange-500" style="font-size: 3.5rem; margin-bottom: 16px;"></i>
                                 <h4 class="text-white">Ruh-e-Raqs</h4>
                                 <p style="color: #888; margin-bottom: 24px;">Join the annual SENTEC banquet, networking, and cultural evening.</p>
-                                <a href="social_register.php" class="btn-action-primary w-100 justify-content-center">Get Social Pass</a>
+                                <a href="social_register" class="btn-action-primary w-100 justify-content-center">Get Social Pass</a>
                             <?php else: ?>
                                 <i class="fas fa-lock" style="font-size: 2.5rem; color: #666; margin-bottom: 15px;"></i>
                                 <p class="mb-0" style="color: #888;">Social night bookings are closed.</p>
@@ -424,7 +424,7 @@ if($checkTable && $checkTable->num_rows > 0) {
                                 <?php echo date('M j, g:i A', strtotime($latestElection['start_time'])); ?> to <?php echo date('M j, g:i A', strtotime($latestElection['end_time'])); ?>
                             </div>
                         <?php endif; ?>
-                        <a href="election_portal.php" class="btn-action-primary">
+                        <a href="election_portal" class="btn-action-primary">
                             <i class="fas fa-lock me-2"></i> Open Polling Portal
                         </a>
                     </div>
@@ -472,7 +472,7 @@ if($checkTable && $checkTable->num_rows > 0) {
                         <?php endforeach; ?>
                     </div>
                     <div class="text-center mt-4">
-                        <a href="election_portal.php" class="btn-clear" style="border-color:#00d2ff; color:#00d2ff;">
+                        <a href="election_portal" class="btn-clear" style="border-color:#00d2ff; color:#00d2ff;">
                             <i class="fas fa-eye me-2"></i> Open Full Results Page
                         </a>
                     </div>

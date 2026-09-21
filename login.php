@@ -73,7 +73,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     'role' => 'ambassador'
                 ];
                 $conn->query("UPDATE brand_ambassadors SET last_login = NOW() WHERE id=" . (int)$amb['id']);
-                echo "<script>window.location.href='ambassador_dashboard.php';</script>"; exit;
+                echo "<script>window.location.href='ambassador_dashboard';</script>"; exit;
             } else {
                 $msg = "<div class='p-3.5 mb-5 rounded-lg bg-red-500/10 border border-red-500/40 text-red-300 text-xs font-mono'>Invalid ambassador credentials.</div>";
             }
@@ -160,7 +160,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 </div>
 
                 <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-                    <a href="forgot_password.php" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--orange); text-decoration: none;">
+                    <a href="forgot_password" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--orange); text-decoration: none;">
                         Forgot password?
                     </a>
                 </div>
@@ -173,7 +173,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 </div>
 
                 <div style="margin-top: 28px; text-align: center; font-size: 13px; color: var(--muted); font-family: 'Space Grotesk', sans-serif; line-height: 1.6;">
-                    Don’t have an account yet? <a href="signup.php" style="color: var(--orange); font-weight: 700; text-decoration: none; display: block; margin-top: 2px;">Create Account</a>
+                    Don’t have an account yet? <a href="signup" style="color: var(--orange); font-weight: 700; text-decoration: none; display: block; margin-top: 2px;">Create Account</a>
                 </div>
             </form>
         </section>

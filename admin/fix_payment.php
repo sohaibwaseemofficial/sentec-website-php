@@ -23,7 +23,7 @@ if ($bulk) {
         echo "<div style='background:#00FF94; color:#000; padding:20px; font-family:sans-serif; text-align:center;'>
             <h2>✅ Bulk Fix Complete!</h2>
             <p>$affected payment status(es) updated to 'submitted'.</p>
-            <a href='check_payments.php'>Back to List</a>
+            <a href='check_payments'>Back to List</a>
         </div>";
     } else {
         echo "Error: " . $conn->error;
@@ -37,7 +37,7 @@ if ($bulk) {
         echo "<div style='background:#00FF94; color:#000; padding:20px; font-family:sans-serif; text-align:center;'>
             <h2>✅ Payment Status Fixed!</h2>
             <p>Registration #$id updated to 'submitted'.</p>
-            <a href='check_payments.php'>Back to List</a>
+            <a href='check_payments'>Back to List</a>
         </div>";
     } else {
         echo "Error: " . $conn->error;

@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <p class="text-muted">Update team and participant details.</p>
     </div>
     <div>
-        <a href="manage_registrations.php" class="btn btn-sm btn-outline-light"><i class="fas fa-arrow-left"></i> Back</a>
+        <a href="manage_registrations" class="btn btn-sm btn-outline-light"><i class="fas fa-arrow-left"></i> Back</a>
     </div>
 </div>
 
@@ -285,7 +285,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="col-12 mt-3 d-flex justify-content-end gap-2">
-            <a href="manage_registrations.php" class="btn btn-outline-secondary">Cancel</a>
+            <a href="manage_registrations" class="btn btn-outline-secondary">Cancel</a>
             <button class="btn-neon" type="submit">Save Changes</button>
         </div>
     </form>

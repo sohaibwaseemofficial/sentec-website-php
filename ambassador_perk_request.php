@@ -20,7 +20,7 @@ $perkThreshold = $validTypes[$ambType];
 // Detect columns
 $hasPerk = false; $hasInitialPwd=false;
 try { $c=$conn->query("SHOW COLUMNS FROM brand_ambassadors LIKE 'perk_requested'"); $hasPerk = $c && $c->num_rows>0; } catch(Exception $e){}
-if (!$hasPerk) { echo '<script>alert("Perk tracking not configured yet. Contact admin.");window.location.href="ambassador_dashboard.php";</script>'; exit; }
+if (!$hasPerk) { echo '<script>alert("Perk tracking not configured yet. Contact admin.");window.location.href="ambassador_dashboard";</script>'; exit; }
 
 // Check approved teams count
 $approved = 0; $stmt = $conn->prepare("SELECT COUNT(*) c FROM event_registrations WHERE brand_ambassador_code=? AND status='approved'");
@@ -104,13 +104,13 @@ if ($action==='request') {
   if ($approvedWithManual < $perkThreshold) {
     $msg = "You need at least {$perkThreshold} approved team" . ($perkThreshold > 1 ? 's' : '') . " to request the perk. Current effective count: {$approvedWithManual}";
     if ($manualCredit > 0) { $msg .= " (includes {$manualCredit} manual bonus)"; }
-    echo '<script>alert('.json_encode($msg).');window.location.href="ambassador_dashboard.php";</script>'; exit;
+    echo '<script>alert('.json_encode($msg).');window.location.href="ambassador_dashboard";</script>'; exit;
   }
   // Update request status if not already requested/granted
   $chk = $conn->prepare("SELECT perk_requested, perk_granted FROM brand_ambassadors WHERE id=? LIMIT 1");
   $chk->bind_param('i',$aid); $chk->execute(); $ri=$chk->get_result()->fetch_assoc(); $chk->close();
-  if ($ri && $ri['perk_granted']) { echo '<script>alert("Perk already granted.");window.location.href="ambassador_dashboard.php";</script>'; exit; }
-  if ($ri && $ri['perk_requested']) { echo '<script>alert("Perk already requested and pending.");window.location.href="ambassador_dashboard.php";</script>'; exit; }
+  if ($ri && $ri['perk_granted']) { echo '<script>alert("Perk already granted.");window.location.href="ambassador_dashboard";</script>'; exit; }
+  if ($ri && $ri['perk_requested']) { echo '<script>alert("Perk already requested and pending.");window.location.href="ambassador_dashboard";</script>'; exit; }
   $up = $conn->prepare("UPDATE brand_ambassadors SET perk_requested=1, perk_requested_at=NOW() WHERE id=?"); $up->bind_param('i',$aid); $up->execute(); $up->close();
   // Notify admin via email (if FROM_EMAIL configured)
   try {
@@ -125,7 +125,7 @@ if ($action==='request') {
       @$mailer->send();
     }
   } catch(Exception $e) {}
-  echo '<script>alert("Perk request submitted successfully.");window.location.href="ambassador_dashboard.php";</script>'; exit;
+  echo '<script>alert("Perk request submitted successfully.");window.location.href="ambassador_dashboard";</script>'; exit;
 }
 
-echo '<script>window.location.href="ambassador_dashboard.php";</script>';
+echo '<script>window.location.href="ambassador_dashboard";</script>';

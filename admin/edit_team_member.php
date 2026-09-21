@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-grow-1" style="background: var(--accent); color: #000; border: none;">Save Changes</button>
-                <a href="manage_team.php" class="btn btn-outline-light">Cancel</a>
+                <a href="manage_team" class="btn btn-outline-light">Cancel</a>
             </div>
         </form>
     </div>

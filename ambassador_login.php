@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['ambassador_code'] = $amb['code'];
                 $_SESSION['ambassador_type'] = $ambType;
                 $conn->query("UPDATE brand_ambassadors SET last_login = NOW() WHERE id=" . (int)$amb['id']);
-                echo "<script>window.location.href='ambassador_dashboard.php';</script>"; exit;
+                echo "<script>window.location.href='ambassador_dashboard';</script>"; exit;
             } else {
                 $msg = "<div class='alert alert-danger'>Invalid credentials.</div>";
             }
@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div style="margin-bottom: 28px;">
                     <div style="display: flex; justify-content: space-between; align-items: baseline;">
                         <label for="ambPassInput">PASSWORD</label>
-                        <a href="forgot_password.php" style="font-size: 10px; font-family: 'IBM Plex Mono', monospace; color: var(--orange); text-decoration: none; letter-spacing: 0.06em;">
+                        <a href="forgot_password" style="font-size: 10px; font-family: 'IBM Plex Mono', monospace; color: var(--orange); text-decoration: none; letter-spacing: 0.06em;">
                             FORGOT PASSWORD?
                         </a>
                     </div>
@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
 
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line);">
-                    <a href="login.php" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: #9aa3a3; text-decoration: none;">
+                    <a href="login" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: #9aa3a3; text-decoration: none;">
                         PARTICIPANT? <span style="color: var(--orange); text-decoration: underline;">SIGN IN HERE</span>
                     </a>
                     <button type="submit" class="signal-btn">

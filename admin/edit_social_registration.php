@@ -230,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h2><i class="fas fa-edit me-2"></i>Edit Social Registration #<?php echo htmlspecialchars($registrationId); ?></h2>
         <p class="text-muted mb-0">Update guest details, registration type, and uploaded documents.</p>
     </div>
-    <a href="manage_social.php" class="btn btn-outline-secondary">Back to List</a>
+    <a href="manage_social" class="btn btn-outline-secondary">Back to List</a>
 </div>
 
 <?php echo $statusMessage; ?>
@@ -332,7 +332,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="mt-4">
             <button type="submit" class="btn btn-success">Save Changes</button>
-            <a href="manage_social.php" class="btn btn-outline-secondary">Cancel</a>
+            <a href="manage_social" class="btn btn-outline-secondary">Cancel</a>
         </div>
     </form>
 </div>

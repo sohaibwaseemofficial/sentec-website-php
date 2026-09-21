@@ -93,7 +93,7 @@ if (isset($_GET['edit_vote'])) {
         <div class="glass-panel p-4 mb-4" style="background: rgba(12, 20, 42, 0.95); border: 1px solid #00ffd1; border-radius:16px;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="text-white">Edit Vote #<?php echo (int) $editVote['id']; ?> (<?php echo htmlspecialchars($editVote['position']); ?>)</h4>
-                <a href="audit_elections.php" class="btn btn-sm btn-outline-light">Close Editor</a>
+                <a href="audit_elections" class="btn btn-sm btn-outline-light">Close Editor</a>
             </div>
 
             <form id="editVoteForm" method="POST">

@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $check->bind_param("s", $email);
         $check->execute();
         if ($check->get_result()->num_rows > 0) {
-            $msg = "<div class='alert alert-danger'>Email already registered! <a href='login.php' style='color:var(--accent);'>Login here</a>.</div>";
+            $msg = "<div class='alert alert-danger'>Email already registered! <a href='login' style='color:var(--accent);'>Login here</a>.</div>";
         } else {
             // Generate OTP & Hash Password
             $otp = rand(100000, 999999);
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     
                     // Redirect to Verification Page (use URL-encoded email)
                     $redirEmail = urlencode($email);
-                    echo "<script>window.location.href='verify.php?email={$redirEmail}';</script>";
+                    echo "<script>window.location.href='verify?email={$redirEmail}';</script>";
                     exit;
 
                 } catch (Exception $e) {
@@ -202,7 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
 
                 <div style="margin-top: 24px; text-align: center; font-size: 12px; color: var(--muted); font-family: 'Space Grotesk', sans-serif;">
-                    Already enrolled? <a href="login.php" style="color: var(--orange); font-weight: 600; text-decoration: none;">Sign In</a>
+                    Already enrolled? <a href="login" style="color: var(--orange); font-weight: 600; text-decoration: none;">Sign In</a>
                 </div>
             </form>
         </section>

@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line);">
-                    <a href="login.php" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: #9aa3a3; text-decoration: none;">
+                    <a href="login" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: #9aa3a3; text-decoration: none;">
                         ← RETURN TO <span style="color: var(--orange); text-decoration: underline;">SIGN IN</span>
                     </a>
                     <button type="submit" class="signal-btn">

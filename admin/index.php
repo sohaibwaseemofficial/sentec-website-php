@@ -222,7 +222,7 @@ $past_events = $conn->query("SELECT * FROM events WHERE status = 'past' ORDER BY
             <?php else: ?>
                 <?php foreach ($recentRegistrations as $notif): ?>
                     <li>
-                        <a class="dropdown-item d-flex align-items-start gap-2 py-2" href="manage_registrations.php" style="background: transparent; color: #ccc;">
+                        <a class="dropdown-item d-flex align-items-start gap-2 py-2" href="manage_registrations" style="background: transparent; color: #ccc;">
                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px; background: rgba(241,90,36,0.15);">
                                 <i class="fas fa-user-plus" style="color: var(--accent);"></i>
                             </div>
@@ -241,7 +241,7 @@ $past_events = $conn->query("SELECT * FROM events WHERE status = 'past' ORDER BY
                 <?php endforeach; ?>
             <?php endif; ?>
             <li class="border-top border-secondary mt-2 pt-2 text-center">
-                <a class="dropdown-item text-center" href="manage_registrations.php" style="color: var(--accent);">View All Registrations</a>
+                <a class="dropdown-item text-center" href="manage_registrations" style="color: var(--accent);">View All Registrations</a>
             </li>
         </ul>
     </div>
@@ -396,32 +396,32 @@ $past_events = $conn->query("SELECT * FROM events WHERE status = 'past' ORDER BY
     <h4 class="text-white mb-4"><i class="fas fa-bolt text-warning me-2"></i> Quick Actions</h4>
     <div class="row g-3">
         <div class="col-md-3">
-            <a href="add_event.php" class="btn-neon w-100 text-center" style="padding: 20px;">
+            <a href="add_event" class="btn-neon w-100 text-center" style="padding: 20px;">
                 <i class="fas fa-plus-circle fa-2x mb-2 d-block"></i> Add Event
             </a>
         </div>
         <div class="col-md-3">
-            <a href="manage_registrations.php" class="btn-neon w-100 text-center" style="padding: 20px; border-color: #ffbb33; color: #ffbb33;">
+            <a href="manage_registrations" class="btn-neon w-100 text-center" style="padding: 20px; border-color: #ffbb33; color: #ffbb33;">
                 <i class="fas fa-clipboard-check fa-2x mb-2 d-block"></i> Review Applications
             </a>
         </div>
         <div class="col-md-3">
-            <a href="manage_team.php" class="btn-neon w-100 text-center" style="padding: 20px; border-color: #00d2ff; color: #00d2ff;">
+            <a href="manage_team" class="btn-neon w-100 text-center" style="padding: 20px; border-color: #00d2ff; color: #00d2ff;">
                 <i class="fas fa-users fa-2x mb-2 d-block"></i> Manage Team
             </a>
         </div>
         <div class="col-md-3">
-            <a href="manage_gallery.php" class="btn-neon w-100 text-center" style="padding: 20px; border-color: #ff5555; color: #ff5555;">
+            <a href="manage_gallery" class="btn-neon w-100 text-center" style="padding: 20px; border-color: #ff5555; color: #ff5555;">
                 <i class="fas fa-images fa-2x mb-2 d-block"></i> Upload Photos
             </a>
         </div>
         <div class="col-md-3">
-            <a href="manage_ambassadors.php" class="btn-neon w-100 text-center" style="padding: 20px; border-color: #7c4dff; color: #7c4dff;">
+            <a href="manage_ambassadors" class="btn-neon w-100 text-center" style="padding: 20px; border-color: #7c4dff; color: #7c4dff;">
                 <i class="fas fa-user-tie fa-2x mb-2 d-block"></i> Manage Ambassadors
             </a>
         </div>
         <div class="col-md-3">
-            <a href="manage_elections.php" class="btn-neon w-100 text-center" style="padding: 20px; border-color: #00d2ff; color: #00d2ff;">
+            <a href="manage_elections" class="btn-neon w-100 text-center" style="padding: 20px; border-color: #00d2ff; color: #00d2ff;">
                 <i class="fas fa-vote-yea fa-2x mb-2 d-block"></i> Manage Elections
             </a>
         </div>
@@ -462,7 +462,7 @@ $past_events = $conn->query("SELECT * FROM events WHERE status = 'past' ORDER BY
 <div class="glass-panel mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="text-white m-0"><i class="fas fa-trophy me-2" style="color: gold;"></i> Ambassador Leaderboard</h4>
-        <a href="manage_ambassadors.php" class="btn btn-sm btn-outline-light">View All</a>
+        <a href="manage_ambassadors" class="btn btn-sm btn-outline-light">View All</a>
     </div>
     <div class="table-responsive">
         <table class="table table-dark table-hover mb-0" style="background: transparent;">
@@ -533,7 +533,7 @@ $past_events = $conn->query("SELECT * FROM events WHERE status = 'past' ORDER BY
 <!-- Events Row -->
 <div class="row g-4 mb-5">
     <div class="col-md-3">
-        <a href="manage_signups.php" class="text-decoration-none">
+        <a href="manage_signups" class="text-decoration-none">
             <div class="stat-box" style="cursor:pointer;">
                 <h3 style="color: #fff;"><?php echo $stats['total_signups']; ?></h3>
                 <p>Portal Signups</p>
@@ -549,7 +549,7 @@ $past_events = $conn->query("SELECT * FROM events WHERE status = 'past' ORDER BY
         <div class="glass-panel h-100">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="text-white m-0">🚀 Upcoming Events</h4>
-                <a href="add_event.php" class="btn btn-sm btn-outline-success"><i class="fas fa-plus"></i></a>
+                <a href="add_event" class="btn btn-sm btn-outline-success"><i class="fas fa-plus"></i></a>
             </div>
             
             <?php if ($upcoming_events->num_rows > 0): ?>

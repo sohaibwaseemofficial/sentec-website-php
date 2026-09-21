@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h2><i class="fas fa-edit me-2"></i> Edit Event</h2>
         <p class="text-muted">Modify details for: <strong><?php echo htmlspecialchars($event['title']); ?></strong></p>
     </div>
-    <a href="add_event.php" class="btn btn-outline-secondary btn-sm">
+    <a href="add_event" class="btn btn-outline-secondary btn-sm">
         <i class="fas fa-arrow-left me-1"></i> Back to List
     </a>
 </div>
@@ -141,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="submit" class="btn-neon">
                         <i class="fas fa-save me-2"></i> Update Event
                     </button>
-                    <a href="add_event.php" class="btn btn-outline-secondary btn-sm">Cancel Changes</a>
+                    <a href="add_event" class="btn btn-outline-secondary btn-sm">Cancel Changes</a>
                 </div>
             </div>
         </div>

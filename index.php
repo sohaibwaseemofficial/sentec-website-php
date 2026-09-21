@@ -1295,7 +1295,7 @@ $events = get_cached_data('public_events_data', 600, function() {
                     <em>Olympiads.</em>
                 </h2>
             </div>
-            <a class="button button-outline" href="PROXION.php">
+            <a class="button button-outline" href="PROXION">
                 <span>View All Events</span>
                 <i class="fas fa-arrow-up-right text-xs"></i>
             </a>
@@ -1331,7 +1331,7 @@ $events = get_cached_data('public_events_data', 600, function() {
                         <span>Competitive Coding & ML</span>
                         <h3>PROXION<br>Olympiad</h3>
                         <p>14 competitive challenges across algorithms, defect finding, cybersecurity, robotics, and intelligent systems.</p>
-                        <a href="PROXION.php" class="text-link">
+                        <a href="PROXION" class="text-link">
                             <span>View Modules</span>
                             <i class="fas fa-arrow-up-right text-xs"></i>
                         </a>
@@ -1344,7 +1344,7 @@ $events = get_cached_data('public_events_data', 600, function() {
                         <span>Esports & Networking</span>
                         <h3>Battle Arena &<br>Social Gala</h3>
                         <p>High-intensity esports championships, stage performances, and corporate networking gala for innovators.</p>
-                        <a href="social_register.php" class="text-link">
+                        <a href="social_register" class="text-link">
                             <span>Get Passes</span>
                             <i class="fas fa-arrow-up-right text-xs"></i>
                         </a>
@@ -1357,7 +1357,7 @@ $events = get_cached_data('public_events_data', 600, function() {
                         <span>Autonomous Systems</span>
                         <h3>Engineering Project<br>Exhibition</h3>
                         <p>Hardware hackathons, CAD modeling showdowns, and embedded robotics demonstrations judged by industry leaders.</p>
-                        <a href="event_registration.php" class="text-link">
+                        <a href="event_registration" class="text-link">
                             <span>Register Team</span>
                             <i class="fas fa-arrow-up-right text-xs"></i>
                         </a>

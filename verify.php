@@ -18,7 +18,7 @@ if (isset($_GET['email']) && isset($_GET['otp'])) {
         $updateG = $conn->prepare("UPDATE users SET is_verified = 1, otp = NULL WHERE email = ?");
         $updateG->bind_param("s", $get_email);
         if ($updateG->execute()) {
-            echo "<script>alert('Account Verified! Please Login.'); window.location.href='login.php';</script>";
+            echo "<script>alert('Account Verified! Please Login.'); window.location.href='login';</script>";
             exit;
         } else {
             error_log('Verify (GET) update failed: ' . $conn->error);
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $update = $conn->prepare("UPDATE users SET is_verified = 1, otp = NULL WHERE email = ?");
             $update->bind_param("s", $email_input);
             if ($update->execute()) {
-                echo "<script>alert('Account Verified! Please Login.'); window.location.href='login.php';</script>";
+                echo "<script>alert('Account Verified! Please Login.'); window.location.href='login';</script>";
                 exit;
             } else {
                 error_log('Verify (POST) update failed: ' . $conn->error);

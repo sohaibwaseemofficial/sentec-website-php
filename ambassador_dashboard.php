@@ -4,7 +4,7 @@ include 'db_connection.php';
 
 // 1. SECURITY: Redirect if not an Ambassador
 if (!isset($_SESSION['ambassador_id'])) {
-    echo "<script>window.location.href='ambassador_login.php';</script>";
+    echo "<script>window.location.href='ambassador_login';</script>";
     exit;
 }
 

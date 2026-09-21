@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_member'])) {
             $stmt->bind_param("ssssssi", $name, $role, $cat, $imgPath, $linkedin, $domain, $order);
 
             if($stmt->execute()) {
-                echo "<script>window.location.href='manage_team.php';</script>";
+                echo "<script>window.location.href='manage_team';</script>";
             } else {
                 echo "<div class='alert alert-danger'>Error: " . $stmt->error . "</div>";
             }
@@ -39,7 +39,7 @@ if (isset($_POST['update_order'])) {
     $id = (int)$_POST['member_id'];
     $new_order = (int)$_POST['new_sort_order'];
     $conn->query("UPDATE team_members SET sort_order = $new_order WHERE id = $id");
-    echo "<script>window.location.href='manage_team.php';</script>";
+    echo "<script>window.location.href='manage_team';</script>";
 }
 
 // 3. FETCH TEAM (Sorted by your Order)

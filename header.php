@@ -500,7 +500,7 @@ $logoutUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_logout.php'
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             
             <!-- Brand Lockup matching SiteChrome.tsx -->
-            <a href="index.php" class="flex items-center gap-3 group text-decoration-none">
+            <a href="index" class="flex items-center gap-3 group text-decoration-none">
                 <div class="w-10 h-10 rounded-full bg-transparent border border-white/[0.12] flex items-center justify-center p-1 transition-transform group-hover:scale-105 overflow-hidden">
                     <img id="brandHeaderLogo" src="images/SENTECNEWWHITELOGO.webp" alt="SENTEC" class="w-full h-full object-contain">
                 </div>
@@ -511,14 +511,14 @@ $logoutUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_logout.php'
             </a>
 
             <!-- Desktop Navigation Links -->
-            <nav class="hidden md:flex items-center gap-7 text-xs font-mono tracking-wider text-neutral-300">
-                <a href="index.php" class="hover:text-[#f15a24] transition-colors py-1">HOME</a>
-                <a href="index.php#about" class="hover:text-[#f15a24] transition-colors py-1">ABOUT</a>
-                <a href="team.php" class="hover:text-[#f15a24] transition-colors py-1">TEAM</a>
-                <a href="index.php#events" class="hover:text-[#f15a24] transition-colors py-1">EVENTS</a>
-                <a href="OurPartners.php" class="hover:text-[#f15a24] transition-colors py-1">PARTNERS</a>
-                <a href="gallery.php" class="hover:text-[#f15a24] transition-colors py-1">GALLERY</a>
-                <a href="contact.php" class="hover:text-[#f15a24] transition-colors py-1">CONTACT US</a>
+            <nav class="hidden md:flex items-center gap-7 text-xs font-mono tracking-wider text-neutral-300 bg-transparent">
+                <a href="index" class="hover:text-[#f15a24] transition-colors py-1">HOME</a>
+                <a href="index#about" class="hover:text-[#f15a24] transition-colors py-1">ABOUT</a>
+                <a href="team" class="hover:text-[#f15a24] transition-colors py-1">TEAM</a>
+                <a href="index#events" class="hover:text-[#f15a24] transition-colors py-1">EVENTS</a>
+                <a href="OurPartners" class="hover:text-[#f15a24] transition-colors py-1">PARTNERS</a>
+                <a href="gallery" class="hover:text-[#f15a24] transition-colors py-1">GALLERY</a>
+                <a href="contact" class="hover:text-[#f15a24] transition-colors py-1">CONTACT US</a>
             </nav>
 
             <!-- Action Area / Session State Control -->
@@ -590,7 +590,7 @@ $logoutUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_logout.php'
                     </a>
                 <?php else: ?>
                     <!-- STRICT VISITOR STATE: Render exact Login button matching SiteChrome.tsx -->
-                    <a href="login.php" class="nav-cta">
+                    <a href="login" class="nav-cta">
                         <span>LOGIN</span>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="7" y1="17" x2="17" y2="7"></line>
@@ -612,13 +612,13 @@ $logoutUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_logout.php'
         <!-- Mobile Dropdown Drawer -->
         <div id="mobileMenuDropdown" class="hidden md:hidden bg-[#0d1215] border-b border-white/[0.08] px-5 pt-3 pb-6 space-y-3 font-mono text-xs tracking-wider">
             <div class="flex flex-col space-y-2.5 pt-2">
-                <a href="index.php" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">HOME</a>
-                <a href="index.php#about" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">ABOUT</a>
-                <a href="team.php" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">TEAM</a>
-                <a href="index.php#events" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">EVENTS</a>
-                <a href="OurPartners.php" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">PARTNERS</a>
-                <a href="gallery.php" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">GALLERY</a>
-                <a href="contact.php" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">CONTACT US</a>
+                <a href="index" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">HOME</a>
+                <a href="index#about" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">ABOUT</a>
+                <a href="team" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">TEAM</a>
+                <a href="index#events" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">EVENTS</a>
+                <a href="OurPartners" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">PARTNERS</a>
+                <a href="gallery" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">GALLERY</a>
+                <a href="contact" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">CONTACT US</a>
             </div>
 
             <div class="pt-3 flex flex-col gap-2">
@@ -634,7 +634,7 @@ $logoutUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_logout.php'
                         <i class="fas fa-sign-out-alt"></i> LOGOUT
                     </a>
                 <?php else: ?>
-                    <a href="login.php" class="nav-cta" style="width:100%; justify-content:center; padding:10px 14px;">
+                    <a href="login" class="nav-cta" style="width:100%; justify-content:center; padding:10px 14px;">
                         <span>LOGIN</span>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="7" y1="17" x2="17" y2="7"></line>

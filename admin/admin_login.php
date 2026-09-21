@@ -209,7 +209,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             </form>
 
             <div class="mt-8 pt-6 border-t border-white/[0.08] text-center">
-                <a href="../index.php" class="text-xs font-mono text-neutral-400 hover:text-[#f15a24] inline-flex items-center gap-2 transition-colors">
+                <a href="../index" class="text-xs font-mono text-neutral-400 hover:text-[#f15a24] inline-flex items-center gap-2 transition-colors">
                     <i class="fas fa-arrow-left text-[10px]"></i>
                     <span>Back to Live Website</span>
                 </a>

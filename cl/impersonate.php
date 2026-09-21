@@ -84,7 +84,7 @@ $logMsg = date('Y-m-d H:i:s') . " | Client generated impersonation link for User
         <a href="<?php echo $link; ?>" target="_blank" class="btn-solid-green" style="text-decoration:none;">Open Now</a>
     </div>
     <p class="text-muted mt-3">Link expires in 5 minutes. You can generate a new one anytime.</p>
-    <a href="index.php" class="btn-outline-light mt-2" style="display:inline-block;">← Back to Dashboard</a>
+    <a href="index" class="btn-outline-light mt-2" style="display:inline-block;">← Back to Dashboard</a>
 </div>
 </body>
 </html>

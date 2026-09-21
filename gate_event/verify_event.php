@@ -59,7 +59,7 @@ $attendee = $attendeeId ? event_attendee_fetch_with_registration($conn, $attende
             <?php if ($markedDay): ?>
                 <p style="color: #000; font-weight: bold; opacity: 0.7; font-size: 1.2rem; margin-top: 10px;">Day <?php echo $markedDay; ?> marked as PRESENT</p>
             <?php endif; ?>
-            <a href="index.php" style="margin-top: 40px; background: #000; color: #00FF94; padding: 15px 40px; border-radius: 50px; font-weight: bold; font-size: 1.05rem; text-transform: uppercase; text-decoration:none;">Scan Next</a>
+            <a href="index" style="margin-top: 40px; background: #000; color: #00FF94; padding: 15px 40px; border-radius: 50px; font-weight: bold; font-size: 1.05rem; text-transform: uppercase; text-decoration:none;">Scan Next</a>
         </div>
     <?php endif; ?>
 
@@ -68,7 +68,7 @@ $attendee = $attendeeId ? event_attendee_fetch_with_registration($conn, $attende
             <i class="fas fa-search" style="font-size: 3rem; color: #333; margin-bottom: 20px;"></i>
             <h3 style="color:#ff4444;">No Record Found</h3>
             <p>Request could not be located.</p>
-            <a href="index.php" class="back-link">Back to Dashboard</a>
+            <a href="index" class="back-link">Back to Dashboard</a>
         <?php else: ?>
             <?php 
                 $img = (!empty($attendee['face_image'])) ? "../" . ltrim($attendee['face_image'], '/') : "../assets/img/default_user.png";
@@ -88,7 +88,7 @@ $attendee = $attendeeId ? event_attendee_fetch_with_registration($conn, $attende
             <?php if (!$approved): ?>
                 <div class="badge st-used">NOT APPROVED</div>
                 <p style="color:#ff4444; font-size:0.9rem;">Status is "<?php echo ucfirst($attendee['registration_status']); ?>"</p>
-                <a href="index.php" class="back-link">Back to Dashboard</a>
+                <a href="index" class="back-link">Back to Dashboard</a>
             <?php else: ?>
                 <div class="badge st-valid">APPROVED PASS</div>
                 <div class="member-details">
@@ -130,7 +130,7 @@ $attendee = $attendeeId ? event_attendee_fetch_with_registration($conn, $attende
 
                 <?php if ($day1Status === 'present' && $day2Status === 'present'): ?>
                     <p style="color:#00FF94; font-weight:700; margin-top:14px;">Both days completed.</p>
-                    <a href="index.php" class="back-link">Scan Next</a>
+                    <a href="index" class="back-link">Scan Next</a>
                 <?php endif; ?>
             <?php endif; ?>
         <?php endif; ?>

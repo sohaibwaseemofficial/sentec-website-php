@@ -68,7 +68,7 @@ if (!empty($search)) {
         <div class="col-md-3 col-sm-4 d-flex gap-2">
             <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-1"></i> Filter</button>
             <?php if (!empty($search)): ?>
-                <a href="manage_contacts.php" class="btn btn-outline-secondary">Reset</a>
+                <a href="manage_contacts" class="btn btn-outline-secondary">Reset</a>
             <?php endif; ?>
         </div>
     </form>

@@ -697,7 +697,7 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                         <p style="color: var(--muted); font-size: 14px; max-width: 500px; margin: 0 auto 30px auto; line-height: 1.6;">
                             Your team registration has been recorded into the SENTEC database. You can track validation status directly from your participant console.
                         </p>
-                        <a href="dashboard.php" class="btn-step-next" style="text-decoration: none; display: inline-flex;">
+                        <a href="dashboard" class="btn-step-next" style="text-decoration: none; display: inline-flex;">
                             <span>RETURN TO DASHBOARD</span>
                             <span>&rarr;</span>
                         </a>

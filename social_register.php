@@ -27,7 +27,7 @@ if (!$socialOpen) {
                 <i class="fas fa-lock" style="font-size:3rem; color:#ff6a6a;"></i>
                 <h2 class="text-white mt-3">We’re currently full</h2>
                 <p class="text-muted mb-4">Thanks for the overwhelming interest! All available spots are booked right now. Please check back later for any openings.</p>
-                <a href="dashboard.php" class="btn btn-outline-light">Back to Dashboard</a>
+                <a href="dashboard" class="btn btn-outline-light">Back to Dashboard</a>
             </div>
         </div>
     </section>
@@ -39,7 +39,7 @@ if (!$socialOpen) {
 // 3. CHECK EXISTING REGISTRATION
 $check = $conn->query("SELECT id FROM social_registrations WHERE user_id = $user_id");
 if ($check->num_rows > 0) {
-    echo "<script>alert('You have already registered for Social Night!'); window.location.href='dashboard.php';</script>";
+    echo "<script>alert('You have already registered for Social Night!'); window.location.href='dashboard';</script>";
     exit;
 }
 
@@ -162,7 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (!empty($memberPayload)) {
                 social_attendees_sync($conn, $registrationId, $memberPayload, $pay_proof, 'submitted');
             }
-            echo "<script>alert('Registration Submitted Successfully!'); window.location.href='dashboard.php';</script>";
+            echo "<script>alert('Registration Submitted Successfully!'); window.location.href='dashboard';</script>";
         } else {
             $msg = "<div class='alert alert-danger'>DB Error: " . $conn->error . "</div>";
         }

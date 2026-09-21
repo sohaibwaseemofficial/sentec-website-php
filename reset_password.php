@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $showForm) {
                 $del->execute();
                 $del->close();
                 
-                $msg = '<div class="alert alert-success">Password Updated! <a href="login.php">Login Now</a></div>';
+                $msg = '<div class="alert alert-success">Password Updated! <a href="login">Login Now</a></div>';
                 $showForm = false;
             }
             $update->close();
@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $showForm) {
                     </div>
 
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line);">
-                        <a href="login.php" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: #9aa3a3; text-decoration: none;">
+                        <a href="login" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: #9aa3a3; text-decoration: none;">
                             ← RETURN TO <span style="color: var(--orange); text-decoration: underline;">SIGN IN</span>
                         </a>
                         <button type="submit" class="signal-btn">
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $showForm) {
                 </form>
                 <?php else: ?>
                 <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line);">
-                    <a href="login.php" class="signal-btn" style="width: 100%; text-align: center;">
+                    <a href="login" class="signal-btn" style="width: 100%; text-align: center;">
                         <span>RETURN TO SIGN IN</span>
                     </a>
                 </div>

@@ -298,10 +298,10 @@
 
                 <div class="mt-4">
                     <?php if(isset($_SESSION['user_id'])): ?>
-                        <a href="social_register.php" class="btn-neon">Open Registration Form <i class="fas fa-arrow-right ms-2"></i></a>
+                        <a href="social_register" class="btn-neon">Open Registration Form <i class="fas fa-arrow-right ms-2"></i></a>
                     <?php else: ?>
-                        <a href="signup.php" class="btn-neon">Create Account <i class="fas fa-user-plus ms-2"></i></a>
-                        <a href="login.php" style="color:#aaa; margin-left:20px; text-decoration:none;">Login</a>
+                        <a href="signup" class="btn-neon">Create Account <i class="fas fa-user-plus ms-2"></i></a>
+                        <a href="login" style="color:#aaa; margin-left:20px; text-decoration:none;">Login</a>
                     <?php endif; ?>
                 </div>
 
