@@ -1295,7 +1295,7 @@ $events = get_cached_data('public_events_data', 600, function() {
                     <em>Olympiads.</em>
                 </h2>
             </div>
-            <a class="button button-outline" href="PROXION">
+            <a class="button button-outline" href="engineers_code.php">
                 <span>View All Events</span>
                 <i class="fas fa-arrow-up-right text-xs"></i>
             </a>
@@ -1329,9 +1329,9 @@ $events = get_cached_data('public_events_data', 600, function() {
                     <div class="project-index">A / 2026</div>
                     <div class="project-card-content">
                         <span>Competitive Coding & ML</span>
-                        <h3>PROXION<br>Olympiad</h3>
+                        <h3>The Engineer's<br>Code</h3>
                         <p>14 competitive challenges across algorithms, defect finding, cybersecurity, robotics, and intelligent systems.</p>
-                        <a href="PROXION" class="text-link">
+                        <a href="engineers_code.php" class="text-link">
                             <span>View Modules</span>
                             <i class="fas fa-arrow-up-right text-xs"></i>
                         </a>
@@ -1341,13 +1341,12 @@ $events = get_cached_data('public_events_data', 600, function() {
                 <article class="project-card">
                     <div class="project-index">B / 2026</div>
                     <div class="project-card-content">
-                        <span>Esports & Networking</span>
-                        <h3>Battle Arena &<br>Social Gala</h3>
-                        <p>High-intensity esports championships, stage performances, and corporate networking gala for innovators.</p>
-                        <a href="social_register" class="text-link">
-                            <span>Get Passes</span>
-                            <i class="fas fa-arrow-up-right text-xs"></i>
-                        </a>
+                        <span>Upcoming Event</span>
+                        <h3>Coming<br>Soon</h3>
+                        <p>New challenge details will be announced soon.</p>
+                        <span class="text-link" aria-disabled="true" style="opacity: 0.7; pointer-events: none; cursor: default;">
+                            <span>Coming Soon</span>
+                        </span>
                     </div>
                 </article>
 
