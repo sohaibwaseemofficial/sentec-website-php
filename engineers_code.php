@@ -336,37 +336,29 @@
     }
 
     .module-meta {
-        margin-top: 22px;
-        padding-top: 16px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        display: grid;
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
         gap: 10px;
     }
 
-    .module-meta-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
+    .module-meta-pill {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 8px 10px;
         font-family: var(--font-mono);
-    }
-
-    .module-meta-label {
-        color: #8b949a;
+        color: #eef2f5;
         font-size: 0.68rem;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-    }
-
-    .module-meta-value {
-        color: #ffffff;
-        font-size: 0.82rem;
-        font-weight: 700;
-        text-align: right;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .module-register {
-        margin-top: 22px;
+        margin-top: 20px;
         width: 100%;
         display: inline-flex;
         align-items: center;
@@ -530,14 +522,8 @@
                 <h3 class="module-title">' . htmlspecialchars($mod["title"]) . '</h3>
                 <p class="module-desc">' . htmlspecialchars($mod["desc"]) . '</p>
                 <div class="module-meta">
-                    <div class="module-meta-row">
-                        <span class="module-meta-label">Team Size</span>
-                        <span class="module-meta-value">' . htmlspecialchars($mod["team_size"]) . '</span>
-                    </div>
-                    <div class="module-meta-row">
-                        <span class="module-meta-label">Price</span>
-                        <span class="module-meta-value">' . htmlspecialchars($mod["price"]) . '</span>
-                    </div>
+                    <span class="module-meta-pill">' . htmlspecialchars($mod["team_size"]) . '</span>
+                    <span class="module-meta-pill">' . htmlspecialchars($mod["price"]) . '</span>
                 </div>
                 <a href="event_registration" class="btn-neon module-register">Register Here</a>
             </div>';
