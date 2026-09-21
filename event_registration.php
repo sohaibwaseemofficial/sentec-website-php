@@ -95,30 +95,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // C. DYNAMIC VALIDATION LOGIC
         // ---------------------------------------------------------
         $serverLimits = [
-            "Code Rush" => ["min" => 3, "max" => 4],
-            "Algo Masters" => ["min" => 3, "max" => 4],
-            "Race with Code" => ["min" => 3, "max" => 4],
-            "Design Sprint" => ["min" => 3, "max" => 4],
-            "App Innovate" => ["min" => 3, "max" => 4],
-            "Query Quest" => ["min" => 3, "max" => 4],
-            "Maths Clash" => ["min" => 1, "max" => 1], // Usually solo
-            "Bug Busters" => ["min" => 3, "max" => 4],
-            "Web Wizards" => ["min" => 3, "max" => 4],
-            "Blind Coding" => ["min" => 1, "max" => 1],
-            "Valorant" => ["min" => 5, "max" => 5],
-            "CS 2" => ["min" => 5, "max" => 5],
-            "PUBG Mobile" => ["min" => 4, "max" => 4],
-            "COD Mobile" => ["min" => 5, "max" => 5],
-            "Pseudocode Builder" => ["min" => 3, "max" => 4],
-            "Emoji Algorithm" => ["min" => 3, "max" => 4],
-            "AI Energy Saver Dashboard" => ["min" => 2, "max" => 3],
-            "AI Defect Finder (Basic Vision ML)" => ["min" => 2, "max" => 3],
-            "AI Cyber Alert Classifier" => ["min" => 2, "max" => 3],
-            "AI Disaster Aid Planner" => ["min" => 2, "max" => 3],
-            "AI Home Energy Advisor" => ["min" => 2, "max" => 3],
-            "AI Data Insight Tool" => ["min" => 2, "max" => 3],
-            "AI City Planner Map" => ["min" => 2, "max" => 3],
-            "AI Image Checker (Simple Classifier)" => ["min" => 2, "max" => 3]
+            "Line Following Robot (LFR)" => ["min" => 4, "max" => 4, "price" => "PKR 1,200"],
+            "Circuit Designing Competition" => ["min" => 4, "max" => 4, "price" => "PKR 1,200"],
+            "CYBER WAR ROOM" => ["min" => 3, "max" => 4, "price" => "PKR 1,400"],
+            "RAG CHATBOT BUILDER" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
+            "AGENT SPRINT: LIVE GMAIL AUTOMATION" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
+            "AI COURT: FAKE OR REAL" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
+            "DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
+            "BREAK THE RULES" => ["min" => 1, "max" => 1, "price" => "PKR 1,000"],
+            "PitchFest" => ["min" => 4, "max" => 4, "price" => "PKR 500"],
+            "AI DEBATE COLOSSEUM" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
+            "Web Forces" => ["min" => 3, "max" => 4, "price" => "PKR 1,400"],
+            "Reactor Zero" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
+            "Fault Line" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
+
+            // Legacy backward compatibility entries
+            "Code Rush" => ["min" => 3, "max" => 4, "price" => "PKR 1,200"],
+            "Algo Masters" => ["min" => 3, "max" => 4, "price" => "PKR 1,200"],
+            "Race with Code" => ["min" => 3, "max" => 4, "price" => "PKR 1,200"],
+            "Design Sprint" => ["min" => 3, "max" => 4, "price" => "PKR 1,200"],
+            "App Innovate" => ["min" => 3, "max" => 4, "price" => "PKR 1,200"],
+            "Query Quest" => ["min" => 3, "max" => 4, "price" => "PKR 1,200"],
+            "Maths Clash" => ["min" => 1, "max" => 1, "price" => "PKR 500"],
+            "Bug Busters" => ["min" => 3, "max" => 4, "price" => "PKR 1,200"],
+            "Web Wizards" => ["min" => 3, "max" => 4, "price" => "PKR 1,200"],
+            "Blind Coding" => ["min" => 1, "max" => 1, "price" => "PKR 500"],
+            "Valorant" => ["min" => 5, "max" => 5, "price" => "PKR 2,000"],
+            "CS 2" => ["min" => 5, "max" => 5, "price" => "PKR 2,000"],
+            "PUBG Mobile" => ["min" => 4, "max" => 4, "price" => "PKR 1,500"],
+            "COD Mobile" => ["min" => 5, "max" => 5, "price" => "PKR 2,000"],
+            "Pseudocode Builder" => ["min" => 3, "max" => 4, "price" => "PKR 1,200"],
+            "Emoji Algorithm" => ["min" => 3, "max" => 4, "price" => "PKR 1,200"],
+            "AI Disaster Aid Planner" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
+            "AI Energy Saver Dashboard" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"]
         ];
 
         if (isset($serverLimits[$module])) {
@@ -135,9 +144,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Validate maximum participants
-            for ($i = $maxAllowed + 1; $i <= 4; $i++) {
+            for ($i = $maxAllowed + 1; $i <= 6; $i++) {
                 if (!empty($p[$i]['name'])) {
-                    throw new Exception("The $module module only allows a maximum of $maxAllowed participants.");
+                    throw new Exception("The $module module only allows a maximum of $maxAllowed participant" . ($maxAllowed > 1 ? 's' : '') . ".");
                 }
             }
         } else {
@@ -559,24 +568,19 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                         <div style="margin-bottom: 24px;">
                             <label class="signal-label" for="moduleSelectInput">MODULE SELECTION</label>
                             <select id="moduleSelectInput" name="moduleSelection" class="signal-select" onchange="onModuleChange()">
-                                <option value="Code Rush">Code Rush (Coding)</option>
-                                <option value="Algo Masters">Algo Masters (Coding)</option>
-                                <option value="Race with Code">Race with Code (Coding)</option>
-                                <option value="Design Sprint">Design Sprint (Design)</option>
-                                <option value="App Innovate">App Innovate (Software)</option>
-                                <option value="Query Quest">Query Quest (Database)</option>
-                                <option value="Maths Clash">Maths Clash (STEM)</option>
-                                <option value="Bug Busters">Bug Busters (QA)</option>
-                                <option value="Web Wizards">Web Wizards (Web)</option>
-                                <option value="Blind Coding">Blind Coding (Coding)</option>
-                                <option value="Valorant">Valorant (Esports)</option>
-                                <option value="CS 2">CS 2 (Esports)</option>
-                                <option value="PUBG Mobile">PUBG Mobile (Esports)</option>
-                                <option value="COD Mobile">COD Mobile (Esports)</option>
-                                <option value="Pseudocode Builder">Pseudocode Builder (Logic)</option>
-                                <option value="Emoji Algorithm">Emoji Algorithm (Logic)</option>
-                                <option value="AI Disaster Aid Planner">AI Disaster Aid Planner (AI/ML)</option>
-                                <option value="AI Energy Saver Dashboard">AI Energy Saver Dashboard (AI/ML)</option>
+                                <option value="Line Following Robot (LFR)">Line Following Robot (LFR) (Robotics) — Team of 4</option>
+                                <option value="Circuit Designing Competition">Circuit Designing Competition (Hardware) — Team of 4</option>
+                                <option value="CYBER WAR ROOM">CYBER WAR ROOM (Cybersecurity) — Team of 3-4</option>
+                                <option value="RAG CHATBOT BUILDER">RAG CHATBOT BUILDER (AI/ML) — Team of 2-3</option>
+                                <option value="AGENT SPRINT: LIVE GMAIL AUTOMATION">AGENT SPRINT: LIVE GMAIL AUTOMATION (AI/ML) — Team of 2-3</option>
+                                <option value="AI COURT: FAKE OR REAL">AI COURT: FAKE OR REAL (AI/ML) — Team of 2-3</option>
+                                <option value="DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE">DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE (Data) — Team of 2-3</option>
+                                <option value="BREAK THE RULES">BREAK THE RULES (AI/Security) — Solo (1 Member)</option>
+                                <option value="PitchFest">PitchFest (Innovation) — Team of 4</option>
+                                <option value="AI DEBATE COLOSSEUM">AI DEBATE COLOSSEUM (AI/ML) — Team of 2-3</option>
+                                <option value="Web Forces">Web Forces (Web Dev) — Team of 3-4</option>
+                                <option value="Reactor Zero">Reactor Zero (Engineering) — Team of 2-3</option>
+                                <option value="Fault Line">Fault Line (ML/Materials) — Team of 2-3</option>
                             </select>
                         </div>
 
@@ -660,7 +664,7 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                                 <div><span style="color: var(--muted);">TITLE:</span> SENTEC NEDUET</div>
                                 <div><span style="color: var(--muted);">ACCOUNT:</span> 01090105391234</div>
                                 <div><span style="color: var(--muted);">IBAN:</span> PK73MPBL9972477140262131</div>
-                                <div><span style="color: var(--muted);">AMOUNT:</span> <strong style="color: var(--orange);">PKR 1500 / Team</strong></div>
+                                <div><span style="color: var(--muted);">AMOUNT:</span> <strong style="color: var(--orange);" id="moduleFeeDisplay">PKR 1,200 / Team</strong></div>
                             </div>
                         </div>
 
@@ -712,26 +716,99 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
 <script>
-    // Module Rules Database matching React constants
+    // Module Rules Database matching 13 official competition modules
     const MODULE_RULES = {
-        "Code Rush": { min: 3, max: 4, desc: "Speed programming and algorithmic problem solving under pressure." },
-        "Algo Masters": { min: 3, max: 4, desc: "Advanced data structures and computational complexity challenges." },
-        "Race with Code": { min: 3, max: 4, desc: "Fast-paced syntax sprints and logic relay." },
-        "Design Sprint": { min: 3, max: 4, desc: "UI/UX wireframing, interactive prototyping, and user journey audits." },
-        "App Innovate": { min: 3, max: 4, desc: "Full-stack mobile or web application rapid MVP deployment." },
-        "Query Quest": { min: 3, max: 4, desc: "Relational queries, index optimization, and database schema forensics." },
-        "Maths Clash": { min: 1, max: 1, desc: "Individual pure mathematics and discrete probability battle." },
-        "Bug Busters": { min: 3, max: 4, desc: "Code review, security regression audit, and debugging." },
-        "Web Wizards": { min: 3, max: 4, desc: "Responsive layout engineering and state orchestration." },
-        "Blind Coding": { min: 1, max: 1, desc: "Screen-free terminal programming assessing spatial mental modeling." },
-        "Valorant": { min: 5, max: 5, desc: "Tactical 5v5 esports arena championship." },
-        "CS 2": { min: 5, max: 5, desc: "Competitive 5v5 esports major brackets." },
-        "PUBG Mobile": { min: 4, max: 4, desc: "Tactical squad battle royale tournament." },
-        "COD Mobile": { min: 5, max: 5, desc: "Multiplayer 5v5 search & destroy ladder." },
-        "Pseudocode Builder": { min: 3, max: 4, desc: "Algorithm drafting and structural pseudo translation." },
-        "Emoji Algorithm": { min: 3, max: 4, desc: "Cryptic logic decoding and fun puzzle heuristics." },
-        "AI Disaster Aid Planner": { min: 2, max: 3, desc: "Applied predictive analytics for resource distribution." },
-        "AI Energy Saver Dashboard": { min: 2, max: 3, desc: "Smart grid consumption telemetry forecasting." }
+        "Line Following Robot (LFR)": {
+            min: 4,
+            max: 4,
+            price: "PKR 1,200",
+            category: "Robotics",
+            desc: "A practical robotics competition in which autonomous robots follow a predefined track using sensors and control logic."
+        },
+        "Circuit Designing Competition": {
+            min: 4,
+            max: 4,
+            price: "PKR 1,200",
+            category: "Hardware",
+            desc: "An electronics and digital-logic focused competition involving circuit design, problem solving, and circuit debugging through simulation."
+        },
+        "CYBER WAR ROOM": {
+            min: 3,
+            max: 4,
+            price: "PKR 1,400",
+            category: "Cybersecurity",
+            desc: "Cyber War Room is a direct Attack & Defense Web Security Competition. Teams must first build and secure their own functional web application, package it using Docker, and submit it to the organizers. The application is then randomly assigned to another team."
+        },
+        "RAG CHATBOT BUILDER": {
+            min: 2,
+            max: 3,
+            price: "PKR 1,200",
+            category: "AI/ML",
+            desc: "Build a Retrieval-Augmented Generation chatbot from a provided PDF that answers accurately and stays polite under a live adversarial roleplay."
+        },
+        "AGENT SPRINT: LIVE GMAIL AUTOMATION": {
+            min: 2,
+            max: 3,
+            price: "PKR 1,200",
+            category: "AI/ML",
+            desc: "Build an agent that reads real emails from a provided Gmail account, classifies them, drafts policy-based replies, and displays live status on a dashboard."
+        },
+        "AI COURT: FAKE OR REAL": {
+            min: 2,
+            max: 3,
+            price: "PKR 1,200",
+            category: "AI/ML",
+            desc: "Classify six curated items as real or AI-generated and defend the verdict before a judging panel."
+        },
+        "DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE": {
+            min: 2,
+            max: 3,
+            price: "PKR 1,200",
+            category: "Data",
+            desc: "Digitize and clean a single messy hardcopy dataset, build a dashboard, and catch a live injected anomaly."
+        },
+        "BREAK THE RULES": {
+            min: 1,
+            max: 1,
+            price: "PKR 1,000",
+            category: "AI/Security",
+            desc: "Break a locked chatbot's hidden behavioral rules through conversation alone, across a minimum of three rule categories."
+        },
+        "PitchFest": {
+            min: 4,
+            max: 4,
+            price: "PKR 500",
+            category: "Innovation",
+            desc: "Students can come up with their ideas and projects, then present them to a panel of evaluators who assess innovation, feasibility, and impact. The module rewards bold thinking, clear communication, and the ability to turn an idea into a compelling solution."
+        },
+        "AI DEBATE COLOSSEUM": {
+            min: 2,
+            max: 3,
+            price: "PKR 1,200",
+            category: "AI/ML",
+            desc: "Build a competing AI debate persona and face another team's persona live, with a live-updating public transcript and an AI judge deciding the winner."
+        },
+        "Web Forces": {
+            min: 3,
+            max: 4,
+            price: "PKR 1,400",
+            category: "Web Dev",
+            desc: "Teams ship a working full stack app against a live spec that is only revealed at the start of the module. Partway through, a twist is dropped in (a broken API, a new requirement) to test how well the team adapts, not just how fast they can build."
+        },
+        "Reactor Zero": {
+            min: 2,
+            max: 3,
+            price: "PKR 1,200",
+            category: "Engineering",
+            desc: "A high-stakes competition where teams must design and build a reactor from scratch, facing real-world challenges and constraints."
+        },
+        "Fault Line": {
+            min: 2,
+            max: 3,
+            price: "PKR 1,200",
+            category: "ML/Materials",
+            desc: "Teams get mixed data, concrete stress tests and fabric tensile tests, and must build one classifier pipeline that generalizes across material types."
+        }
     };
 
     let currentStep = 1;
@@ -756,13 +833,36 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
 
     function onModuleChange() {
         const mod = document.getElementById('moduleSelectInput').value;
-        const rule = MODULE_RULES[mod] || { min: 3, max: 4, desc: "General competition track rules apply." };
+        const rule = MODULE_RULES[mod] || { min: 2, max: 4, price: "PKR 1,200", desc: "General competition track rules apply." };
         const minCount = rule.min;
         const maxCount = rule.max;
 
-        document.getElementById('constraintTitle').textContent = `Team Constraint: ${minCount === maxCount ? minCount + ' Member' : 'Min ' + minCount + ' to Max ' + maxCount + ' Members'}`;
+        let constraintText = '';
+        if (minCount === 1 && maxCount === 1) {
+            constraintText = 'Solo Participant (1 Member Required)';
+        } else if (minCount === maxCount) {
+            constraintText = `Team Constraint: Exactly ${minCount} Members Required`;
+        } else {
+            constraintText = `Team Constraint: Min ${minCount} to Max ${maxCount} Members`;
+        }
+
+        document.getElementById('constraintTitle').textContent = constraintText;
         document.getElementById('constraintDesc').textContent = rule.desc;
-        document.getElementById('rosterHeading').textContent = `Team Roster (${minCount} Required, Up to ${maxCount})`;
+
+        let rosterText = '';
+        if (minCount === 1 && maxCount === 1) {
+            rosterText = 'Participant Details (1 Required)';
+        } else if (minCount === maxCount) {
+            rosterText = `Team Roster (${minCount} Members Required)`;
+        } else {
+            rosterText = `Team Roster (${minCount} Required, Up to ${maxCount})`;
+        }
+        document.getElementById('rosterHeading').textContent = rosterText;
+
+        const feeEl = document.getElementById('moduleFeeDisplay');
+        if (feeEl) {
+            feeEl.textContent = (rule.price || 'PKR 1,200') + (minCount === 1 && maxCount === 1 ? ' / Person' : ' / Team');
+        }
 
         renderParticipantCards(minCount, maxCount);
     }
@@ -777,10 +877,20 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
 
             const card = document.createElement('div');
             card.className = `participant-card ${isRequired ? '' : 'optional'}`;
+            
+            let cardTitle = '';
+            if (minCount === 1 && maxCount === 1) {
+                cardTitle = 'PARTICIPANT (SOLO) *';
+            } else if (isLeader) {
+                cardTitle = 'PARTICIPANT 01 (TEAM LEADER) *';
+            } else {
+                cardTitle = 'PARTICIPANT 0' + i + (isRequired ? ' *' : ' (OPTIONAL)');
+            }
+
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--line); padding-bottom: 10px;">
                     <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: ${isRequired ? 'var(--orange)' : 'var(--muted)'}; font-family: 'Space Grotesk', sans-serif;">
-                        ${isLeader ? 'PARTICIPANT 01 (TEAM LEADER) *' : 'PARTICIPANT 0' + i + (isRequired ? ' *' : ' (OPTIONAL)')}
+                        ${cardTitle}
                     </h3>
                     <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: ${isRequired ? 'var(--orange)' : 'var(--muted)'}; letter-spacing: 0.1em;">
                         ${isRequired ? 'REQUIRED' : 'OPTIONAL'}
@@ -818,10 +928,12 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                     <div class="col-md-6">
                         <label class="signal-label">FACE PHOTOGRAPH *</label>
                         <input type="file" name="participant${i}_face_image" accept="image/*" class="form-control" style="background:#101518; border:1px solid var(--line); color:var(--muted); font-size:11px; border-radius:0; padding:8px;">
+                        <span style="font-size:10px; color:var(--muted);">Clear photo for participant pass badge</span>
                     </div>
                     <div class="col-md-6">
                         <label class="signal-label">STUDENT ID CARD PHOTO *</label>
                         <input type="file" name="participant${i}_id_card" accept="image/*" class="form-control" style="background:#101518; border:1px solid var(--line); color:var(--muted); font-size:11px; border-radius:0; padding:8px;">
+                        <span style="font-size:10px; color:var(--muted);">Front side of University/College ID card</span>
                     </div>
                 </div>
             `;
@@ -847,7 +959,7 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
         }
         if (stepNumber === 4 && currentStep === 3) {
             const mod = document.getElementById('moduleSelectInput').value;
-            const rule = MODULE_RULES[mod] || { min: 3 };
+            const rule = MODULE_RULES[mod] || { min: 2, max: 4 };
             for (let i = 1; i <= rule.min; i++) {
                 const name = document.querySelector(`[name="participant${i}_name"]`)?.value.trim();
                 const contact = document.querySelector(`[name="participant${i}_contact"]`)?.value.trim();
@@ -855,7 +967,8 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                 const cnic = document.querySelector(`[name="participant${i}_cnic"]`)?.value.trim();
                 const roll = document.querySelector(`[name="participant${i}_roll_number"]`)?.value.trim();
                 if (!name || !contact || !email || !cnic || !roll) {
-                    alert(`Please complete required fields for Participant 0${i} (${i === 1 ? 'Team Leader' : 'Member ' + i}).`);
+                    const label = (rule.min === 1 && rule.max === 1) ? 'Solo Participant' : (i === 1 ? 'Team Leader' : 'Participant 0' + i);
+                    alert(`Please complete required fields for ${label}.`);
                     return;
                 }
             }
@@ -895,6 +1008,16 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
 
     // Initialize on document ready
     document.addEventListener('DOMContentLoaded', function() {
+        // Pre-select module from URL parameter if passed (e.g. from engineers_code.php card click)
+        const urlParams = new URLSearchParams(window.location.search);
+        const preselectedModule = urlParams.get('module');
+        if (preselectedModule && MODULE_RULES[preselectedModule]) {
+            const selectEl = document.getElementById('moduleSelectInput');
+            if (selectEl) {
+                selectEl.value = preselectedModule;
+            }
+        }
+
         onModuleChange();
 
         document.getElementById('multiStepRegForm').addEventListener('submit', async function(e) {

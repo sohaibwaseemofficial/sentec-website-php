@@ -526,7 +526,7 @@
                     <span class="module-meta-pill">' . htmlspecialchars($mod["team_size"]) . '</span>
                     <span class="module-meta-pill">' . htmlspecialchars($mod["price"]) . '</span>
                 </div>
-                <a href="event_registration" class="btn-neon module-register">Register Here</a>
+                <a href="event_registration?module=' . urlencode($mod["title"]) . '" class="btn-neon module-register">Register Here</a>
             </div>';
         }
         ?>
