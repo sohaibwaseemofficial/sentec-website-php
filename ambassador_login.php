@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 // --- FIX: USE JAVASCRIPT REDIRECT INSTEAD OF PHP HEADER ---
                 echo "<script>
-                        window.location.href = 'dashboard.php';
+                        window.location.href = 'dashboard';
                       </script>";
                 exit;
             } else {

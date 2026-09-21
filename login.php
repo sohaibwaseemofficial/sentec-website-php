@@ -31,7 +31,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 ];
                 
                 echo "<script>
-                        window.location.href = 'dashboard.php';
+                        window.location.href = 'dashboard';
                       </script>";
                 exit;
             } else {
