@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $msg = '<div class="alert alert-success">Reset link sent! Check your inbox.</div>';
                 } catch (Exception $e) {
                     sentec_mail_log('forgot_password', 'error', $e->getMessage());
-                    $msg = '<div class="alert alert-danger">Email dispatch service is currently unavailable. Please contact support.</div>';
+                    $msg = '<div class="alert alert-danger">Dispatch failed: ' . htmlspecialchars($e->getMessage()) . '</div>';
                 }
             }
             $stmt->close();

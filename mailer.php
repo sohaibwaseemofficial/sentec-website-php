@@ -26,13 +26,16 @@ class SentecResendMailer {
     protected string $apiKey = '';
 
     public function __construct() {
-        // Pull API Key securely from environment
-        $this->apiKey = trim((string)(getenv('RESEND_API_KEY') ?: (env('RESEND_API_KEY') ?: '')));
+        // Pull API Key securely from all possible environment sources
+        $this->apiKey = trim((string)(
+            getenv('RESEND_API_KEY')
+            ?: ($_ENV['RESEND_API_KEY'] ?? ($_SERVER['RESEND_API_KEY'] ?? (function_exists('env') ? env('RESEND_API_KEY') : '')))
+        ));
 
         // Configurable authenticated From address (defaults to domain noreply@sentecneduet.live)
-        $envFrom = getenv('FROM_EMAIL') ?: (env('FROM_EMAIL') ?: 'noreply@sentecneduet.live');
-        $this->fromEmail = $envFrom;
-        $this->fromName  = getenv('FROM_NAME') ?: (env('FROM_NAME') ?: 'SENTEC');
+        $envFrom = getenv('FROM_EMAIL') ?: (function_exists('env') ? env('FROM_EMAIL') : null);
+        $this->fromEmail = $envFrom ?: 'noreply@sentecneduet.live';
+        $this->fromName  = getenv('FROM_NAME') ?: (function_exists('env') ? env('FROM_NAME') : 'SENTEC');
     }
 
     public function isSMTP(): void {
