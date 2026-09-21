@@ -34,7 +34,12 @@ class SentecResendMailer {
 
         // Configurable authenticated From address (defaults to domain noreply@sentecneduet.live)
         $envFrom = getenv('FROM_EMAIL') ?: (function_exists('env') ? env('FROM_EMAIL') : null);
-        $this->fromEmail = $envFrom ?: 'noreply@sentecneduet.live';
+        // Resend blocks unverified public mailbox providers (gmail.com, yahoo.com, etc.)
+        if (!empty($envFrom) && !preg_match('/@(gmail|yahoo|hotmail|outlook)\.com$/i', $envFrom)) {
+            $this->fromEmail = $envFrom;
+        } else {
+            $this->fromEmail = 'noreply@sentecneduet.live';
+        }
         $this->fromName  = getenv('FROM_NAME') ?: (function_exists('env') ? env('FROM_NAME') : 'SENTEC');
     }
 
@@ -47,7 +52,7 @@ class SentecResendMailer {
     }
 
     public function setFrom(string $email, string $name = ''): void {
-        if (!empty($email)) {
+        if (!empty($email) && !preg_match('/@(gmail|yahoo|hotmail|outlook)\.com$/i', $email)) {
             $this->fromEmail = $email;
         }
         if (!empty($name)) {
