@@ -459,58 +459,33 @@
     <div class="section-header">
         <h2>Competition Modules</h2>
         <p class="section-subtitle">
-            CHOOSE YOUR CHALLENGE LEVEL BELOW
+            UNIVERSITY LEVEL CHALLENGES
         </p>
     </div>
 
-    <div class="tab-container">
-        <button class="tab-btn active" onclick="showCategory('university', this)">University Level</button>
-        <button class="tab-btn" onclick="showCategory('college', this)">College Level</button>
-    </div>
-
-    <!-- University Modules Grid -->
     <div id="university-grid" class="modules-grid">
         <?php
         $uni_modules = [
-            ["title" => "AI Smart Grid RL Optimizer", "desc" => "Train an AI agent to control a virtual power grid smartly, reducing energy costs and carbon emissions using Reinforcement Learning."],
-            ["title" => "AI Simple Defect Classifier", "desc" => "Use YOLOv8 to spot defective products in a factory line instantly, ensuring quality control with a small dataset."],
-            ["title" => "AI Urban Insight Tool", "desc" => "Build a tool for city planners that maps accident or pollution data and generates AI-backed improvement proposals."],
-            ["title" => "AI Defect Detector: Edge-Optimized", "desc" => "Optimize a vision model to run on low-power devices (Edge AI) for real-time defect detection in manufacturing."],
-            ["title" => "AI RAG Security Threat Prioritizer", "desc" => "Create an AI system that reads security alerts and highlights the top critical threats with AI-generated solutions."],
-            ["title" => "AI Workflow & Report Generator", "desc" => "Build a chatbot that takes raw business data and generates summaries, anomaly reports, and action plans in seconds."],
-            ["title" => "AI Smart Meter Behavioral Advisor", "desc" => "An AI advisor that studies electricity usage data and gives each user a simple, personalized 7-day plan to save energy."],
-            ["title" => "AI Disaster Response: Ethical RL Agent", "desc" => "Design an AI agent that decides how to share limited resources fairly and effectively during disasters while reducing bias."]
+            ["title" => "Line Following Robot (LFR)", "desc" => "A practical robotics competition in which autonomous robots follow a predefined track using sensors and control logic."],
+            ["title" => "Circuit Designing Competition", "desc" => "An electronics and digital-logic focused competition involving circuit design, problem solving, and circuit debugging through simulation."],
+            ["title" => "CYBER WAR ROOM", "desc" => "Cyber War Room is a direct Attack & Defense Web Security Competition. Teams must first build and secure their own functional web application, package it using Docker, and submit it to the organizers. The application is then randomly assigned to another team."],
+            ["title" => "RAG CHATBOT BUILDER", "desc" => "Build a Retrieval-Augmented Generation chatbot from a provided PDF that answers accurately and stays polite under a live adversarial roleplay."],
+            ["title" => "AGENT SPRINT: LIVE GMAIL AUTOMATION", "desc" => "Build an agent that reads real emails from a provided Gmail account, classifies them, drafts policy-based replies, and displays live status on a dashboard."],
+            ["title" => "AI COURT: FAKE OR REAL", "desc" => "Classify six curated items as real or AI-generated and defend the verdict before a judging panel."],
+            ["title" => "DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE", "desc" => "Digitize and clean a single messy hardcopy dataset, build a dashboard, and catch a live injected anomaly."],
+            ["title" => "BREAK THE RULES", "desc" => "Break a locked chatbot's hidden behavioral rules through conversation alone, across a minimum of three rule categories."],
+            ["title" => "AI DEBATE COLOSSEUM", "desc" => "Build a competing AI debate persona and face another team's persona live, with a live-updating public transcript and an AI judge deciding the winner."],
+            ["title" => "Web Forces", "desc" => "Teams ship a working full stack app against a live spec that is only revealed at the start of the module. Partway through, a twist is dropped in (a broken API, a new requirement) to test how well the team adapts, not just how fast they can build."],
+            ["title" => "Reactor Zero", "desc" => "Teams receive live sensor logs from a plant that is six hours from a shutdown. They must build an early warning model that predicts the failure window before it actually happens. The focus is urgency and timing, not just classification."],
+            ["title" => "Fault Line", "desc" => "Build one AI system that can say a given sample is going to fail, for either material, using the same underlying logic around stress and strain behavior."]
         ];
+
         foreach ($uni_modules as $mod) {
             echo '
             <div class="module-card">
                 <span class="module-badge">University</span>
-                <h3 class="module-title">'.htmlspecialchars($mod["title"]).'</h3>
-                <p class="module-desc">'.htmlspecialchars($mod["desc"]).'</p>
-            </div>';
-        }
-        ?>
-    </div>
-
-    <!-- College Modules Grid -->
-    <div id="college-grid" class="modules-grid" style="display: none;">
-        <?php
-        $col_modules = [
-            ["title" => "AI Energy Saver Dashboard", "desc" => "Build a simulation to analyze and predict energy usage using Linear Regression and suggest optimization tips."],
-            ["title" => "AI Cyber Alert Classifier", "desc" => "Train a keyword-based text classifier to categorize security alerts as Low, Medium, or High risk."],
-            ["title" => "AI Disaster Aid Planner", "desc" => "Use K-Means clustering to group affected regions and design an algorithm for fair supply distribution."],
-            ["title" => "AI City Planner Map", "desc" => "Identify high-risk accident zones using clustering and visualize them on an interactive map."],
-            ["title" => "AI Home Energy Advisor", "desc" => "Predict next week's energy usage from historical data and generate 3 personalized saving tips."],
-            ["title" => "AI Defect Finder (Basic)", "desc" => "Train a simple image classifier (Teachable Machine) to detect 'Good' vs 'Defective' products."],
-            ["title" => "AI Data Insight Tool", "desc" => "Create a mini ML dashboard that loads a CSV file and performs basic analytics for trend prediction."],
-            ["title" => "AI Image Checker", "desc" => "Collect 20-30 images and train a simple classifier using Teachable Machine or Scikit-learn to evaluate accuracy."]
-        ];
-        foreach ($col_modules as $mod) {
-            echo '
-            <div class="module-card">
-                <span class="module-badge">College</span>
-                <h3 class="module-title">'.htmlspecialchars($mod["title"]).'</h3>
-                <p class="module-desc">'.htmlspecialchars($mod["desc"]).'</p>
+                <h3 class="module-title">' . htmlspecialchars($mod["title"]) . '</h3>
+                <p class="module-desc">' . htmlspecialchars($mod["desc"]) . '</p>
             </div>';
         }
         ?>
@@ -567,26 +542,7 @@
 
 <!-- ================= JAVASCRIPT LOGIC ================= -->
 <script>
-    // 1. Tab switching between University and College modules
-    function showCategory(cat, btn) {
-        var uniGrid = document.getElementById('university-grid');
-        var colGrid = document.getElementById('college-grid');
-        
-        if (cat === 'university') {
-            uniGrid.style.display = 'grid';
-            colGrid.style.display = 'none';
-        } else {
-            uniGrid.style.display = 'none';
-            colGrid.style.display = 'grid';
-        }
-        
-        document.querySelectorAll('.tab-btn').forEach(function(b) {
-            b.classList.remove('active');
-        });
-        btn.classList.add('active');
-    }
-
-    // 2. Hero Background Slideshow Autoplay
+    // Hero background slideshow autoplay
     (function() {
         var slides = document.querySelectorAll('.bg-slideshow .slide');
         if (slides.length > 1) {
