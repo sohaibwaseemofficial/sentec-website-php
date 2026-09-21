@@ -368,9 +368,15 @@
     .module-register {
         margin-top: 22px;
         width: 100%;
-        padding: 12px 16px;
-        font-size: 0.8rem;
-        letter-spacing: 0.12em;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 18px;
+        font-size: 0.72rem;
+        line-height: 1.2;
+        letter-spacing: 0.14em;
+        border-radius: 50px;
+        box-shadow: 0 0 25px rgba(241, 90, 36, 0.35);
     }
 
     /* 7. REGISTRATION STEPS */
@@ -483,7 +489,7 @@
         <div class="hero-pills">
             <div class="pill"><i class="fas fa-calendar-alt"></i> 14, 15, 16 October 2026</div>
             <div class="pill"><i class="fas fa-map-marker-alt"></i> NED MAIN CAMPUS</div>
-            <div class="pill"><i class="fas fa-trophy"></i> 60K PRIZE POOL</div>
+            <div class="pill"><i class="fas fa-trophy"></i>PRIZE POOL (tbd)</div>
         </div>
 
         <a href="#register" class="btn-neon" style="font-size: 1.15rem; padding: 16px 54px;">
@@ -504,20 +510,18 @@
     <div id="university-grid" class="modules-grid">
         <?php
         $uni_modules = [
-            ["title" => "Line Following Robot (LFR)", "desc" => "A practical robotics competition in which autonomous robots follow a predefined track using sensors and control logic.", "team_size" => "Team of 4", "price" => "PKR 3,000"],
-            ["title" => "Circuit Designing Competition", "desc" => "An electronics and digital-logic focused competition involving circuit design, problem solving, and circuit debugging through simulation.", "team_size" => "Team of 3", "price" => "PKR 2,500"],
-            ["title" => "CYBER WAR ROOM", "desc" => "Cyber War Room is a direct Attack & Defense Web Security Competition. Teams must first build and secure their own functional web application, package it using Docker, and submit it to the organizers. The application is then randomly assigned to another team.", "team_size" => "Team of 4", "price" => "PKR 4,000"],
-            ["title" => "RAG CHATBOT BUILDER", "desc" => "Build a Retrieval-Augmented Generation chatbot from a provided PDF that answers accurately and stays polite under a live adversarial roleplay.", "team_size" => "Team of 3", "price" => "PKR 3,000"],
-            ["title" => "AGENT SPRINT: LIVE GMAIL AUTOMATION", "desc" => "Build an agent that reads real emails from a provided Gmail account, classifies them, drafts policy-based replies, and displays live status on a dashboard.", "team_size" => "Team of 3", "price" => "PKR 4,000"],
-            ["title" => "AI COURT: FAKE OR REAL", "desc" => "Classify six curated items as real or AI-generated and defend the verdict before a judging panel.", "team_size" => "Team of 2", "price" => "PKR 2,500"],
-            ["title" => "DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE", "desc" => "Digitize and clean a single messy hardcopy dataset, build a dashboard, and catch a live injected anomaly.", "team_size" => "Team of 2", "price" => "PKR 2,500"],
-            ["title" => "BREAK THE RULES", "desc" => "Break a locked chatbot's hidden behavioral rules through conversation alone, across a minimum of three rule categories.", "team_size" => "Team of 3", "price" => "PKR 2,500"],
-            ["title" => "AI DEBATE COLOSSEUM", "desc" => "Build a competing AI debate persona and face another team's persona live, with a live-updating public transcript and an AI judge deciding the winner.", "team_size" => "Team of 2", "price" => "PKR 3,500"],
-            ["title" => "Web Forces", "desc" => "Teams ship a working full stack app against a live spec that is only revealed at the start of the module. Partway through, a twist is dropped in (a broken API, a new requirement) to test how well the team adapts, not just how fast they can build.", "team_size" => "Team of 4", "price" => "PKR 4,500"],
-            ["title" => "Reactor Zero", "desc" => "Teams receive live sensor logs from a plant that is six hours from a shutdown. They must build an early warning model that predicts the failure window before it actually happens. The focus is urgency and timing, not just classification.", "team_size" => "Team of 3", "price" => "PKR 3,500"],
-            ["title" => "Fault Line", "desc" => "Build one AI system that can say a given sample is going to fail, for either material, using the same underlying logic around stress and strain behavior.", "team_size" => "Team of 2", "price" => "PKR 3,000"]
+            ["title" => "Line Following Robot (LFR)", "desc" => "A practical robotics competition in which autonomous robots follow a predefined track using sensors and control logic.", "team_size" => "Team of 4", "price" => "PKR 1,200"],
+            ["title" => "Circuit Designing Competition", "desc" => "An electronics and digital-logic focused competition involving circuit design, problem solving, and circuit debugging through simulation.", "team_size" => "Team of 4", "price" => "PKR 1,200"],
+            ["title" => "CYBER WAR ROOM", "desc" => "Cyber War Room is a direct Attack & Defense Web Security Competition. Teams must first build and secure their own functional web application, package it using Docker, and submit it to the organizers. The application is then randomly assigned to another team.", "team_size" => "Team of 3-4", "price" => "PKR 1,400"],
+            ["title" => "RAG CHATBOT BUILDER", "desc" => "Build a Retrieval-Augmented Generation chatbot from a provided PDF that answers accurately and stays polite under a live adversarial roleplay.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
+            ["title" => "AGENT SPRINT: LIVE GMAIL AUTOMATION", "desc" => "Build an agent that reads real emails from a provided Gmail account, classifies them, drafts policy-based replies, and displays live status on a dashboard.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
+            ["title" => "AI COURT: FAKE OR REAL", "desc" => "Classify six curated items as real or AI-generated and defend the verdict before a judging panel.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
+            ["title" => "DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE", "desc" => "Digitize and clean a single messy hardcopy dataset, build a dashboard, and catch a live injected anomaly.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
+            ["title" => "BREAK THE RULES", "desc" => "Break a locked chatbot's hidden behavioral rules through conversation alone, across a minimum of three rule categories.", "team_size" => "Team of 1-2", "price" => "PKR 1,200"],
+            ["title" => "AI DEBATE COLOSSEUM", "desc" => "Build a competing AI debate persona and face another team's persona live, with a live-updating public transcript and an AI judge deciding the winner.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
+            ["title" => "Web Forces", "desc" => "Teams ship a working full stack app against a live spec that is only revealed at the start of the module. Partway through, a twist is dropped in (a broken API, a new requirement) to test how well the team adapts, not just how fast they can build.", "team_size" => "Team of 3-4", "price" => "PKR 1,400"],
+            ["title" => "Reactor Zero", "desc" => "A high-stakes competition where teams must design and build a reactor from scratch, facing real-world challenges and constraints.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"]
         ];
-
         foreach ($uni_modules as $mod) {
             echo '
             <div class="module-card">
