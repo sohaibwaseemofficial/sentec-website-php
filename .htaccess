@@ -8,6 +8,15 @@ DirectoryIndex index.php index.html
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # Prevent Apache from leaking internal ports on directory trailing slash redirects
+    DirectorySlash Off
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteCond %{REQUEST_URI} !/$
+    # Capture the hostname while stripping any leaked port numbers (like :10000)
+    RewriteCond %{HTTP_HOST} ^([^:]+)
+    RewriteRule ^(.*)$ https://%1/$1/ [R=301,L]
+
     RewriteBase /
 
     # -------------------------------------------------------------
@@ -20,13 +29,6 @@ DirectoryIndex index.php index.html
     RewriteCond %{HTTP:X-Forwarded-Proto} !=https
     RewriteCond %{HTTPS} off
     RewriteRule ^ - [E=REQ_SCHEME:http]
-
-    # -------------------------------------------------------------
-    # 1. DIRECTORY TRAILING SLASH FIX
-    # Prevents Apache mod_dir from issuing redirects with internal port (e.g. :10000)
-    # -------------------------------------------------------------
-    RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^(.+[^/])$ %{ENV:REQ_SCHEME}://%{HTTP_HOST}/$1/ [R=301,L]
 
     # -------------------------------------------------------------
     # 2. CANONICAL REDIRECT: /file.php -> /file (UNIVERSAL FOR ALL PAGES)

@@ -39,7 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param('sss', $email, $token, $expires);
             
             if ($stmt->execute()) {
-                $resetLink = "https://" . $_SERVER['HTTP_HOST'] . "/reset_password.php?token=" . $token;
+                $cleanHost = preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? 'sentecneduet.live');
+                $baseUrl = function_exists('env') ? rtrim(env('APP_URL', 'https://' . $cleanHost), '/') : 'https://' . $cleanHost;
+                $resetLink = $baseUrl . "/reset_password.php?token=" . $token;
                 
                 try {
                     // Use centralized mailer

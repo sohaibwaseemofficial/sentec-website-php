@@ -22,6 +22,11 @@ WORKDIR /var/www/html
 # Enable Apache modules
 RUN a2enmod rewrite remoteip headers
 
+# Configure Apache to respect reverse proxy headers & prevent internal port leakage
+RUN echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf && \
+    echo "UseCanonicalPhysicalPort Off" >> /etc/apache2/apache2.conf && \
+    echo "SetEnvIf X-Forwarded-Proto https HTTPS=on" >> /etc/apache2/apache2.conf
+
 # Allow .htaccess overrides
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
