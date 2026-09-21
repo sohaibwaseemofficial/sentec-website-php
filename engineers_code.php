@@ -521,6 +521,7 @@
             ["title" => "AI DEBATE COLOSSEUM", "desc" => "Build a competing AI debate persona and face another team's persona live, with a live-updating public transcript and an AI judge deciding the winner.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
             ["title" => "Web Forces", "desc" => "Teams ship a working full stack app against a live spec that is only revealed at the start of the module. Partway through, a twist is dropped in (a broken API, a new requirement) to test how well the team adapts, not just how fast they can build.", "team_size" => "Team of 3-4", "price" => "PKR 1,400"],
             ["title" => "Reactor Zero", "desc" => "A high-stakes competition where teams must design and build a reactor from scratch, facing real-world challenges and constraints.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"]
+            ["title" => "Fault Line", "desc" => "Teams get mixed data, concrete stress tests and fabric tensile tests, and must build one classifier pipeline that generalizes across material types.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"]
         ];
         foreach ($uni_modules as $mod) {
             echo '
