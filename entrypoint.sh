@@ -8,6 +8,12 @@ PORT="${PORT:-80}"
 sed -i "s/Listen .*/Listen $PORT/" /etc/apache2/ports.conf
 sed -i "s/<VirtualHost \*:.*>/<VirtualHost \*:$PORT>/" /etc/apache2/sites-available/000-default.conf
 
+# Ensure Apache redirects do not include container's internal port or hostname
+if ! grep -q "UseCanonicalPhysicalPort" /etc/apache2/apache2.conf 2>/dev/null; then
+    echo "UseCanonicalPhysicalPort Off" >> /etc/apache2/apache2.conf
+    echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf
+fi
+
 # Clean any existing pid
 rm -f /var/run/apache2/apache2.pid
 

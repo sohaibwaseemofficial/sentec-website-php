@@ -11,14 +11,32 @@ DirectoryIndex index.php index.html
     RewriteBase /
 
     # -------------------------------------------------------------
-    # 1. CANONICAL REDIRECT: /file.php -> /file
+    # 0. PROTOCOL DETECTION BEHIND PROXY (Render / Cloudflare)
+    # -------------------------------------------------------------
+    RewriteCond %{HTTP:X-Forwarded-Proto} =https [OR]
+    RewriteCond %{HTTPS} on
+    RewriteRule ^ - [E=REQ_SCHEME:https]
+
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteCond %{HTTPS} off
+    RewriteRule ^ - [E=REQ_SCHEME:http]
+
+    # -------------------------------------------------------------
+    # 1. DIRECTORY TRAILING SLASH FIX
+    # Prevents Apache mod_dir from issuing redirects with internal port (e.g. :10000)
+    # -------------------------------------------------------------
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^(.+[^/])$ %{ENV:REQ_SCHEME}://%{HTTP_HOST}/$1/ [R=301,L]
+
+    # -------------------------------------------------------------
+    # 2. CANONICAL REDIRECT: /file.php -> /file
     # Sends external 301 redirect if someone visits .php directly
     # -------------------------------------------------------------
     RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+?)\.php[\s?] [NC]
     RewriteRule ^ /%1 [R=301,L,NE]
 
     # -------------------------------------------------------------
-    # 2. INVISIBLE ROUTING: /file -> file.php
+    # 3. INVISIBLE ROUTING: /file -> file.php
     # -------------------------------------------------------------
     # Don't rewrite if the request is an existing directory
     RewriteCond %{REQUEST_FILENAME} !-d
