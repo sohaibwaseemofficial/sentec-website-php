@@ -30,19 +30,19 @@ function sentec_mailer(): PHPMailer {
     $mail->Username   = $user;
     $mail->Password   = $pass;
     
-    $port = (int)env('SMTP_PORT', 587);
+    $port = (int)env('SMTP_PORT', 465);
     $mail->Port       = $port;
     
-    // Set encryption
-    $secure = strtolower((string)env('SMTP_SECURE', 'tls'));
-    if ($port === 465 || $secure === 'ssl') {
+    // Set encryption (default to SMTPS on port 465 for better cloud host compatibility)
+    $secure = strtolower((string)env('SMTP_SECURE', 'ssl'));
+    if ($port === 465 || $secure === 'ssl' || $secure === 'smtps') {
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     } else {
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     }
     
-    // Prevent long hangs on SMTP connections (12s max)
-    $mail->Timeout = 12;
+    // Fast timeout (5s max) to prevent freezing web requests on blocked cloud networks
+    $mail->Timeout = 5;
     $mail->SMTPOptions = [
         'ssl' => [
             'verify_peer' => false,

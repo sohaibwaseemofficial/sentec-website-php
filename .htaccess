@@ -1,10 +1,15 @@
 DirectoryIndex index.php index.html
 
-# Prevent direct access to sensitive config files
-<FilesMatch "^\.env|ca\.pem|composer\.(json|lock)">
+# Prevent direct access to sensitive config files and logs
+<FilesMatch "^\.env|ca\.pem|composer\.(json|lock)|\.log$">
     Order allow,deny
     Deny from all
 </FilesMatch>
+
+# Block access to storage directory
+<IfModule mod_rewrite.c>
+    RewriteRule ^storage/ - [F,L]
+</IfModule>
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
