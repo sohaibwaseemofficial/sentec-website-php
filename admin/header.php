@@ -1,14 +1,14 @@
 <?php
-// Session security settings - MUST be set BEFORE session_start()
-ini_set('session.cookie_httponly', 1);
-$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
-ini_set('session.cookie_secure', $isHttps ? 1 : 0);
-ini_set('session.cookie_samesite', 'Lax');
-ini_set('session.use_strict_mode', 1);
-
-// Set session lifetime to 30 minutes (1800 seconds)
-ini_set('session.gc_maxlifetime', 1800);
-ini_set('session.cookie_lifetime', 1800);
+// Session settings must be applied before session_start().
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', 1);
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+    ini_set('session.cookie_secure', $isHttps ? 1 : 0);
+    ini_set('session.cookie_samesite', 'Lax');
+    ini_set('session.use_strict_mode', 1);
+    ini_set('session.gc_maxlifetime', 1800);
+    ini_set('session.cookie_lifetime', 1800);
+}
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
