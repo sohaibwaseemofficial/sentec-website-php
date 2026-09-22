@@ -58,13 +58,9 @@ $events = get_cached_data('public_events_data', 600, function() {
 
 <!-- Scoped Editorial Design System matching Home.tsx & index.css 1:1 -->
 <style>
-            <?php else: ?>
         --ink-soft: #101518;
-                    <div class="project-index">01 / SOON</div>
         --paper: #f4f1eb;
         inset: 0;
-                        <h3>Coming<br>Soon</h3>
-                        <p>New event details will be published here when they are ready.</p>
         opacity: 0.35;
         background-image:
             linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
