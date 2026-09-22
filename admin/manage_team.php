@@ -39,6 +39,7 @@ if (isset($_POST['update_order'])) {
     $id = (int)$_POST['member_id'];
     $new_order = (int)$_POST['new_sort_order'];
     $conn->query("UPDATE team_members SET sort_order = $new_order WHERE id = $id");
+    invalidate_cache('team_members');
     echo "<script>window.location.href='manage_team';</script>";
 }
 
@@ -140,6 +141,9 @@ $team = $conn->query("SELECT * FROM team_members ORDER BY sort_order ASC, id DES
                             </td>
                             <td><span class="badge bg-dark border border-secondary"><?php echo htmlspecialchars($row['category']); ?></span></td>
                             <td>
+                                <a href="edit_team_member.php?id=<?php echo $row['id']; ?>" class="text-info me-2" title="Edit member">
+                                    <i class="fas fa-edit"></i>
+                                </a>
                                 <a href="delete_team.php?id=<?php echo $row['id']; ?>" class="text-danger" onclick="return confirm('Delete this member?');">
                                     <i class="fas fa-trash"></i>
                                 </a>
