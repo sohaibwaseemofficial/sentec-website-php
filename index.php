@@ -1350,18 +1350,6 @@ $events = get_cached_data('public_events_data', 600, function() {
                     </div>
                 </article>
 
-                <article class="project-card">
-                    <div class="project-index">C / 2026</div>
-                    <div class="project-card-content">
-                        <span>Autonomous Systems</span>
-                        <h3>Engineering Project<br>Exhibition</h3>
-                        <p>Hardware hackathons, CAD modeling showdowns, and embedded robotics demonstrations judged by industry leaders.</p>
-                        <a href="event_registration" class="text-link">
-                            <span>Register Team</span>
-                            <i class="fas fa-arrow-up-right text-xs"></i>
-                        </a>
-                    </div>
-                </article>
             <?php endif; ?>
         </div>
     </div>
