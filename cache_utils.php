@@ -29,7 +29,10 @@ function get_cached_data($key, $ttlSeconds, $fetchCallback) {
             if ($content !== false) {
                 $decoded = json_decode($content, true);
                 if ($decoded !== null || $content === 'null') {
-                    return $decoded;
+                    if (!is_array($decoded) || !empty($decoded)) {
+                        return $decoded;
+                    }
+                    @unlink($cacheFile);
                 }
             }
         }

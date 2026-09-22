@@ -7,10 +7,7 @@ $teamMembers = get_cached_data('team_members', 3600, function() {
     global $conn;
     $members = [];
     if (isset($conn) && !$conn->connect_error) {
-        $query = "SELECT * FROM team_members 
-                  ORDER BY sort_order ASC, 
-                  FIELD(category, 'Executive Committee', 'Directorate', 'Member', 'Alumni'), 
-                  name ASC";
+        $query = "SELECT * FROM team_members";
         $result = $conn->query($query);
         if ($result && $result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
@@ -19,9 +16,14 @@ $teamMembers = get_cached_data('team_members', 3600, function() {
                     'role' => $row['designation'],
                     'category' => $row['category'],
                     'image' => $row['image'],
-                    'linkedin' => $row['linkedin']
+                    'linkedin' => $row['linkedin'],
+                    'sort_order' => (int)($row['sort_order'] ?? 10)
                 ];
             }
+            usort($members, function ($left, $right) {
+                return ($left['sort_order'] <=> $right['sort_order'])
+                    ?: strcasecmp($left['name'], $right['name']);
+            });
         }
     }
     return $members;
