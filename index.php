@@ -36,24 +36,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $contactFeedback = $response;
 }
 
-// Fetch live events with high-performance cache (lazy db loading)
-$events = get_cached_data('public_events_data', 600, function() {
-    require_once __DIR__ . '/db_connection.php';
-    global $conn;
-    $evList = [];
-    if (isset($conn) && !$conn->connect_error) {
-        $eventsQuery = $conn->query("SELECT * FROM events ORDER BY event_date ASC LIMIT 6");
-        if (!$eventsQuery) {
-            return null;
-        }
-        if ($eventsQuery->num_rows > 0) {
-            while ($row = $eventsQuery->fetch_assoc()) {
-                $evList[] = $row;
-            }
+// Read events directly so admin edits are visible immediately.
+$events = [];
+require_once __DIR__ . '/db_connection.php';
+if (isset($conn) && !$conn->connect_error) {
+    $eventsQuery = $conn->query("SELECT * FROM events ORDER BY event_date ASC LIMIT 6");
+    if ($eventsQuery) {
+        while ($row = $eventsQuery->fetch_assoc()) {
+            $events[] = $row;
         }
     }
-    return $evList;
-});
+}
 ?>
 
 <!-- Scoped Editorial Design System matching Home.tsx & index.css 1:1 -->
