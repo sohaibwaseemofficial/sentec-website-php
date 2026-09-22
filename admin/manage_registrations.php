@@ -387,7 +387,8 @@ function toggleInst(type, val) {
 
         if ($result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
-                $feeImg = "../" . htmlspecialchars($row['payment_proof']);
+                $paymentProof = (string)($row['payment_proof'] ?? '');
+                $feeImg = "../" . htmlspecialchars($paymentProof, ENT_QUOTES, 'UTF-8');
                 $payStatus = !empty($row['payment_status']) ? strtolower($row['payment_status']) : 'pending';
 
                 // 1. DATA GATHERING: Updated for full 6-member support
