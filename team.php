@@ -35,8 +35,8 @@ include 'header.php';
 if (empty($teamMembers)) {
     $teamMembers = [
         ["name" => "Zainab Khan", "role" => "President", "category" => "Executive Committee", "image" => "images/pictures of team/zainab.jpg", "linkedin" => "https://www.linkedin.com/in/zainab-khan05/"],
-        ["name" => "Mohid Ahmer Khan", "role" => "Vice President", "category" => "Executive Committee", "image" => "images/pictures of team/mohid.jpg", "linkedin" => "https://www.linkedin.com/in/mohid-ahmer-khan-464bb9282/"],
-        ["name" => "Hurain Maria Qureshi", "role" => "Vice President", "category" => "Executive Committee", "image" => "images/pictures of team/hurain.jpg", "linkedin" => "https://www.linkedin.com/in/hurain-maria-qureshi-10955b326/"],
+        ["name" => "Mohid Ahmer Khan", "role" => "Vice President", "category" => "Executive Committee", "image" => "images/pictures of team/hurain.jpg", "linkedin" => "https://www.linkedin.com/in/mohid-ahmer-khan-464bb9282/"],
+        ["name" => "Hurain Maria Qureshi", "role" => "Vice President", "category" => "Executive Committee", "image" => "images/pictures of team/mohid.jpg", "linkedin" => "https://www.linkedin.com/in/hurain-maria-qureshi-10955b326/"],
         ["name" => "Abdul Rafay", "role" => "General Secretary", "category" => "Executive Committee", "image" => "images/pictures of team/rafay.jpg", "linkedin" => "https://www.linkedin.com/in/abdul-rafay-18bab5356"],
         ["name" => "Ubaid Raza", "role" => "Joint Secretary", "category" => "Executive Committee", "image" => "images/pictures of team/ubaid.jpg", "linkedin" => ""],
         ["name" => "Syed Nabeel Hussain", "role" => "Social Media Manager", "category" => "Executive Committee", "image" => "images/pictures of team/nabeel.jpg", "linkedin" => "https://www.linkedin.com/in/snabeel"],
