@@ -239,7 +239,7 @@ if ($action === 'grant_perk' && $hasPerk) {
             } catch(Exception $e) {}
         }
     }
-    redirect_back();
+    redirect_back($requestedType);
 }
 
 redirect_back($requestedType);
