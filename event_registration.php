@@ -701,9 +701,9 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                                 Transfer module entry fee to the official SENTEC account and upload the transaction screenshot below.
                             </p>
                             <div style="background: #080b0d; border: 1px solid var(--line); padding: 16px; border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.8; color: var(--paper);">
-                                <div><span style="color: var(--muted);">BANK:</span> Meezan Bank Limited</div>
-                                <div><span style="color: var(--muted);">TITLE:</span> SENTEC NEDUET</div>
-                                <div><span style="color: var(--muted);">ACCOUNT:</span> 01090105391234</div>
+                                <div><span style="color: var(--muted);">BANK:</span> Habib Metropolitan Bank Limited</div>
+                                <div><span style="color: var(--muted);">TITLE:</span> NEDUET CONTROLLER STUDENT AFFAIRS</div>
+                                <div><span style="color: var(--muted);">ACCOUNT:</span> 6-99-72-29314-714-262131</div>
                                 <div><span style="color: var(--muted);">IBAN:</span> PK73MPBL9972477140262131</div>
                                 <div><span style="color: var(--muted);">AMOUNT:</span> <strong style="color: var(--orange);" id="moduleFeeDisplay">PKR 1,200 / Team</strong></div>
                             </div>

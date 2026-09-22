@@ -58,7 +58,7 @@ if (empty($teamMembers)) {
         ["name" => "Manal Kafeel", "role" => "Director Content Creation", "category" => "Directorate", "image" => "images/pictures of team/manal.jpg", "linkedin" => "https://www.linkedin.com/in/manal-kafeel-19962b300/"],
         ["name" => "Mariam Ali", "role" => "Director Social Media", "category" => "Directorate", "image" => "images/pictures of team/mariam.jpg", "linkedin" => "https://www.linkedin.com/in/mariam-ali-a1892538b?utm_source=share_via&utm_content=profile&utm_medium=member_android"],
         ["name" => "Syed Haseeb Ahmed", "role" => "Director Creativity", "category" => "Directorate", "image" => "images/pictures of team/haseeb.jpg", "linkedin" => ""],
-        ["name" => "Minhal Yusuf", "role" => "Ceo of Discord", "category" => "Directorate", "image" => "images/pictures of team/minhal.jpg", "linkedin" => ""],
+        ["name" => "Minhal Yusuf", "role" => "Ceo of Discord", "category" => "Directorate", "image" => "images/pictures of team/minhal.jpg", "linkedin" => "https://www.linkedin.com/in/minhal-kazmi-99984337a/"],
         ["name" => "Syeda Anzila Amin", "role" => "Director Graphics", "category" => "Directorate", "image" => "images/pictures of team/anzila.jpg", "linkedin" => ""],
         ["name" => "Maaz Ali", "role" => "Director Photography", "category" => "Directorate", "image" => "images/pictures of team/maaz.jpg", "linkedin" => ""],
         ["name" => "Ayesha Aftab", "role" => "Deputy Director Photography", "category" => "Directorate", "image" => "images/pictures of team/ayesha.jpg", "linkedin" => ""]

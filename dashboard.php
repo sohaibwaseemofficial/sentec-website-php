@@ -10,7 +10,6 @@ include 'header.php';
 include 'db_connection.php';
 require_once __DIR__ . '/social_registration_settings.php';
 require_once __DIR__ . '/event_registration_settings.php';
-require_once __DIR__ . '/election_settings.php';
 
 $user_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'] ?? 'Participant';
@@ -18,33 +17,6 @@ $user_name = $_SESSION['user_name'] ?? 'Participant';
 // FETCH SETTINGS
 $socialOpen = social_registrations_open($conn);
 $eventOpen = event_registrations_open($conn);
-$electionVisible = election_portal_visible($conn);
-$electionOpen = election_portal_open($conn);
-
-$latestElection = null;
-$latestElectionRes = $conn->query("SELECT id, title, start_time, end_time, status, show_results FROM elections ORDER BY id DESC LIMIT 1");
-if ($latestElectionRes && $latestElectionRes->num_rows > 0) {
-    $latestElection = $latestElectionRes->fetch_assoc();
-}
-
-$latestElectionResults = [];
-if ($latestElection) {
-    $resultVisible = election_portal_results_visible($conn) || (($latestElection['status'] ?? '') === 'ended') || !empty($latestElection['show_results']);
-    if ($resultVisible) {
-        $resultSql = "SELECT c.name, COUNT(v.id) AS total_votes
-                      FROM election_candidates c
-                      LEFT JOIN election_votes v ON c.id = v.candidate_id AND v.is_valid = 1
-                      WHERE c.election_id = " . (int) ($latestElection['id'] ?? 0) . " AND c.is_active = 1
-                      GROUP BY c.id
-                      ORDER BY total_votes DESC, c.name ASC";
-        $resultRes = $conn->query($resultSql);
-        if ($resultRes) {
-            while ($row = $resultRes->fetch_assoc()) {
-                $latestElectionResults[] = $row;
-            }
-        }
-    }
-}
 
 // 2. FETCH ACTIVE EVENT LABEL (Using prepared statement)
 $activeEventLabel = 'proxion_2026'; // fallback
@@ -273,16 +245,9 @@ if($checkTable && $checkTable->num_rows > 0) {
                     <i class="fas fa-cubes"></i> Register Module
                 </a>
             <?php endif; ?>
-            <?php if ($socialOpen): ?>
-                <a href="social_register" class="btn-action-outline">
-                    <i class="fas fa-ticket-alt"></i> Social Pass
-                </a>
-            <?php endif; ?>
-            <?php if ($electionVisible): ?>
-                <a href="election_portal" class="btn-action-outline">
-                    <i class="fas fa-vote-yea"></i> Elections
-                </a>
-            <?php endif; ?>
+            <span class="btn-action-outline" aria-disabled="true" style="opacity: 0.65; cursor: default;">
+                <i class="fas fa-ticket-alt"></i> Social Pass: Coming Soon
+            </span>
         </div>
     </div>
 
@@ -291,7 +256,7 @@ if($checkTable && $checkTable->num_rows > 0) {
         $socialVisible = social_registrations_visible($conn);
 
         $showCompetitions = ($eventVisible || !empty($registrations));
-        $showSocial = ($socialVisible || $social_reg);
+        $showSocial = false;
         
         $colClass = ($showCompetitions && $showSocial) ? 'col-lg-6' : 'col-lg-8 offset-lg-2';
         ?>
@@ -361,120 +326,6 @@ if($checkTable && $checkTable->num_rows > 0) {
                                 </table>
                             </div>
                         <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
-
-            <?php if ($showSocial): ?> 
-            <div class="<?php echo $colClass; ?>">
-                <div class="glass-panel text-center d-flex flex-column justify-content-center">
-                    <h3 style="color: #fff; margin-bottom: 20px;"><i class="fas fa-ticket-alt text-orange-500 me-2"></i> Social Night Access</h3>
-                    
-                    <?php if ($social_reg): ?>
-                        <div class="py-4">
-                            <?php 
-                                $s_status = strtolower($social_reg['status']);
-                                if($s_status == 'approved' || $s_status == 'confirmed') { 
-                                    echo '<i class="fas fa-check-circle text-orange-500" style="font-size: 3.5rem; margin-bottom: 16px;"></i>';
-                                    echo '<h4 style="color:#f5f5f5;">E-Pass Issued</h4>';
-                                } else {
-                                    echo '<i class="fas fa-clock" style="font-size: 3.5rem; margin-bottom: 16px; color: #f15a24;"></i>';
-                                    echo '<h4 style="color:#f15a24; font-family:\'Space Grotesk\', sans-serif;">Pending Verification</h4>';
-                                }
-                            ?>
-                            <div class="mt-3">
-                                <span class="status-badge status-<?php echo $s_status; ?>"><?php echo ucfirst($s_status); ?></span>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <div class="py-4">
-                            <?php if ($socialOpen): ?>
-                                <i class="fas fa-glass-cheers text-orange-500" style="font-size: 3.5rem; margin-bottom: 16px;"></i>
-                                <h4 class="text-white">Ruh-e-Raqs</h4>
-                                <p style="color: #888; margin-bottom: 24px;">Join the annual SENTEC banquet, networking, and cultural evening.</p>
-                                <a href="social_register" class="btn-action-primary w-100 justify-content-center">Get Social Pass</a>
-                            <?php else: ?>
-                                <i class="fas fa-lock" style="font-size: 2.5rem; color: #666; margin-bottom: 15px;"></i>
-                                <p class="mb-0" style="color: #888;">Social night bookings are closed.</p>
-                            <?php endif; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <?php endif; ?>
-
-            <?php if ($electionVisible): ?>
-            <div class="col-lg-8 offset-lg-2">
-                <div class="glass-panel text-center">
-                    <div class="panel-header">
-                        <h3 style="margin:0;">
-                            <i class="fas fa-vote-yea text-orange-500 me-2"></i> Student Council Ballot
-                        </h3>
-                        <span class="status-badge <?php echo $electionOpen ? 'status-approved' : 'status-rejected'; ?>">
-                            <?php echo $electionOpen ? 'Polling Active' : 'Polling Locked'; ?>
-                        </span>
-                    </div>
-                    <div class="py-3">
-                        <i class="fas fa-shield-alt mb-3 text-orange-500" style="font-size: 2.8rem;"></i>
-                        <h4 class="text-white mb-2" style="font-family:'Space Grotesk', sans-serif;"><?php echo htmlspecialchars($latestElection['title'] ?? 'Election Portal'); ?></h4>
-                        <p style="color: #888; margin-bottom: 16px;">Encrypted ballot portal for verified NED University students.</p>
-                        <?php if (!empty($latestElection)): ?>
-                            <div class="mb-3 small" style="color: #888; font-family:'IBM Plex Mono', monospace;">
-                                <?php echo date('M j, g:i A', strtotime($latestElection['start_time'])); ?> to <?php echo date('M j, g:i A', strtotime($latestElection['end_time'])); ?>
-                            </div>
-                        <?php endif; ?>
-                        <a href="election_portal" class="btn-action-primary">
-                            <i class="fas fa-lock me-2"></i> Open Polling Portal
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
-
-            <?php if (!empty($latestElectionResults)): ?>
-            <div class="col-lg-8 offset-lg-2">
-                <div class="glass-panel">
-                    <div class="panel-header">
-                        <h3 style="margin:0;">
-                            <i class="fas fa-chart-bar text-orange-500 me-2"></i> Official Polling Tally
-                        </h3>
-                        <span class="status-badge status-approved">Verified Count</span>
-                    </div>
-                    <div class="mb-4 p-3" style="border-radius: 18px; background: linear-gradient(135deg, rgba(0,210,255,0.08), rgba(0,255,148,0.06)); border: 1px solid rgba(0,210,255,0.14);">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div>
-                                <div class="text-uppercase small" style="letter-spacing:0.12em; color:#8edbf0;">Student Science Society</div>
-                                <h4 class="text-white mb-0">Official Polling Results</h4>
-                            </div>
-                            <div class="text-end">
-                                <div class="text-muted small">Results are public</div>
-                                <div class="election-chip mt-1"><i class="fas fa-badge-check"></i> Verified tally</div>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-muted mb-4">These are the official live results visible to all users when results are published.</p>
-                    <?php
-                        $topVotes = max(array_map(static function ($row) { return (int) $row['total_votes']; }, $latestElectionResults));
-                        $topVotes = max($topVotes, 1);
-                    ?>
-                    <div class="d-grid gap-3">
-                        <?php foreach ($latestElectionResults as $resultRow): ?>
-                            <div class="result-row-highlight">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="text-white fw-bold"><?php echo htmlspecialchars($resultRow['name']); ?></span>
-                                    <span style="color:#00ffd1;"><?php echo (int) $resultRow['total_votes']; ?> Votes</span>
-                                </div>
-                                <div class="progress" style="height: 12px; background: rgba(255,255,255,0.05); border-radius: 6px;">
-                                    <div class="progress-bar" style="width: <?php echo max(4, round(((int) $resultRow['total_votes'] / $topVotes) * 100)); ?>%; background: #00ffd1;"></div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="text-center mt-4">
-                        <a href="election_portal" class="btn-clear" style="border-color:#00d2ff; color:#00d2ff;">
-                            <i class="fas fa-eye me-2"></i> Open Full Results Page
-                        </a>
                     </div>
                 </div>
             </div>

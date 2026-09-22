@@ -43,7 +43,10 @@ $events = get_cached_data('public_events_data', 600, function() {
     $evList = [];
     if (isset($conn) && !$conn->connect_error) {
         $eventsQuery = $conn->query("SELECT * FROM events ORDER BY event_date ASC LIMIT 6");
-        if ($eventsQuery && $eventsQuery->num_rows > 0) {
+        if (!$eventsQuery) {
+            return null;
+        }
+        if ($eventsQuery->num_rows > 0) {
             while ($row = $eventsQuery->fetch_assoc()) {
                 $evList[] = $row;
             }
@@ -55,45 +58,18 @@ $events = get_cached_data('public_events_data', 600, function() {
 
 <!-- Scoped Editorial Design System matching Home.tsx & index.css 1:1 -->
 <style>
-    :root {
-        --ink: #080b0d;
+            <?php else: ?>
         --ink-soft: #101518;
-        --panel: #151c20;
+                    <div class="project-index">01 / SOON</div>
         --paper: #f4f1eb;
-        --muted: #9aa3a3;
-        --muted-dark: #5d696c;
-        --steel: #7b9096;
-        --orange: #f15a24;
-        --orange-light: #ff8050;
-        --line: rgba(235, 241, 237, 0.14);
-        --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-        --ease-smooth: cubic-bezier(0.77, 0, 0.175, 1);
-    }
-
-    /* Ambient Technical Blueprint Grid */
-    .ambient-grid {
-        position: fixed;
         inset: 0;
-        pointer-events: none;
-        z-index: 0;
+                        <h3>Coming<br>Soon</h3>
+                        <p>New event details will be published here when they are ready.</p>
         opacity: 0.35;
         background-image:
             linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
             linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
         background-size: 72px 72px;
-        mask-image: linear-gradient(to bottom, black 0%, black 72%, transparent 92%);
-        -webkit-mask-image: linear-gradient(to bottom, black 0%, black 72%, transparent 92%);
-    }
-
-    /* Hero Section Geometry */
-    .hero-section {
-        min-height: 780px;
-        height: 100vh;
-        max-height: 980px;
-        position: relative;
-        isolation: isolate;
-        overflow: hidden;
-        border-bottom: 1px solid var(--line);
         background-color: var(--ink);
         background-size: cover;
         background-position: center;
@@ -1324,32 +1300,17 @@ $events = get_cached_data('public_events_data', 600, function() {
                     </article>
                 <?php endforeach; ?>
             <?php else: ?>
-                <!-- Flagship Showcase Modules from Home.tsx -->
                 <article class="project-card">
-                    <div class="project-index">A / 2026</div>
+                    <div class="project-index">01 / SOON</div>
                     <div class="project-card-content">
-                        <span>Competitive Coding & ML</span>
-                        <h3>The Engineer's<br>Code</h3>
-                        <p>14 competitive challenges across algorithms, defect finding, cybersecurity, robotics, and intelligent systems.</p>
-                        <a href="engineers_code.php" class="text-link">
-                            <span>View Modules</span>
-                            <i class="fas fa-arrow-up-right text-xs"></i>
-                        </a>
-                    </div>
-                </article>
-
-                <article class="project-card">
-                    <div class="project-index">B / 2026</div>
-                    <div class="project-card-content">
-                        <span>Upcoming Event</span>
+                        <span>Upcoming Events</span>
                         <h3>Coming<br>Soon</h3>
-                        <p>New challenge details will be announced soon.</p>
+                        <p>New event details will be published here when they are ready.</p>
                         <span class="text-link" aria-disabled="true" style="opacity: 0.7; pointer-events: none; cursor: default;">
                             <span>Coming Soon</span>
                         </span>
                     </div>
                 </article>
-
             <?php endif; ?>
         </div>
     </div>

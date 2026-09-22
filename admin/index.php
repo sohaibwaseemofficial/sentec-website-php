@@ -25,6 +25,7 @@ function env_val($key, $default = '') {
 $conn->query("UPDATE events SET status = 'past' WHERE event_date < NOW() AND status = 'upcoming'");
 // Update upcoming events
 $conn->query("UPDATE events SET status = 'upcoming' WHERE event_date > NOW() AND status = 'past'");
+if (function_exists('invalidate_cache')) invalidate_cache('public_events_data');
 
 // 2. FETCH LIVE STATISTICS - with error handling
 $stats = [];

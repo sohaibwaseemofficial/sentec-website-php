@@ -57,6 +57,25 @@ if (!$reg) {
     exit;
 }
 
+$moduleFees = [
+    'Line Following Robot (LFR)' => 'PKR 1,200',
+    'Circuit Designing Competition' => 'PKR 1,200',
+    'CYBER WAR ROOM' => 'PKR 1,400',
+    'RAG CHATBOT BUILDER' => 'PKR 1,200',
+    'AGENT SPRINT: LIVE GMAIL AUTOMATION' => 'PKR 1,200',
+    'AI COURT: FAKE OR REAL' => 'PKR 1,200',
+    'DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE' => 'PKR 1,200',
+    'BREAK THE RULES' => 'PKR 1,000',
+    'PitchFest' => 'PKR 500',
+    'AI DEBATE COLOSSEUM' => 'PKR 1,200',
+    'Web Forces' => 'PKR 1,400',
+    'Reactor Zero' => 'PKR 1,200',
+    'Fault Line' => 'PKR 1,200'
+];
+$eventFee = $isSocial
+    ? 'PKR ' . number_format((float)($reg['total_amount'] ?? 0))
+    : ($moduleFees[$reg['module_selection'] ?? ''] ?? 'PKR 1,200');
+
 // 3. HANDLE UPLOAD
 $msg = "";
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['payment_proof'])) {
@@ -231,19 +250,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['payment_proof'])) {
             <div class="row g-3">
                 <div class="col-sm-6 bank-field">
                     <label>Bank Name</label>
-                    <div class="bank-value">Meezan Bank Limited</div>
+                    <div class="bank-value">Habib Metropolitan Bank Limited</div>
                 </div>
                 <div class="col-sm-6 bank-field">
                     <label>Account Title</label>
-                    <div class="bank-value">SENTEC NEDUET</div>
+                    <div class="bank-value">NEDUET CONTROLLER STUDENT AFFAIRS</div>
                 </div>
                 <div class="col-sm-6 bank-field">
                     <label>Account Number</label>
-                    <div class="bank-value-mono">01090105391234</div>
+                    <div class="bank-value-mono">6-99-72-29314-714-262131</div>
                 </div>
                 <div class="col-sm-6 bank-field">
                     <label>Fee Amount</label>
-                    <div class="bank-value-accent">PKR <?php echo htmlspecialchars($reg['fee'] ?? '1500'); ?></div>
+                    <div class="bank-value-accent"><?php echo htmlspecialchars($eventFee); ?></div>
                 </div>
                 <div class="col-12 bank-field">
                     <label>IBAN</label>
