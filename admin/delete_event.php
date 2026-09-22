@@ -10,8 +10,13 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     // 1. Fetch image path to delete the physical file too
     $res = $conn->query("SELECT image_url FROM events WHERE id = $event_id");
     if($row = $res->fetch_assoc()) {
-        $filePath = __DIR__ . '/../' . $row['image_url'];
-        if(file_exists($filePath)) { unlink($filePath); }
+        $imageUrl = trim((string)($row['image_url'] ?? ''));
+        if ($imageUrl !== '') {
+            $filePath = __DIR__ . '/../' . ltrim($imageUrl, '/\\');
+            if (is_file($filePath)) {
+                unlink($filePath);
+            }
+        }
     }
 
     // 2. Delete from database
