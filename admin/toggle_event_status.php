@@ -4,7 +4,7 @@ include '../db_connection.php';
 header('Content-Type: application/json');
 
 // Basic security check
-if (!isset($_SESSION['admin'])) {
+if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }

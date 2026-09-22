@@ -1,7 +1,7 @@
 <?php
 session_start();
 // 1. SECURITY
-if (!isset($_SESSION['admin'])) { 
+if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']); 
     exit; 
 }
@@ -104,13 +104,11 @@ try {
         $response['success'] = true;
         $response['message'] = "Status updated & Emails sent to " . count($recipients) . " members!";
 
-        // Log this action
-        log_admin_action('UPDATE_REGISTRATION_STATUS', "Set status to $status for registration ID $id");
-        
     } else {
         throw new Exception('Database update failed.');
     }
 
+    log_admin_action('UPDATE_REGISTRATION_STATUS', "Set status to $status for registration ID $id");
     $stmt->close();
     $conn->close();
 

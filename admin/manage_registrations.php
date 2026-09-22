@@ -385,7 +385,9 @@ function toggleInst(type, val) {
         $sql = "SELECT * FROM event_registrations ORDER BY created_at DESC";
         $result = $conn->query($sql);
 
-        if ($result->num_rows > 0) {
+        if (!$result) {
+            echo '<div class="alert alert-danger">Unable to load registrations: ' . htmlspecialchars($conn->error, ENT_QUOTES, 'UTF-8') . '</div>';
+        } elseif ($result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
                 $paymentProof = (string)($row['payment_proof'] ?? '');
                 $feeImg = "../" . htmlspecialchars($paymentProof, ENT_QUOTES, 'UTF-8');

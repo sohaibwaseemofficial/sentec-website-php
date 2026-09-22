@@ -2,7 +2,7 @@
 session_start();
 
 // 1. SECURITY CHECK
-if (!isset($_SESSION['admin'])) {
+if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit();
@@ -90,15 +90,24 @@ try {
         throw new Exception('Failed to execute delete: ' . $delStmt->error);
     }
     
+    if (isset($_SESSION['admin_id'])) {
+        $logStmt = $conn->prepare("INSERT INTO admin_logs (admin_id, action, details, ip_address) VALUES (?, ?, ?, ?)");
+        if ($logStmt) {
+            $action = 'DELETE_REGISTRATION';
+            $details = "Deleted registration ID $id";
+            $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+            $logStmt->bind_param('isss', $_SESSION['admin_id'], $action, $details, $ip);
+            $logStmt->execute();
+            $logStmt->close();
+        }
+    }
+
     $delStmt->close();
     $conn->close();
-    
+
     $response['success'] = true;
     $response['message'] = 'Registration and associated files deleted successfully';
 
-    // Log this action
-    log_admin_action('DELETE_REGISTRATION', "Deleted registration ID $id");
-    
 } catch (Exception $e) {
     $response['success'] = false;
     $response['message'] = $e->getMessage();

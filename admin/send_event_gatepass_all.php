@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['admin'])) {
+if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
     http_response_code(403);
     header('Content-Type: application/json');
     echo json_encode(['sent' => 0, 'errors' => ['Unauthorized access.']]);
