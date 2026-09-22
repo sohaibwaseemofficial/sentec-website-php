@@ -49,7 +49,7 @@ if (empty($teamMembers)) {
         ["name" => "Muhammad Amaan Khan", "role" => "Co-Director Promotions", "category" => "Directorate", "image" => "images/pictures of team/amaan.jpg", "linkedin" => ""],
         ["name" => "Aneeqa Kamran", "role" => "Ambassador Promotions", "category" => "Directorate", "image" => "images/pictures of team/aneeqa.jpg", "linkedin" => ""],
         ["name" => "Maaz Shahid", "role" => "Director Cyber Security", "category" => "Directorate", "image" => "images/pictures of team/maaz shahid.png", "linkedin" => "http://maazshahid.me/"],
-        ["name" => "Muhammad Danish Khan", "role" => "Co-Director Artificial Intelligence", "category" => "Directorate", "image" => "images/pictures of team/danish khan.jpg", "linkedin" => ""],
+        ["name" => "Muhammad Danish Khan", "role" => "Co-Director Artificial Intelligence", "category" => "Directorate", "image" => "images/pictures of team/danish khan.jpg", "linkedin" => "https://www.linkedin.com/in/muhammad-danish-khan0?utm_source=share_via&utm_content=profile&utm_medium=member_ios"],
         ["name" => "S.M. Abdullah Abdulbadeeli", "role" => "Director Artificial Intelligence", "category" => "Directorate", "image" => "images/pictures of team/abdullah.jpg", "linkedin" => "https://www.linkedin.com/in/smaasui/"],
         ["name" => "Humaria Razi", "role" => "Director Robotics", "category" => "Directorate", "image" => "images/pictures of team/humaira.jpg", "linkedin" => "https://pk.linkedin.com/in/humaira-razi7"],
         ["name" => "Javeria Iqbal", "role" => "Deputy Director Robotics", "category" => "Directorate", "image" => "images/pictures of team/javeria.jpg", "linkedin" => "https://www.linkedin.com/in/jaweria-iqbal-248632350/"],
