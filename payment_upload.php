@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['payment_proof'])) {
             }
             
             // Refresh
-            $redirectUrl = 'payment_upload.php' . ($reg_id > 0 ? '?id=' . $reg_id : '');
+            $redirectUrl = 'payment_upload' . ($reg_id > 0 ? '?id=' . $reg_id : '');
             echo "<script>alert('Payment proof uploaded successfully!'); window.location.href='{$redirectUrl}';</script>";
             exit;
         } else {

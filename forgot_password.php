@@ -39,8 +39,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param('sss', $email, $token, $expires);
             
             if ($stmt->execute()) {
-                $cleanHost = preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? 'sentecneduet.live');
-                $baseUrl = function_exists('env') ? rtrim(env('APP_URL', 'https://' . $cleanHost), '/') : 'https://' . $cleanHost;
+                $rawHost = $_SERVER['HTTP_HOST'] ?? 'sentecneduet.live';
+                $cleanHost = explode(':', $rawHost)[0];
+                if (empty($cleanHost) || in_array($cleanHost, ['localhost', '127.0.0.1'])) {
+                    $cleanHost = 'sentecneduet.live';
+                }
+                $baseUrl = function_exists('app_base_url') ? app_base_url() : 'https://' . $cleanHost;
                 $resetLink = $baseUrl . "/reset_password.php?token=" . $token;
                 
                 try {

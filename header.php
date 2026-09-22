@@ -1,8 +1,12 @@
 <?php
+require_once __DIR__ . '/env_loader.php';
+
 // 1. START SESSION
 if (session_status() === PHP_SESSION_NONE) {
     // Session security settings - MUST be set BEFORE session_start()
-    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') 
+        || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443)
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
     ini_set('session.cookie_httponly', 1);
     ini_set('session.cookie_secure', $isHttps ? 1 : 0);
     ini_set('session.cookie_samesite', 'Lax');
@@ -10,6 +14,14 @@ if (session_status() === PHP_SESSION_NONE) {
     
     session_start();
 }
+
+// Ensure base URL cleanly strips internal ports (e.g. :10000)
+$rawHost = $_SERVER['HTTP_HOST'] ?? 'sentecneduet.live';
+$cleanHost = explode(':', $rawHost)[0];
+if (empty($cleanHost) || in_array($cleanHost, ['localhost', '127.0.0.1'])) {
+    $cleanHost = 'sentecneduet.live';
+}
+$base_url = function_exists('app_base_url') ? app_base_url() : 'https://' . $cleanHost;
 
 // Session state detection
 $isUserLoggedIn = isset($_SESSION['user']) || isset($_SESSION['user_id']);
@@ -25,9 +37,9 @@ if (!empty($_SESSION['user']['name'])) {
 }
 $firstName = $displayName ? htmlspecialchars(explode(' ', trim($displayName))[0]) : 'User';
 
-// Determine dashboard and logout links
-$dashboardUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_dashboard.php' : 'dashboard.php';
-$logoutUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_logout.php' : 'logout.php';
+// Determine clean dashboard and logout links (clean routes prevent Apache 301 port leakage)
+$dashboardUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_dashboard' : 'dashboard';
+$logoutUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_logout' : 'logout';
 ?>
 <!doctype html>
 <html lang="en" class="scroll-smooth dark">

@@ -1295,7 +1295,7 @@ $events = get_cached_data('public_events_data', 600, function() {
                     <em>Olympiads.</em>
                 </h2>
             </div>
-            <a class="button button-outline" href="engineers_code.php">
+            <a class="button button-outline" href="engineers_code">
                 <span>View All Events</span>
                 <i class="fas fa-arrow-up-right text-xs"></i>
             </a>
@@ -1308,7 +1308,7 @@ $events = get_cached_data('public_events_data', 600, function() {
                     $evDate = !empty($ev['event_date']) ? date('M d, Y', strtotime($ev['event_date'])) : 'EVENT 0'.($idx + 1);
                     $evCategory = htmlspecialchars($ev['category'] ?? 'Competition & Workshop');
                     $evDesc = htmlspecialchars($ev['description'] ?? 'Official technical event hosted by SENTEC at NED University.');
-                    $regLink = !empty($ev['event_link']) ? htmlspecialchars($ev['event_link']) : 'event_registration.php?id='.($ev['id'] ?? '');
+                    $regLink = !empty($ev['event_link']) ? htmlspecialchars($ev['event_link']) : 'event_registration?id='.($ev['id'] ?? '');
                 ?>
                     <article class="project-card">
                         <div class="project-index"><?php echo $evDate; ?></div>

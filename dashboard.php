@@ -2,7 +2,7 @@
 // 1. START SESSION
 session_start();
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header("Location: login");
     exit();
 }
 
@@ -350,7 +350,7 @@ if($checkTable && $checkTable->num_rows > 0) {
                                                             <?php if ($reg['payment_status'] === 'confirmed'): ?>
                                                                 <small style="color:#34d399; font-weight:600; font-family:'IBM Plex Mono', monospace;"><i class="fas fa-check-circle"></i> Paid</small>
                                                             <?php else: ?>
-                                                                <a href="payment_upload.php?id=<?php echo $reg['id']; ?>" class="btn-pay-now">Upload Proof</a>
+                                                                <a href="payment_upload?id=<?php echo $reg['id']; ?>" class="btn-pay-now">Upload Proof</a>
                                                             <?php endif; ?>
                                                         </div>
                                                     <?php endif; ?>

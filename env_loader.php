@@ -108,4 +108,37 @@ function env($key, $default = null) {
 function is_production() {
     return isset($_SERVER['WEBSITE_SITE_NAME']) || getenv('WEBSITE_SITE_NAME');
 }
+
+/**
+ * Get clean application base URL without internal leaked ports (e.g. :10000)
+ */
+function app_base_url(): string {
+    $rawHost = $_SERVER['HTTP_HOST'] ?? 'sentecneduet.live';
+    $cleanHost = explode(':', $rawHost)[0];
+    if (empty($cleanHost) || in_array($cleanHost, ['localhost', '127.0.0.1'])) {
+        $cleanHost = 'sentecneduet.live';
+    }
+
+    $scheme = 'https';
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        $scheme = 'https';
+    } elseif (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) {
+        $scheme = 'https';
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+        $scheme = 'https';
+    }
+
+    $default = $scheme . '://' . $cleanHost;
+    $configured = env('APP_URL', $default);
+    $parsed = parse_url($configured);
+    if (!empty($parsed['host'])) {
+        $cleanConfiguredHost = explode(':', $parsed['host'])[0];
+        $url = ($parsed['scheme'] ?? 'https') . '://' . $cleanConfiguredHost;
+        if (!empty($parsed['path']) && $parsed['path'] !== '/') {
+            $url .= rtrim($parsed['path'], '/');
+        }
+        return $url;
+    }
+    return 'https://sentecneduet.live';
+}
 ?>

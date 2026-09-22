@@ -14,13 +14,15 @@ DirectoryIndex index.php index.html
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Capture the hostname while stripping any leaked port numbers (like :10000)
+    RewriteCond %{HTTP_HOST} ^([^:]+)
+    RewriteRule ^ - [E=CLEAN_HOST:%1]
+
     # Prevent Apache from leaking internal ports on directory trailing slash redirects
     DirectorySlash Off
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteCond %{REQUEST_URI} !/$
-    # Capture the hostname while stripping any leaked port numbers (like :10000)
-    RewriteCond %{HTTP_HOST} ^([^:]+)
-    RewriteRule ^(.*)$ https://%1/$1/ [R=301,L]
+    RewriteRule ^(.*)$ https://%{ENV:CLEAN_HOST}/$1/ [R=301,L]
 
     RewriteBase /
 
@@ -40,11 +42,11 @@ DirectoryIndex index.php index.html
     # Redirects any direct .php access to clean URL without internal port 10000
     # -------------------------------------------------------------
     RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+index\.php[\s?] [NC]
-    RewriteRule ^ %{ENV:REQ_SCHEME}://%{HTTP_HOST}/ [R=301,L]
+    RewriteRule ^ %{ENV:REQ_SCHEME}://%{ENV:CLEAN_HOST}/ [R=301,L]
 
     RewriteCond %{REQUEST_METHOD} !POST
     RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+?)\.php[\s?] [NC]
-    RewriteRule ^ %{ENV:REQ_SCHEME}://%{HTTP_HOST}/%1 [R=301,L,NE]
+    RewriteRule ^ %{ENV:REQ_SCHEME}://%{ENV:CLEAN_HOST}/%1 [R=301,L,NE]
 
     # -------------------------------------------------------------
     # 3. INVISIBLE ROUTING: /file -> file.php

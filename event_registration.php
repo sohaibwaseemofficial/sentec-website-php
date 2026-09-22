@@ -184,8 +184,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $checkStmt->close();
 
         // ---------------------------------------------------------
-        // E. DATABASE INSERTION
+        // E. DATABASE INSERTION (STRICT MODE COMPLIANT)
         // ---------------------------------------------------------
+        // Explicitly set allowed ENUM('pending','approved','rejected') status
+        $registrationStatus = 'pending';
+
         $sql = "INSERT INTO event_registrations (
             user_id, institution_type, team_name, module_selection, brand_ambassador_code, fees_screenshot, payment_proof, payment_status,
             participant1_name, participant1_contact, participant1_email, participant1_cnic, participant1_roll_number, participant1_face_image, participant1_id_card,
@@ -195,12 +198,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             participant5_name, participant5_contact, participant5_email, participant5_cnic, participant5_roll_number, participant5_face_image, participant5_id_card,
             participant6_name, participant6_contact, participant6_email, participant6_cnic, participant6_roll_number, participant6_face_image, participant6_id_card,
             event_label, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?,
+            ?, ?
+        )";
 
         $stmt = $conn->prepare($sql);
         if (!$stmt) throw new Exception("Database Error: " . $conn->error);
 
-        $stmt->bind_param("issssssssssssssssssssssssssssssssssssssssssssssssss",
+        $bindTypes = "i" . str_repeat("s", 51);
+        $stmt->bind_param($bindTypes,
             $user_id, $institution, $teamName, $module, $brandCode, $feesImg, $feesImg, $paymentStatus,
             $p[1]['name'], $p[1]['contact'], $p[1]['email'], $p[1]['cnic'], $p[1]['roll'], $p[1]['face'], $p[1]['card'],
             $p[2]['name'], $p[2]['contact'], $p[2]['email'], $p[2]['cnic'], $p[2]['roll'], $p[2]['face'], $p[2]['card'],
@@ -208,7 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $p[4]['name'], $p[4]['contact'], $p[4]['email'], $p[4]['cnic'], $p[4]['roll'], $p[4]['face'], $p[4]['card'],
             $p[5]['name'], $p[5]['contact'], $p[5]['email'], $p[5]['cnic'], $p[5]['roll'], $p[5]['face'], $p[5]['card'],
             $p[6]['name'], $p[6]['contact'], $p[6]['email'], $p[6]['cnic'], $p[6]['roll'], $p[6]['face'], $p[6]['card'],
-            $activeEventLabel
+            $activeEventLabel, $registrationStatus
         );
 
         if ($stmt->execute()) {
@@ -230,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ];
                 }
             }
-            event_attendees_sync($conn, $registrationId, $syncParticipants, $paymentStatus);
+            event_attendees_sync($conn, $registrationId, $syncParticipants, $registrationStatus);
             $response = [
                 'status' => 'success',
                 'success' => true,

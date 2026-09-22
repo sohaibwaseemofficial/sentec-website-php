@@ -67,6 +67,12 @@ if (!function_exists('event_attendees_table_exists')) {
             return;
         }
 
+        // Strictly enforce allowed ENUM('pending','approved','rejected') to prevent MySQL strict truncation errors
+        $allowedStatuses = ['pending', 'approved', 'rejected'];
+        $cleanStatus = in_array(strtolower(trim($registrationStatus)), $allowedStatuses, true) 
+            ? strtolower(trim($registrationStatus)) 
+            : 'pending';
+
         $del = $conn->prepare('DELETE FROM event_attendees WHERE registration_id = ?');
         $del->bind_param('i', $registrationId);
         $del->execute();
@@ -107,7 +113,7 @@ if (!function_exists('event_attendees_table_exists')) {
                 $roll,
                 $face,
                 $card,
-                $registrationStatus,
+                $cleanStatus,
                 $defaultAttendance,
                 $defaultAttendance
             );
