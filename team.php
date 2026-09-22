@@ -34,34 +34,34 @@ include 'header.php';
 // Fallback matching trewwws/client/src/pages/Team.tsx exactly
 if (empty($teamMembers)) {
     $teamMembers = [
-        ["name" => "Zainab Khan", "role" => "President", "category" => "Executive Committee", "image" => "img_699ad02b1fc581.39195815.webp", "linkedin" => "https://www.linkedin.com/in/zainab-khan05/"],
-        ["name" => "Mohid Ahmer Khan", "role" => "Vice President", "category" => "Executive Committee", "image" => "img_699ad0b416ae07.91713360.webp", "linkedin" => "https://www.linkedin.com/in/mohid-ahmer-khan-464bb9282/"],
-        ["name" => "Hurain Maria Qureshi", "role" => "Vice President", "category" => "Executive Committee", "image" => "img_699ad0b416ae07.91713360.webp", "linkedin" => "https://www.linkedin.com/in/hurain-maria-qureshi-10955b326/"],
-        ["name" => "Abdul Rafay", "role" => "General Secretary", "category" => "Executive Committee", "image" => "img_699ad0fc987926.36537145.webp", "linkedin" => "https://www.linkedin.com/in/abdul-rafay-18bab5356"],
-        ["name" => "Ubaid Raza", "role" => "Joint Secretary", "category" => "Executive Committee", "image" => "img_699ad131235627.04780835.webp", "linkedin" => ""],
-        ["name" => "Syed Nabeel Hussain", "role" => "Social Media Manager", "category" => "Executive Committee", "image" => "img_699ad1fe1997b8.34742482.webp", "linkedin" => "https://www.linkedin.com/in/snabeel"],
-        ["name" => "Adeen Amin", "role" => "Advisor to President", "category" => "Executive Committee", "image" => "img_699ad32eb5e359.81166017.webp", "linkedin" => "https://www.linkedin.com/in/adeen-amin-922a03340/"],
-        ["name" => "Abdul Hadi", "role" => "Technical Advisor", "category" => "Executive Committee", "image" => "img_699ad35f68a8b8.95437537.webp", "linkedin" => ""],
-        ["name" => "Muhammad Raahim Rizwan", "role" => "Technical Advisor", "category" => "Executive Committee", "image" => "img_699ad35f68a8b8.95437537.webp", "linkedin" => "https://linkedin.com/in/muhammad-raahim-rizwan"],
-        ["name" => "Asma Khurram", "role" => "Director Event Management", "category" => "Directorate", "image" => "img_699ad35f68a8b8.95437537.webp", "linkedin" => "https://www.linkedin.com/in/asma-khurram-752975313?utm_source=share_via&utm_content=profile&utm_medium=member_android"],
-        ["name" => "Muneeb Ali", "role" => "Co-Director Event Management", "category" => "Directorate", "image" => "img_699ad35f68a8b8.95437537.webp", "linkedin" => ""],
-        ["name" => "Fizza Naqvi", "role" => "Director Promotions", "category" => "Directorate", "image" => "img_699ad35f68a8b8.95437537.webp", "linkedin" => "https://www.linkedin.com/in/fizza-naqvi-48b8a8266?utm_source=share_via&utm_content=profile&utm_medium=member_android"],
-        ["name" => "Muhammad Amaan Khan", "role" => "Co-Director Promotions", "category" => "Directorate", "image" => "img_699ad35f68a8b8.95437537.webp", "linkedin" => ""],
-        ["name" => "Aneeqa Kamran", "role" => "Ambassador Promotions", "category" => "Directorate", "image" => "img_699ad35f68a8b8.95437537.webp", "linkedin" => ""],
-        ["name" => "Maaz Shahid", "role" => "Director Cyber Security", "category" => "Directorate", "image" => "img_699add53728bc4.65384935.webp", "linkedin" => "http://maazshahid.me/"],
-        ["name" => "Muhammad Danish Ali", "role" => "Co-Director Artificial Intelligence", "category" => "Directorate", "image" => "img_699c0541efbee0.36151658.webp", "linkedin" => ""],
-        ["name" => "S.M. Abdullah Abdulbadeeli", "role" => "Director Artificial Intelligence", "category" => "Directorate", "image" => "img_699c04f2269b16.28720706.webp", "linkedin" => "https://www.linkedin.com/in/smaasui/"],
-        ["name" => "Humaria Razi", "role" => "Director Robotics", "category" => "Directorate", "image" => "img_699ae3e0e24c29.42568247.webp", "linkedin" => "https://pk.linkedin.com/in/humaira-razi7"],
-        ["name" => "Javeria Iqbal", "role" => "Deputy Director Robotics", "category" => "Directorate", "image" => "img_699adc234f2055.82945924.webp", "linkedin" => "https://www.linkedin.com/in/jaweria-iqbal-248632350/"],
-        ["name" => "Kiran Zehra", "role" => "Director Finance & Marketing", "category" => "Directorate", "image" => "img_699ade413d1921.61900042.webp", "linkedin" => "https://www.linkedin.com/in/kiranzehra-bme?utm_source=share_via&utm_content=profile&utm_medium=member_android"],
-        ["name" => "Iraj Naveed", "role" => "Director Videography", "category" => "Directorate", "image" => "img_699adea98f3f08.35826763.webp", "linkedin" => "https://www.linkedin.com/in/iraj-naveed-181643319/"],
-        ["name" => "Manal Kafeel", "role" => "Director Content Creation", "category" => "Directorate", "image" => "img_699adefa863834.07249728.webp", "linkedin" => "https://www.linkedin.com/in/manal-kafeel-19962b300/"],
-        ["name" => "Mariam Ali", "role" => "Director Social Media", "category" => "Directorate", "image" => "img_699adefa863834.07249728.webp", "linkedin" => "https://www.linkedin.com/in/mariam-ali-a1892538b?utm_source=share_via&utm_content=profile&utm_medium=member_android"],
-        ["name" => "Syed Haseeb Ahmed", "role" => "Director Creativity", "category" => "Directorate", "image" => "img_699ae0998e5767.60895474.webp", "linkedin" => ""],
-        ["name" => "Minhal Yusuf", "role" => "Ceo of Discord", "category" => "Directorate", "image" => "img_699ae0998e5767.60895474.webp", "linkedin" => ""],
-        ["name" => "Syeda Anzila Amin", "role" => "Director Graphics", "category" => "Directorate", "image" => "img_699ae0998e5767.60895474.webp", "linkedin" => ""],
-        ["name" => "Maaz Ali", "role" => "Director Photography", "category" => "Directorate", "image" => "img_699c06dbb791d4.98158587.webp", "linkedin" => ""],
-        ["name" => "Ayesha Aftab", "role" => "Deputy Director Photography", "category" => "Directorate", "image" => "img_699c07f20f00e3.62554718.webp", "linkedin" => ""]
+        ["name" => "Zainab Khan", "role" => "President", "category" => "Executive Committee", "image" => "images/pictures of team/zainab.jpg", "linkedin" => "https://www.linkedin.com/in/zainab-khan05/"],
+        ["name" => "Mohid Ahmer Khan", "role" => "Vice President", "category" => "Executive Committee", "image" => "images/pictures of team/mohid.jpg", "linkedin" => "https://www.linkedin.com/in/mohid-ahmer-khan-464bb9282/"],
+        ["name" => "Hurain Maria Qureshi", "role" => "Vice President", "category" => "Executive Committee", "image" => "images/pictures of team/hurain.jpg", "linkedin" => "https://www.linkedin.com/in/hurain-maria-qureshi-10955b326/"],
+        ["name" => "Abdul Rafay", "role" => "General Secretary", "category" => "Executive Committee", "image" => "images/pictures of team/rafay.jpg", "linkedin" => "https://www.linkedin.com/in/abdul-rafay-18bab5356"],
+        ["name" => "Ubaid Raza", "role" => "Joint Secretary", "category" => "Executive Committee", "image" => "images/pictures of team/ubaid.jpg", "linkedin" => ""],
+        ["name" => "Syed Nabeel Hussain", "role" => "Social Media Manager", "category" => "Executive Committee", "image" => "images/pictures of team/nabeel.jpg", "linkedin" => "https://www.linkedin.com/in/snabeel"],
+        ["name" => "Adeen Amin", "role" => "Advisor to President", "category" => "Executive Committee", "image" => "images/pictures of team/adeen.jpg", "linkedin" => "https://www.linkedin.com/in/adeen-amin-922a03340/"],
+        ["name" => "Abdul Hadi", "role" => "Technical Advisor", "category" => "Executive Committee", "image" => "images/pictures of team/hadi.jpg", "linkedin" => ""],
+        ["name" => "Muhammad Raahim Rizwan", "role" => "Technical Advisor", "category" => "Executive Committee", "image" => "images/pictures of team/raahim.jpg", "linkedin" => "https://linkedin.com/in/muhammad-raahim-rizwan"],
+        ["name" => "Asma Khurram", "role" => "Director Event Management", "category" => "Directorate", "image" => "images/pictures of team/asma.jpg", "linkedin" => "https://www.linkedin.com/in/asma-khurram-752975313?utm_source=share_via&utm_content=profile&utm_medium=member_android"],
+        ["name" => "Muneeb Ali", "role" => "Co-Director Event Management", "category" => "Directorate", "image" => "images/pictures of team/muneeb.jpg", "linkedin" => ""],
+        ["name" => "Fizza Naqvi", "role" => "Director Promotions", "category" => "Directorate", "image" => "images/pictures of team/fizza.jpg", "linkedin" => "https://www.linkedin.com/in/fizza-naqvi-48b8a8266?utm_source=share_via&utm_content=profile&utm_medium=member_android"],
+        ["name" => "Muhammad Amaan Khan", "role" => "Co-Director Promotions", "category" => "Directorate", "image" => "images/pictures of team/amaan.jpg", "linkedin" => ""],
+        ["name" => "Aneeqa Kamran", "role" => "Ambassador Promotions", "category" => "Directorate", "image" => "images/pictures of team/aneeqa.jpg", "linkedin" => ""],
+        ["name" => "Maaz Shahid", "role" => "Director Cyber Security", "category" => "Directorate", "image" => "images/pictures of team/maaz shahid.png", "linkedin" => "http://maazshahid.me/"],
+        ["name" => "Muhammad Danish Khan", "role" => "Co-Director Artificial Intelligence", "category" => "Directorate", "image" => "images/pictures of team/danish khan.jpg", "linkedin" => ""],
+        ["name" => "S.M. Abdullah Abdulbadeeli", "role" => "Director Artificial Intelligence", "category" => "Directorate", "image" => "images/pictures of team/abdullah.jpg", "linkedin" => "https://www.linkedin.com/in/smaasui/"],
+        ["name" => "Humaria Razi", "role" => "Director Robotics", "category" => "Directorate", "image" => "images/pictures of team/humaira.jpg", "linkedin" => "https://pk.linkedin.com/in/humaira-razi7"],
+        ["name" => "Javeria Iqbal", "role" => "Deputy Director Robotics", "category" => "Directorate", "image" => "images/pictures of team/javeria.jpg", "linkedin" => "https://www.linkedin.com/in/jaweria-iqbal-248632350/"],
+        ["name" => "Kiran Zehra", "role" => "Director Finance & Marketing", "category" => "Directorate", "image" => "images/pictures of team/kiran.jpg", "linkedin" => "https://www.linkedin.com/in/kiranzehra-bme?utm_source=share_via&utm_content=profile&utm_medium=member_android"],
+        ["name" => "Iraj Naveed", "role" => "Director Videography", "category" => "Directorate", "image" => "images/pictures of team/iraj.jpg", "linkedin" => "https://www.linkedin.com/in/iraj-naveed-181643319/"],
+        ["name" => "Manal Kafeel", "role" => "Director Content Creation", "category" => "Directorate", "image" => "images/pictures of team/manal.jpg", "linkedin" => "https://www.linkedin.com/in/manal-kafeel-19962b300/"],
+        ["name" => "Mariam Ali", "role" => "Director Social Media", "category" => "Directorate", "image" => "images/pictures of team/mariam.jpg", "linkedin" => "https://www.linkedin.com/in/mariam-ali-a1892538b?utm_source=share_via&utm_content=profile&utm_medium=member_android"],
+        ["name" => "Syed Haseeb Ahmed", "role" => "Director Creativity", "category" => "Directorate", "image" => "images/pictures of team/haseeb.jpg", "linkedin" => ""],
+        ["name" => "Minhal Yusuf", "role" => "Ceo of Discord", "category" => "Directorate", "image" => "images/pictures of team/minhal.jpg", "linkedin" => ""],
+        ["name" => "Syeda Anzila Amin", "role" => "Director Graphics", "category" => "Directorate", "image" => "images/pictures of team/anzila.jpg", "linkedin" => ""],
+        ["name" => "Maaz Ali", "role" => "Director Photography", "category" => "Directorate", "image" => "images/pictures of team/maaz.jpg", "linkedin" => ""],
+        ["name" => "Ayesha Aftab", "role" => "Deputy Director Photography", "category" => "Directorate", "image" => "images/pictures of team/ayesha.jpg", "linkedin" => ""]
     ];
 }
 ?>
@@ -479,6 +479,8 @@ if (empty($teamMembers)) {
                     $imgSrc = '';
                     if (!empty($img)) {
                         if (file_exists($img)) {
+                            $imgSrc = $img;
+                        } elseif (file_exists(__DIR__ . '/' . $img)) {
                             $imgSrc = $img;
                         } elseif (file_exists('images/' . basename($img))) {
                             $imgSrc = 'images/' . basename($img);
