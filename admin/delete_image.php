@@ -1,4 +1,9 @@
 <?php
+session_start();
+if (!isset($_SESSION['admin'])) {
+    exit('Unauthorized access.');
+}
+
 include 'db_connection.php';
 
 $image = $_GET['image'] ?? '';

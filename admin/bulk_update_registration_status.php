@@ -7,6 +7,7 @@ if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
 
 header('Content-Type: application/json');
 include '../db_connection.php';
+require_once __DIR__ . '/admin_logger.php';
 require_once __DIR__ . '/../env_loader.php';
 require_once __DIR__ . '/../mailer.php';
 
@@ -38,7 +39,9 @@ foreach ($ids as $id) {
                      participant1_name, participant1_email,
                      participant2_name, participant2_email,
                      participant3_name, participant3_email,
-                     participant4_name, participant4_email
+                     participant4_name, participant4_email,
+                     participant5_name, participant5_email,
+                     participant6_name, participant6_email
               FROM event_registrations WHERE id = ?";
         $qStmt = $conn->prepare($q);
         $qStmt->bind_param("i", $id);
@@ -100,9 +103,11 @@ foreach ($ids as $id) {
                 }
             }
         }
-    } else {
-        $errors[] = "Failed to update ID $id";
     }
+}
+
+if ($successCount > 0) {
+    log_admin_action('BULK_UPDATE_REGISTRATION_STATUS', "Bulk updated $successCount teams to status '$status'", $conn);
 }
 
 echo json_encode([

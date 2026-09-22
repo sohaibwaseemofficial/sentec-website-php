@@ -32,22 +32,8 @@ $_SESSION['last_activity'] = time();
 $currentPage = basename($_SERVER['PHP_SELF']);
 $currentType = strtolower($_GET['type'] ?? '');
 
-/**
- * Log admin action to database
- * @param string $action  e.g. 'DELETE_REGISTRATION', 'APPROVE_TEAM'
- * @param string $details Description of what was done
- */
-function log_admin_action($action, $details = '') {
-    global $conn;
-    if (!isset($_SESSION['admin_id']) || !$conn) return;
-    $stmt = $conn->prepare("INSERT INTO admin_logs (admin_id, action, details, ip_address) VALUES (?, ?, ?, ?)");
-    if ($stmt) {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-        $stmt->bind_param("isss", $_SESSION['admin_id'], $action, $details, $ip);
-        $stmt->execute();
-        $stmt->close();
-    }
-}
+// Include shared logger
+require_once __DIR__ . '/admin_logger.php';
 
 // Make database connection available for auto-logger
 include_once __DIR__ . '/../db_connection.php';

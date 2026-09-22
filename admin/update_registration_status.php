@@ -9,6 +9,7 @@ if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
 // 2. CONFIG
 header('Content-Type: application/json');
 include '../db_connection.php';
+require_once __DIR__ . '/admin_logger.php';
 require_once __DIR__ . '/../env_loader.php';
 require_once __DIR__ . '/../mailer.php';
 
@@ -104,15 +105,18 @@ try {
         $response['success'] = true;
         $response['message'] = "Status updated & Emails sent to " . count($recipients) . " members!";
 
+        // Log this action before closing connection
+        log_admin_action('UPDATE_REGISTRATION_STATUS', "Set status to $status for registration ID $id (Team: $teamName)", $conn);
+        
     } else {
         throw new Exception('Database update failed.');
     }
 
-    log_admin_action('UPDATE_REGISTRATION_STATUS', "Set status to $status for registration ID $id");
     $stmt->close();
     $conn->close();
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
+    $response['success'] = false;
     $response['message'] = $e->getMessage();
 }
 

@@ -324,6 +324,7 @@
         font-size: 1.25rem;
         font-weight: 700;
         line-height: 1.35;
+        margin-top: 4px;
         margin-bottom: 12px;
     }
 
@@ -519,8 +520,7 @@
         foreach ($uni_modules as $mod) {
             echo '
             <div class="module-card">
-                <span class="module-badge">University</span>
-                <h3 class="module-title">' . htmlspecialchars($mod["title"]) . '</h3>
+                <h3 class="module-title mt-2">' . htmlspecialchars($mod["title"]) . '</h3>
                 <p class="module-desc">' . htmlspecialchars($mod["desc"]) . '</p>
                 <div class="module-meta">
                     <span class="module-meta-pill">' . htmlspecialchars($mod["team_size"]) . '</span>

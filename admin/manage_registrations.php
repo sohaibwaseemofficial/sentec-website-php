@@ -744,25 +744,51 @@ $(document).ready(function() {
 
     // 5. SINGLE ACTION (Approve/Reject)
     $('.action-btn').click(function() {
-        var id = $(this).data('id');
-        var status = $(this).data('status');
-        if(confirm("Mark this team as " + status.toUpperCase() + "?")) {
-            $.post('update_registration_status.php', { id: id, status: status }, function(res) {
-                alert(res.message); location.reload();
-            }, 'json');
-        }
+        var btn = $(this);
+        var id = btn.data('id');
+        var status = btn.data('status');
+        if(!confirm("Mark this team as " + status.toUpperCase() + "?")) return;
+
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Processing...');
+
+        $.post('update_registration_status.php', { id: id, status: status }, function(res) {
+            if (res.success) {
+                alert(res.message);
+                location.reload();
+            } else {
+                alert("Error: " + (res.message || "Failed to update status."));
+                btn.prop('disabled', false).html(originalHtml);
+            }
+        }, 'json').fail(function(xhr) {
+            var msg = 'Failed to update status.';
+            try {
+                var json = JSON.parse(xhr.responseText);
+                if (json && json.message) msg = json.message;
+            } catch(e) {}
+            alert("Error: " + msg);
+            btn.prop('disabled', false).html(originalHtml);
+        });
     });
 
     // 6a. CONFIRM PAYMENT
     $('.confirm-pay-btn').click(function() {
-        if(confirm("Confirm payment received? User will be notified.")) {
-            $.post('update_payment_status.php', { id: $(this).data('id') }, function(res) {
-                alert(res.message); location.reload();
-            }, 'json');
-        }
+        var btn = $(this);
+        if(!confirm("Confirm payment received? User will be notified.")) return;
+
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Confirming...');
+
+        $.post('update_payment_status.php', { id: btn.data('id') }, function(res) {
+            alert(res.message);
+            location.reload();
+        }, 'json').fail(function(xhr) {
+            alert("Error confirming payment. Please try again.");
+            btn.prop('disabled', false).html(originalHtml);
+        });
     });
 
-        // 6b. REJECT PAYMENT
+    // 6b. REJECT PAYMENT
     $('.reject-pay-btn').click(function() {
         if(confirm("Reject this payment? The team will be notified to upload again.")) {
             const btn = $(this);
@@ -781,11 +807,29 @@ $(document).ready(function() {
 
     // 7. DELETE
     $('.delete-btn').click(function() {
-        if(confirm("Delete permanently? This removes all data and images.")) {
-            $.post('delete_registration.php', { id: $(this).data('id') }, function(res) {
-                if(res.success) location.reload(); else alert(res.message);
-            }, 'json');
-        }
+        var btn = $(this);
+        if(!confirm("Delete permanently? This removes all data and images.")) return;
+
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Deleting...');
+
+        $.post('delete_registration.php', { id: btn.data('id') }, function(res) {
+            if (res.success) {
+                alert("Registration deleted successfully.");
+                location.reload();
+            } else {
+                alert("Error: " + (res.message || "Failed to delete registration."));
+                btn.prop('disabled', false).html(originalHtml);
+            }
+        }, 'json').fail(function(xhr) {
+            var msg = 'Failed to delete registration.';
+            try {
+                var json = JSON.parse(xhr.responseText);
+                if (json && json.message) msg = json.message;
+            } catch(e) {}
+            alert("Error: " + msg);
+            btn.prop('disabled', false).html(originalHtml);
+        });
     });
 
     // 8. TEAM EMAIL COMPOSER

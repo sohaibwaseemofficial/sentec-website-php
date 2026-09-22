@@ -1,15 +1,19 @@
 <?php
+// Prevent accidental output buffer leaks
+ob_start();
 session_start();
+ini_set('display_errors', 0);
+header('Content-Type: application/json');
 
 // 1. SECURITY CHECK
 if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
-    header('Content-Type: application/json');
+    ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit();
 }
 
-header('Content-Type: application/json');
 include '../db_connection.php';
+require_once __DIR__ . '/admin_logger.php';
 
 $response = ['success' => false, 'message' => ''];
 
@@ -20,9 +24,12 @@ try {
     }
     
     $id = intval($_POST['id']);
+    if ($id <= 0) {
+        throw new Exception('Invalid Registration ID');
+    }
     
     // 3. FETCH REGISTRATION DATA
-    // We fetch everything to ensure we have paths for all 6 participant images
+    // We fetch everything to ensure we have paths for all participant images
     $stmt = $conn->prepare("SELECT * FROM event_registrations WHERE id = ? LIMIT 1");
     if (!$stmt) {
         throw new Exception('Database prepare error: ' . $conn->error);
@@ -45,7 +52,11 @@ try {
      */
     function deleteRegistrationFile($filepath) {
         if (!empty($filepath)) {
-            $fullPath = '../' . $filepath;
+            $clean = ltrim(str_replace(['\\', '//'], '/', $filepath), '/');
+            if (strpos($clean, '../') === 0) {
+                $clean = substr($clean, 3);
+            }
+            $fullPath = __DIR__ . '/../' . $clean;
             if (file_exists($fullPath) && is_file($fullPath)) {
                 @unlink($fullPath);
             }
@@ -53,24 +64,20 @@ try {
     }
     
     // 4. CLEAN UP SERVER FILES
-    // Delete team fee proof
-    deleteRegistrationFile($registration['fees_screenshot']);
+    // Delete team fee proof (both legacy fees_screenshot and payment_proof)
+    deleteRegistrationFile($registration['fees_screenshot'] ?? '');
+    deleteRegistrationFile($registration['payment_proof'] ?? '');
     
     // Loop through all 6 participants to delete face images and ID cards
     for ($i = 1; $i <= 6; $i++) {
-        $nameField = "participant{$i}_name";
         $faceField = "participant{$i}_face_image";
         $cardField = "participant{$i}_id_card";
 
-        // Only attempt deletion if the participant columns exist in the database row
-        if (isset($registration[$nameField])) {
-            deleteRegistrationFile($registration[$faceField] ?? '');
-            deleteRegistrationFile($registration[$cardField] ?? '');
-        }
+        deleteRegistrationFile($registration[$faceField] ?? '');
+        deleteRegistrationFile($registration[$cardField] ?? '');
     }
 
-    // 4.5 CLEAN UP CHILD RECORDS
-    // Delete from event_attendees first to prevent Foreign Key constraint errors
+    // 4.5 CLEAN UP CHILD RECORDS (event_attendees)
     $delAttendeesStmt = $conn->prepare("DELETE FROM event_attendees WHERE registration_id = ?");
     if ($delAttendeesStmt) {
         $delAttendeesStmt->bind_param("i", $id);
@@ -90,30 +97,21 @@ try {
         throw new Exception('Failed to execute delete: ' . $delStmt->error);
     }
     
-    if (isset($_SESSION['admin_id'])) {
-        $logStmt = $conn->prepare("INSERT INTO admin_logs (admin_id, action, details, ip_address) VALUES (?, ?, ?, ?)");
-        if ($logStmt) {
-            $action = 'DELETE_REGISTRATION';
-            $details = "Deleted registration ID $id";
-            $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-            $logStmt->bind_param('isss', $_SESSION['admin_id'], $action, $details, $ip);
-            $logStmt->execute();
-            $logStmt->close();
-        }
-    }
-
     $delStmt->close();
+    
+    // Log this action BEFORE closing the database connection
+    log_admin_action('DELETE_REGISTRATION', "Deleted registration ID $id (Team: " . ($registration['team_name'] ?? 'Unknown') . ")", $conn);
+    
     $conn->close();
 
     $response['success'] = true;
     $response['message'] = 'Registration and associated files deleted successfully';
-
-} catch (Exception $e) {
+    
+} catch (Throwable $e) {
     $response['success'] = false;
     $response['message'] = $e->getMessage();
 }
 
-// Return clean JSON response to your AJAX handler
+ob_end_clean();
 echo json_encode($response);
 exit();
-?>
