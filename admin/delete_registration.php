@@ -12,7 +12,7 @@ if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
     exit();
 }
 
-include '../db_connection.php';
+require_once __DIR__ . '/../db_connection.php';
 require_once __DIR__ . '/admin_logger.php';
 
 $response = ['success' => false, 'message' => ''];

@@ -6,7 +6,7 @@ if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
 }
 
 header('Content-Type: application/json');
-include '../db_connection.php';
+require_once __DIR__ . '/../db_connection.php';
 require_once __DIR__ . '/admin_logger.php';
 require_once __DIR__ . '/../env_loader.php';
 require_once __DIR__ . '/../mailer.php';

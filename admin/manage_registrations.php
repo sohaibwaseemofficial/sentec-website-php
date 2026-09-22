@@ -743,21 +743,23 @@ $(document).ready(function() {
     });
 
     // 5. SINGLE ACTION (Approve/Reject)
-    $('.action-btn').click(function() {
+    $(document).on('click', '.action-btn', function(e) {
+        e.preventDefault();
         var btn = $(this);
-        var id = btn.data('id');
-        var status = btn.data('status');
-        if(!confirm("Mark this team as " + status.toUpperCase() + "?")) return;
+        var id = btn.attr('data-id') || btn.data('id');
+        var status = btn.attr('data-status') || btn.data('status');
+        if(!id) { alert("Registration ID not found."); return; }
+        if(!confirm("Mark this team as " + String(status).toUpperCase() + "?")) return;
 
         var originalHtml = btn.html();
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Processing...');
 
         $.post('update_registration_status.php', { id: id, status: status }, function(res) {
-            if (res.success) {
+            if (res && res.success) {
                 alert(res.message);
                 location.reload();
             } else {
-                alert("Error: " + (res.message || "Failed to update status."));
+                alert("Error: " + ((res && res.message) ? res.message : "Failed to update status."));
                 btn.prop('disabled', false).html(originalHtml);
             }
         }, 'json').fail(function(xhr) {
@@ -772,14 +774,17 @@ $(document).ready(function() {
     });
 
     // 6a. CONFIRM PAYMENT
-    $('.confirm-pay-btn').click(function() {
+    $(document).on('click', '.confirm-pay-btn', function(e) {
+        e.preventDefault();
         var btn = $(this);
+        var id = btn.attr('data-id') || btn.data('id');
+        if(!id) { alert("Registration ID not found."); return; }
         if(!confirm("Confirm payment received? User will be notified.")) return;
 
         var originalHtml = btn.html();
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Confirming...');
 
-        $.post('update_payment_status.php', { id: btn.data('id') }, function(res) {
+        $.post('update_payment_status.php', { id: id }, function(res) {
             alert(res.message);
             location.reload();
         }, 'json').fail(function(xhr) {
@@ -789,36 +794,46 @@ $(document).ready(function() {
     });
 
     // 6b. REJECT PAYMENT
-    $('.reject-pay-btn').click(function() {
-        if(confirm("Reject this payment? The team will be notified to upload again.")) {
-            const btn = $(this);
-            const id = btn.data('id');
-            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Rejecting...');
-            
-            $.post('reject_payment.php', { id: id }, function(res) {
-                alert(res.message);
-                location.reload();
-            }, 'json').fail(function() {
-                alert('Error rejecting payment');
-                btn.prop('disabled', false).html('<i class="fas fa-times-circle me-2"></i> Reject Payment');
-            });
-        }
+    $(document).on('click', '.reject-pay-btn', function(e) {
+        e.preventDefault();
+        var btn = $(this);
+        var id = btn.attr('data-id') || btn.data('id');
+        if(!id) { alert("Registration ID not found."); return; }
+        if(!confirm("Reject this payment? The team will be notified to upload again.")) return;
+
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Rejecting...');
+        
+        $.post('reject_payment.php', { id: id }, function(res) {
+            alert(res.message);
+            location.reload();
+        }, 'json').fail(function() {
+            alert('Error rejecting payment');
+            btn.prop('disabled', false).html(originalHtml);
+        });
     });
 
     // 7. DELETE
-    $('.delete-btn').click(function() {
+    $(document).on('click', '.delete-btn', function(e) {
+        e.preventDefault();
         var btn = $(this);
+        var id = btn.attr('data-id') || btn.data('id');
+        if(!id) {
+            alert("Error: Registration ID not found.");
+            return;
+        }
+
         if(!confirm("Delete permanently? This removes all data and images.")) return;
 
         var originalHtml = btn.html();
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Deleting...');
 
-        $.post('delete_registration.php', { id: btn.data('id') }, function(res) {
-            if (res.success) {
+        $.post('delete_registration.php', { id: id }, function(res) {
+            if (res && res.success) {
                 alert("Registration deleted successfully.");
                 location.reload();
             } else {
-                alert("Error: " + (res.message || "Failed to delete registration."));
+                alert("Error: " + ((res && res.message) ? res.message : "Failed to delete registration."));
                 btn.prop('disabled', false).html(originalHtml);
             }
         }, 'json').fail(function(xhr) {
