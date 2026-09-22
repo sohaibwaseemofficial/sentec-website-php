@@ -27,3 +27,34 @@ Investigated the client report: "network communication error occuring, the modul
 - Switched to client-side WebP compression in event_registration.php using browser-image-compression library.
 - Used strict sequential processing loop to respect mobile memory constraints.
 - Updated UI to reflect progressive compression statuses.
+
+---
+
+## Fix Admin Registration Buttons & Numbering (2026-09-22)
+
+**Task Date:** 2026-09-22  
+**Task Name:** Fix Admin Portal - Registration Buttons Not Working + Add Row Numbers  
+**Status:** ? COMPLETED
+
+### Agents Involved
+- \godmode_product_manager\ (Scope Check)
+- \godmode_lead_architect\ (Impact Analysis)
+- \godmode_backend_dev\ (Implementation)
+
+### Task Summary
+Fixed critical bug where all buttons (Delete, Approve, Reject, Confirm Payment, Reject Payment, Send Gate Pass, Email Team) on the admin \manage_registrations.php\ page were non-functional. Only the Edit link worked.
+
+### Root Cause
+Backslash-escaped quotes (\class=\"...\"\) on line 431 of \manage_registrations.php\ produced invalid HTML that corrupted the DOM, preventing all jQuery click handlers from binding to button elements.
+
+### Changes Made
+1. **\dmin/manage_registrations.php\** — Fixed broken HTML quotes; added sequential \#1, #2, #3...\ row numbering
+2. **\dmin/bulk_update_registration_status.php\** — Extended participant query to include participant5 & participant6 for email notifications
+
+### Evidence Path
+\C:\Users\Connect2Aryans\Desktop\sentec-website-php\Tasks\2026-09-22_Fix_Admin_Registration_Buttons\\
+
+### Resource Utilization
+- **Estimated Time:** 15 mins
+- **Actual Time:** ~10 mins
+- **Complexity:** Low (surgical 3-line fix + 2-line addition)

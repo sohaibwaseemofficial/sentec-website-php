@@ -38,7 +38,9 @@ foreach ($ids as $id) {
                      participant1_name, participant1_email,
                      participant2_name, participant2_email,
                      participant3_name, participant3_email,
-                     participant4_name, participant4_email
+                     participant4_name, participant4_email,
+                     participant5_name, participant5_email,
+                     participant6_name, participant6_email
               FROM event_registrations WHERE id = ?";
         $qStmt = $conn->prepare($q);
         $qStmt->bind_param("i", $id);

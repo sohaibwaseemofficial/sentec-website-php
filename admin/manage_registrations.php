@@ -388,7 +388,9 @@ function toggleInst(type, val) {
         if (!$result) {
             echo '<div class="alert alert-danger">Unable to load registrations: ' . htmlspecialchars($conn->error, ENT_QUOTES, 'UTF-8') . '</div>';
         } elseif ($result->num_rows > 0) {
+            $rowNum = 0;
             while ($row = $result->fetch_assoc()) {
+                $rowNum++;
                 $paymentProof = (string)($row['payment_proof'] ?? '');
                 $feeImg = "../" . htmlspecialchars($paymentProof, ENT_QUOTES, 'UTF-8');
                 $payStatus = !empty($row['payment_status']) ? strtolower($row['payment_status']) : 'pending';
@@ -426,9 +428,9 @@ function toggleInst(type, val) {
                         <div class="d-flex align-items-center gap-3">
                             <input type="checkbox" class="reg-select form-check-input" value="<?php echo $row['id']; ?>">
                             <div>
-                                <h3 class="text-white m-0"><?php echo htmlspecialchars($row['team_name']); ?></h3>
+                                <h3 class="text-white m-0"><span class="badge bg-secondary me-2" style="font-size: 0.7rem; vertical-align: middle;">#<?php echo $rowNum; ?></span><?php echo htmlspecialchars($row['team_name']); ?></h3>
                                 <small class="text-muted"><?php echo htmlspecialchars($row['institution_type']); ?></small>
-                                <span class=\"badge bg-dark border border-secondary ms-2\"><?php echo htmlspecialchars($row['module_selection']); ?></span>
+                                <span class="badge bg-dark border border-secondary ms-2"><?php echo htmlspecialchars($row['module_selection']); ?></span>
                                 <?php if (!empty($row['brand_ambassador_code'])): ?>
                                     <div class="badge-amb"><i class="fas fa-user-shield"></i> Code: <?php echo htmlspecialchars($row['brand_ambassador_code']); ?></div>
                                 <?php endif; ?>
