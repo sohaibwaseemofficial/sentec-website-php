@@ -42,6 +42,7 @@ DirectoryIndex index.php index.html
     RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+index\.php[\s?] [NC]
     RewriteRule ^ %{ENV:REQ_SCHEME}://%{HTTP_HOST}/ [R=301,L]
 
+    RewriteCond %{REQUEST_METHOD} !POST
     RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+?)\.php[\s?] [NC]
     RewriteRule ^ %{ENV:REQ_SCHEME}://%{HTTP_HOST}/%1 [R=301,L,NE]
 

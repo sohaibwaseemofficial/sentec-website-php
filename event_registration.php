@@ -17,20 +17,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ini_set('memory_limit', '256M');
     ini_set('max_execution_time', 300);
 
+    // Clean any prior output buffer to ensure pure JSON
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     ob_start();
-    header('Content-Type: application/json');
-    $response = ['success' => false, 'message' => 'Unknown error'];
+    header('Content-Type: application/json; charset=utf-8');
+    $response = ['status' => 'error', 'success' => false, 'message' => 'Unknown error'];
 
     // Prevent PHP from failing silently when post_max_size is exceeded
     if (empty($_POST) && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
-        ob_end_clean();
-        echo json_encode(['success' => false, 'message' => 'Total file upload size exceeded the server limit. Please ensure each image is under 800KB and try again.']);
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        echo json_encode([
+            'status' => 'error',
+            'success' => false,
+            'message' => 'Total file upload size exceeded the server limit. Please ensure each image is under 800KB and try again.'
+        ]);
         exit;
     }
 
     try {
         if (!file_exists('db_connection.php')) throw new Exception("Database file missing.");
         include 'db_connection.php';
+
+        // Helper functions
+        if (!function_exists('processFile')) {
+            function processFile($fileArray, $inputName, $targetDir, $publicPrefix) {
+                if (!isset($fileArray[$inputName]) || $fileArray[$inputName]['error'] !== UPLOAD_ERR_OK) return '';
+                $result = save_image_as_webp($fileArray[$inputName], $targetDir, $publicPrefix);
+                if ($result['success']) return $result['path'];
+                throw new Exception($result['error'] ?? 'Failed to save file.');
+            }
+        }
+
+        if (!function_exists('getVal')) {
+            function getVal($key) { return !empty($_POST[$key]) ? trim($_POST[$key]) : ''; }
+        }
 
         // Fetch active event label
         $activeEventLabel = '';
@@ -46,20 +70,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
         $publicPrefix = 'images/uploads/event_registrations/';
 
-        // Helper functions
-        function processFile($fileArray, $inputName, $targetDir, $publicPrefix) {
-            if (!isset($fileArray[$inputName]) || $fileArray[$inputName]['error'] !== UPLOAD_ERR_OK) return '';
-            $result = save_image_as_webp($fileArray[$inputName], $targetDir, $publicPrefix);
-            if ($result['success']) return $result['path'];
-            throw new Exception($result['error'] ?? 'Failed to save file.');
-        }
-
-        function getVal($key) { return !empty($_POST[$key]) ? trim($_POST[$key]) : ''; }
-
         // ---------------------------------------------------------
         // B. CORE DATA COLLECTION (MUST HAPPEN BEFORE VALIDATION)
         // ---------------------------------------------------------
+        $sessionUserId = (int)($_SESSION['user_id'] ?? 0);
         $user_id     = (int)getVal('user_id');
+        if ($user_id <= 0 && $sessionUserId > 0) {
+            $user_id = $sessionUserId;
+        }
         if ($user_id <= 0) {
             throw new Exception("Authentication Error: Missing or invalid user ID. Please log in again.");
         }
@@ -213,21 +231,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             event_attendees_sync($conn, $registrationId, $syncParticipants, $paymentStatus);
-            $response['success'] = true;
-            $response['message'] = 'Registration Submitted Successfully!';
-            $response['registrationId'] = $registrationId;
+            $response = [
+                'status' => 'success',
+                'success' => true,
+                'message' => 'Registration Submitted Successfully!',
+                'registrationId' => $registrationId
+            ];
         } else {
             throw new Exception("Database execution failed: " . $stmt->error);
         }
         $stmt->close();
         $conn->close();
 
-    } catch (Exception $e) {
-        $response['message'] = $e->getMessage();
+    } catch (Throwable $e) {
+        $response = [
+            'status' => 'error',
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
     }
 
-    ob_end_clean();
-    echo json_encode($response);
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
@@ -1065,30 +1093,63 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
 
                 btnText.textContent = "TRANSMITTING REGISTRATION...";
 
-                const res = await fetch('event_registration.php', {
+                const targetUrl = window.location.pathname || 'event_registration.php';
+                const res = await fetch(targetUrl, {
                     method: 'POST',
                     body: finalFormData
                 });
 
-                const text = await res.text();
-                let data;
+                // Safely read response text and parse JSON
+                const rawText = await res.text();
+                let data = null;
                 try {
-                    data = JSON.parse(text);
-                } catch (e) {
-                    throw new Error(text || 'Server responded with status ' + res.status);
+                    data = JSON.parse(rawText);
+                } catch (parseErr) {
+                    console.error("Failed to parse server response as JSON. Raw response:", rawText);
+                    // Do not pass raw HTML into Error message to prevent DOM contamination
+                    throw new Error("SERVER_ERROR_NON_JSON");
                 }
-                if (data.success) {
+
+                if (!res.ok && (!data || (!data.message && !data.error))) {
+                    throw new Error("SERVER_STATUS_" + res.status);
+                }
+
+                const isSuccess = data && (data.status === 'success' || data.success === true);
+                if (isSuccess) {
                     goToStep(5);
                 } else {
+                    const errorMsg = (data && (data.message || data.error)) ? String(data.message || data.error) : 'Error occurred during registration.';
                     alertDiv.style.display = 'block';
-                    alertDiv.innerHTML = `<div style="background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.4); color: #f87171; padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">${data.message || 'Error occurred during registration.'}</div>`;
+                    alertDiv.textContent = '';
+                    const errBox = document.createElement('div');
+                    errBox.style.cssText = "background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.4); color: #f87171; padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;";
+                    errBox.textContent = errorMsg;
+                    alertDiv.appendChild(errBox);
+
                     btn.disabled = false;
                     btnText.textContent = "SUBMIT REGISTRATION";
                 }
             } catch (err) {
-                console.error("Compression/Upload error:", err);
+                console.error("Registration submission error:", err);
+
+                let friendlyMessage = "A network error occurred. Please check your connection and try again.";
+                if (err && (err.message === "SERVER_ERROR_NON_JSON" || (typeof err.message === "string" && err.message.startsWith("SERVER_STATUS_")))) {
+                    friendlyMessage = "Server error occurred while processing registration. Please try again.";
+                    alert("Server error occurred");
+                } else if (err && err.message && !err.message.includes("<") && err.message.length < 200) {
+                    friendlyMessage = err.message;
+                } else {
+                    friendlyMessage = "Server error occurred. Please try again.";
+                    alert("Server error occurred");
+                }
+
                 alertDiv.style.display = 'block';
-                alertDiv.innerHTML = `<div style="background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.4); color: #f87171; padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">Compression or Network Error: ${err.message || 'Please check your connection and try again.'}</div>`;
+                alertDiv.textContent = '';
+                const errBox = document.createElement('div');
+                errBox.style.cssText = "background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.4); color: #f87171; padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;";
+                errBox.textContent = friendlyMessage;
+                alertDiv.appendChild(errBox);
+
                 btn.disabled = false;
                 btnText.textContent = "SUBMIT REGISTRATION";
             }
