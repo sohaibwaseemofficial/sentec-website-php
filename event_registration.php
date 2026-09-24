@@ -113,8 +113,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // C. DYNAMIC VALIDATION LOGIC
         // ---------------------------------------------------------
         $serverLimits = [
-            "Line Following Robot (LFR)" => ["min" => 4, "max" => 4, "price" => "PKR 1,200"],
-            "Circuit Designing Competition" => ["min" => 4, "max" => 4, "price" => "PKR 1,200"],
+            "Line Following Robot (LFR)" => ["min" => 2, "max" => 4, "price" => "PKR 1,200"],
+            "Circuit Designing Competition" => ["min" => 2, "max" => 4, "price" => "PKR 1,200"],
             "CYBER WAR ROOM" => ["min" => 3, "max" => 4, "price" => "PKR 1,400"],
             "RAG CHATBOT BUILDER" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
             "AGENT SPRINT: LIVE GMAIL AUTOMATION" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
@@ -626,8 +626,8 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                         <div style="margin-bottom: 24px;">
                             <label class="signal-label" for="moduleSelectInput">MODULE SELECTION</label>
                             <select id="moduleSelectInput" name="moduleSelection" class="signal-select" onchange="onModuleChange()">
-                                <option value="Line Following Robot (LFR)">Line Following Robot (LFR) (Robotics) — Team of 4</option>
-                                <option value="Circuit Designing Competition">Circuit Designing Competition (Hardware) — Team of 4</option>
+                                <option value="Line Following Robot (LFR)">Line Following Robot (LFR) (Robotics) — Team of 2-4</option>
+                                <option value="Circuit Designing Competition">Circuit Designing Competition (Hardware) — Team of 2-4</option>
                                 <option value="CYBER WAR ROOM">CYBER WAR ROOM (Cybersecurity) — Team of 3-4</option>
                                 <option value="RAG CHATBOT BUILDER">RAG CHATBOT BUILDER (AI/ML) — Team of 2-3</option>
                                 <option value="AGENT SPRINT: LIVE GMAIL AUTOMATION">AGENT SPRINT: LIVE GMAIL AUTOMATION (AI/ML) — Team of 2-3</option>
@@ -777,14 +777,14 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
     // Module Rules Database matching 13 official competition modules
     const MODULE_RULES = {
         "Line Following Robot (LFR)": {
-            min: 4,
+            min: 2,
             max: 4,
             price: "PKR 1,200",
             category: "Robotics",
             desc: "A practical robotics competition in which autonomous robots follow a predefined track using sensors and control logic."
         },
         "Circuit Designing Competition": {
-            min: 4,
+            min: 2,
             max: 4,
             price: "PKR 1,200",
             category: "Hardware",

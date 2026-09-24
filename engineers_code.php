@@ -503,8 +503,8 @@
     <div id="university-grid" class="modules-grid">
         <?php
         $uni_modules = [
-            ["title" => "Line Following Robot (LFR)", "desc" => "A practical robotics competition in which autonomous robots follow a predefined track using sensors and control logic.", "team_size" => "Team of 4", "price" => "PKR 1,200"],
-            ["title" => "Circuit Designing Competition", "desc" => "An electronics and digital-logic focused competition involving circuit design, problem solving, and circuit debugging through simulation.", "team_size" => "Team of 4", "price" => "PKR 1,200"],
+            ["title" => "Line Following Robot (LFR)", "desc" => "A practical robotics competition in which autonomous robots follow a predefined track using sensors and control logic.", "team_size" => "Team of 2-4", "price" => "PKR 1,200"],
+            ["title" => "Circuit Designing Competition", "desc" => "An electronics and digital-logic focused competition involving circuit design, problem solving, and circuit debugging through simulation.", "team_size" => "Team of 2-4", "price" => "PKR 1,200"],
             ["title" => "CYBER WAR ROOM", "desc" => "Cyber War Room is a direct Attack & Defense Web Security Competition. Teams must first build and secure their own functional web application, package it using Docker, and submit it to the organizers. The application is then randomly assigned to another team.", "team_size" => "Team of 3-4", "price" => "PKR 1,400"],
             ["title" => "RAG CHATBOT BUILDER", "desc" => "Build a Retrieval-Augmented Generation chatbot from a provided PDF that answers accurately and stays polite under a live adversarial roleplay.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
             ["title" => "AGENT SPRINT: LIVE GMAIL AUTOMATION", "desc" => "Build an agent that reads real emails from a provided Gmail account, classifies them, drafts policy-based replies, and displays live status on a dashboard.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
