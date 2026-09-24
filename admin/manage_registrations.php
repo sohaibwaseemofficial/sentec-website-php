@@ -325,27 +325,18 @@ $eventVisible = event_registrations_visible($conn); // NEW: Check visibility
         <i class="fas fa-sliders-h me-2 text-info"></i> Form Visibility Toggles:
     </span>
     
-    <button class="btn <?php echo $instVis['ned'] ? 'btn-solid-green' : 'btn-solid-red'; ?> btn-sm" onclick="toggleInst('ned', <?php echo $instVis['ned'] ? '0' : '1'; ?>)" style="padding: 6px 16px;">
+    <button type="button" class="btn <?php echo $instVis['ned'] ? 'btn-solid-green' : 'btn-solid-red'; ?> btn-sm inst-toggle-btn" data-type="ned" data-val="<?php echo $instVis['ned'] ? '0' : '1'; ?>" style="padding: 6px 16px;">
         NED <?php echo $instVis['ned'] ? '<i class="fas fa-eye ms-2"></i>' : '<i class="fas fa-eye-slash ms-2"></i>'; ?>
     </button>
     
-    <button class="btn <?php echo $instVis['non_ned'] ? 'btn-solid-green' : 'btn-solid-red'; ?> btn-sm" onclick="toggleInst('non_ned', <?php echo $instVis['non_ned'] ? '0' : '1'; ?>)" style="padding: 6px 16px;">
+    <button type="button" class="btn <?php echo $instVis['non_ned'] ? 'btn-solid-green' : 'btn-solid-red'; ?> btn-sm inst-toggle-btn" data-type="non_ned" data-val="<?php echo $instVis['non_ned'] ? '0' : '1'; ?>" style="padding: 6px 16px;">
         Non-NED <?php echo $instVis['non_ned'] ? '<i class="fas fa-eye ms-2"></i>' : '<i class="fas fa-eye-slash ms-2"></i>'; ?>
     </button>
     
-    <button class="btn <?php echo $instVis['college'] ? 'btn-solid-green' : 'btn-solid-red'; ?> btn-sm" onclick="toggleInst('college', <?php echo $instVis['college'] ? '0' : '1'; ?>)" style="padding: 6px 16px;">
+    <button type="button" class="btn <?php echo $instVis['college'] ? 'btn-solid-green' : 'btn-solid-red'; ?> btn-sm inst-toggle-btn" data-type="college" data-val="<?php echo $instVis['college'] ? '0' : '1'; ?>" style="padding: 6px 16px;">
         College <?php echo $instVis['college'] ? '<i class="fas fa-eye ms-2"></i>' : '<i class="fas fa-eye-slash ms-2"></i>'; ?>
     </button>
 </div>
-
-<script>
-function toggleInst(type, val) {
-    if(!confirm("Are you sure you want to toggle this option on the public form?")) return;
-    $.post('toggle_event_status.php', { toggle_inst: type, val: val }, function(res) {
-        alert(res.message); location.reload();
-    }, 'json');
-}
-</script>
 
 <div class="row mb-4 g-3">
     <div class="col-md-3"><div class="stat-box"><h3><?php echo $total; ?></h3><p>Total</p></div></div>
@@ -358,8 +349,8 @@ function toggleInst(type, val) {
     
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div class="d-flex gap-3 align-items-center">
-            <input type="checkbox" id="selectAll" class="reg-select">
-            <label for="selectAll" class="text-white fw-bold">Select All</label>
+            <input type="checkbox" id="selectAll" class="form-check-input" style="width: 20px; height: 20px; cursor: pointer; accent-color: #00FF94;">
+            <label for="selectAll" class="text-white fw-bold" style="cursor: pointer;">Select All</label>
             
             <button id="bulkApprove" class="btn-solid-green btn-sm ms-3"><i class="fas fa-check-double"></i> Bulk Approve</button>
             <button id="bulkReject" class="btn-solid-red btn-sm"><i class="fas fa-ban"></i> Bulk Reject</button>
@@ -426,7 +417,7 @@ function toggleInst(type, val) {
                     
                     <div class="d-flex justify-content-between align-items-start mb-3 border-bottom border-secondary pb-3">
                         <div class="d-flex align-items-center gap-3">
-                            <input type="checkbox" class="reg-select form-check-input" value="<?php echo $row['id']; ?>">
+                            <input type="checkbox" class="reg-select reg-checkbox form-check-input" value="<?php echo (int)$row['id']; ?>">
                             <div>
                                 <h3 class="text-white m-0"><span class="badge bg-secondary me-2" style="font-size: 0.7rem; vertical-align: middle;">#<?php echo $rowNum; ?></span><?php echo htmlspecialchars($row['team_name']); ?></h3>
                                 <small class="text-muted"><?php echo htmlspecialchars($row['institution_type']); ?></small>
@@ -548,7 +539,7 @@ function toggleInst(type, val) {
                             <hr class="border-secondary">
 
                             <div class="d-grid gap-2">
-                                <a href="edit_registration.php?id=<?php echo $row['id']; ?>" class="btn-outline-info btn-sm">
+                                <a href="edit_registration?id=<?php echo (int)$row['id']; ?>" class="btn-outline-info btn-sm">
                                     <i class="fas fa-pen"></i> Edit Details
                                 </a>
                                 <button type="button" class="btn-outline-info btn-sm send-gatepass-btn" data-registration-id="<?php echo (int)$row['id']; ?>">
@@ -676,66 +667,123 @@ function toggleInst(type, val) {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() { 
-    // Add this logic to your existing script block
-    $('#toggle-event-btn').click(function() {
-        var current = $(this).data('open');
-         if(!confirm("Change registration status?")) return;
-         $.post('toggle_event_status.php', { open: current == 1 ? 0 : 1 }, function(res) {
-            alert(res.message); location.reload();
-    }, 'json');
+    // 0. FORM VISIBILITY & SETTINGS
+    $(document).on('click', '.inst-toggle-btn', function(e) {
+        e.preventDefault();
+        var btn = $(this);
+        var type = btn.data('type') || btn.attr('data-type');
+        var val = btn.data('val') !== undefined ? btn.data('val') : btn.attr('data-val');
+        if(!confirm("Are you sure you want to toggle this option on the public form?")) return;
+        $.post('toggle_event_status.php', { toggle_inst: type, val: val }, function(res) {
+            alert(res && res.message ? res.message : 'Toggled successfully.');
+            location.reload();
+        }, 'json').fail(function() {
+            alert('Error toggling institution visibility.');
+        });
     });
 
-    $('#save-event-limit').click(function() {
+    window.toggleInst = function(type, val) {
+        if(!confirm("Are you sure you want to toggle this option on the public form?")) return;
+        $.post('toggle_event_status.php', { toggle_inst: type, val: val }, function(res) {
+            alert(res && res.message ? res.message : 'Toggled successfully.');
+            location.reload();
+        }, 'json').fail(function() {
+            alert('Error toggling institution visibility.');
+        });
+    };
+
+    $(document).on('click', '#toggle-event-btn', function(e) {
+        e.preventDefault();
+        var current = $(this).data('open');
+        if(!confirm("Change registration status?")) return;
+        $.post('toggle_event_status.php', { open: current == 1 ? 0 : 1 }, function(res) {
+            alert(res && res.message ? res.message : 'Status updated.');
+            location.reload();
+        }, 'json').fail(function() {
+            alert('Failed to toggle registration status.');
+        });
+    });
+
+    $(document).on('click', '#vanish-event-btn', function(e) {
+        e.preventDefault();
+        var current = $(this).data('visible');
+        $.post('toggle_event_status.php', { visible: current == 1 ? 0 : 1 }, function(res) {
+            alert(res && res.message ? res.message : 'Dashboard visibility updated.');
+            location.reload();
+        }, 'json').fail(function() {
+            alert('Failed to update dashboard visibility.');
+        });
+    });
+
+    $(document).on('click', '#save-event-limit', function(e) {
+        e.preventDefault();
         var limit = $('#event-limit-input').val();
         $.post('toggle_event_status.php', { limit: limit }, function(res) {
-            alert(res.message); location.reload();
-        }, 'json');
+            alert(res && res.message ? res.message : 'Registration limit saved.');
+            location.reload();
+        }, 'json').fail(function() {
+            alert('Failed to save registration limit.');
+        });
     });
-    // 1. SEARCH
-    $("#searchBox").on("keyup", function() {
+
+    // 1. SEARCH FILTER
+    $(document).on('keyup', '#searchBox', function() {
         var value = $(this).val().toLowerCase();
         $(".reg-card").filter(function() {
-            $(this).toggle($(this).data('search').indexOf(value) > -1)
+            $(this).toggle($(this).data('search').indexOf(value) > -1);
         });
     });
 
     // 2. FILTER TABS
-    $('#statusFilter .nav-link').on('click', function(e) {
+    $(document).on('click', '#statusFilter .nav-link', function(e) {
         e.preventDefault();
         $('#statusFilter .nav-link').removeClass('active');
         $(this).addClass('active');
         var status = $(this).data('status');
-        if(status === 'all') { $('.reg-card').fadeIn(); } 
-        else { $('.reg-card').hide(); $('.reg-card[data-status="' + status + '"]').fadeIn(); }
+        if(status === 'all') { 
+            $('.reg-card').fadeIn(); 
+        } else { 
+            $('.reg-card').hide(); 
+            $('.reg-card[data-status="' + status + '"]').fadeIn(); 
+        }
     });
 
     // 3. BULK SELECT
-    $('#selectAll').change(function() {
-        $('.reg-card:visible .reg-select').prop('checked', this.checked);
+    $(document).on('change', '#selectAll', function() {
+        $('.reg-card:visible .reg-checkbox').prop('checked', this.checked);
     });
 
     // 4. BULK ACTIONS
     function bulkAction(status) {
-        var ids = $('.reg-select:checked').map(function(){return $(this).val();}).get();
+        var ids = $('.reg-checkbox:checked').map(function(){ return $(this).val(); }).get().filter(function(v){ return v && v !== 'on' && parseInt(v, 10) > 0; });
         if(ids.length === 0) { alert("Select at least one team."); return; }
         
-        if(confirm("Confirm " + status + " for " + ids.length + " teams? Emails will be sent.")) {
+        if(confirm("Confirm " + status.toUpperCase() + " for " + ids.length + " team(s)? Emails will be sent.")) {
             $.post('bulk_update_registration_status.php', { ids: ids, status: status }, function(res) {
-                alert(res.message); location.reload();
-            }, 'json');
+                alert(res && res.message ? res.message : 'Bulk status updated.');
+                location.reload();
+            }, 'json').fail(function(xhr) {
+                var msg = 'Failed to bulk update status.';
+                try {
+                    var json = JSON.parse(xhr.responseText);
+                    if (json && json.message) msg = json.message;
+                } catch(e) {}
+                alert("Error: " + msg);
+            });
         }
     }
-    $('#bulkApprove').click(function() { bulkAction('approved'); });
-    $('#bulkReject').click(function() { bulkAction('rejected'); });
+    $(document).on('click', '#bulkApprove', function(e) { e.preventDefault(); bulkAction('approved'); });
+    $(document).on('click', '#bulkReject', function(e) { e.preventDefault(); bulkAction('rejected'); });
 
-    // 4b. BULK SEND GATE PASSES (all approved)
-    $('#sendAllGatePass').click(function() {
+    // 4b. BULK SEND GATE PASSES
+    $(document).on('click', '#sendAllGatePass', function(e) {
+        e.preventDefault();
         if(!confirm('Send gate pass QR emails to all approved teams?')) { return; }
         const btn = $(this);
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Sending...');
         $.post('send_event_gatepass_all.php', {}, function(res) {
-            alert(res.message || ('Sent: ' + (res.sent || 0)));
-        }, 'json').fail(function(err) {
+            alert((res && res.message) ? res.message : ('Sent: ' + ((res && res.sent) || 0)));
+        }, 'json').fail(function() {
             alert('Bulk gate pass failed.');
         }).always(function(){
             btn.prop('disabled', false).html('<i class="fas fa-qrcode"></i> Send Gate Passes (Approved)');
@@ -779,16 +827,26 @@ $(document).ready(function() {
         var btn = $(this);
         var id = btn.attr('data-id') || btn.data('id');
         if(!id) { alert("Registration ID not found."); return; }
-        if(!confirm("Confirm payment received? User will be notified.")) return;
+        if(!confirm("Confirm payment received? Team will be notified.")) return;
 
         var originalHtml = btn.html();
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Confirming...');
 
         $.post('update_payment_status.php', { id: id }, function(res) {
-            alert(res.message);
-            location.reload();
+            if (res && res.success) {
+                alert(res.message);
+                location.reload();
+            } else {
+                alert("Error: " + ((res && res.message) ? res.message : "Failed to confirm payment."));
+                btn.prop('disabled', false).html(originalHtml);
+            }
         }, 'json').fail(function(xhr) {
-            alert("Error confirming payment. Please try again.");
+            var msg = "Error confirming payment.";
+            try {
+                var json = JSON.parse(xhr.responseText);
+                if (json && json.message) msg = json.message;
+            } catch(e) {}
+            alert("Error: " + msg);
             btn.prop('disabled', false).html(originalHtml);
         });
     });
@@ -802,18 +860,28 @@ $(document).ready(function() {
         if(!confirm("Reject this payment? The team will be notified to upload again.")) return;
 
         var originalHtml = btn.html();
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Rejecting...');
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Rejecting...');
         
         $.post('reject_payment.php', { id: id }, function(res) {
-            alert(res.message);
-            location.reload();
-        }, 'json').fail(function() {
-            alert('Error rejecting payment');
+            if (res && res.success) {
+                alert(res.message);
+                location.reload();
+            } else {
+                alert("Error: " + ((res && res.message) ? res.message : "Failed to reject payment."));
+                btn.prop('disabled', false).html(originalHtml);
+            }
+        }, 'json').fail(function(xhr) {
+            var msg = "Error rejecting payment.";
+            try {
+                var json = JSON.parse(xhr.responseText);
+                if (json && json.message) msg = json.message;
+            } catch(e) {}
+            alert("Error: " + msg);
             btn.prop('disabled', false).html(originalHtml);
         });
     });
 
-    // 7. DELETE
+    // 7. DELETE REGISTRATION
     $(document).on('click', '.delete-btn', function(e) {
         e.preventDefault();
         var btn = $(this);
@@ -823,7 +891,7 @@ $(document).ready(function() {
             return;
         }
 
-        if(!confirm("Delete permanently? This removes all data and images.")) return;
+        if(!confirm("Delete permanently? This removes all team data, members, and uploaded files.")) return;
 
         var originalHtml = btn.html();
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Deleting...');
@@ -847,7 +915,32 @@ $(document).ready(function() {
         });
     });
 
-    // 8. TEAM EMAIL COMPOSER
+    // 8. SEND GATE PASS (Single Team)
+    $(document).on('click', '.send-gatepass-btn', function(e) {
+        e.preventDefault();
+        var btn = $(this);
+        var regId = btn.attr('data-registration-id') || btn.data('registration-id');
+        if(!regId) { alert("Registration ID not found."); return; }
+        if(!confirm('Send gate pass QR emails to this team?')) { return; }
+        
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Sending...');
+        
+        $.post('send_event_gatepass.php', { registration_id: regId }, function(data) {
+            alert((data && data.message) ? data.message : 'Gate pass emails sent.');
+        }, 'json').fail(function(xhr) {
+            var msg = 'Failed to send gate pass.';
+            try {
+                var json = JSON.parse(xhr.responseText);
+                if (json && json.message) msg = json.message;
+            } catch(e) {}
+            alert('Error: ' + msg);
+        }).always(function() {
+            btn.prop('disabled', false).html(originalHtml);
+        });
+    });
+
+    // 9. TEAM EMAIL COMPOSER
     const teamEmailModalEl = document.getElementById('teamEmailModal');
     const teamEmailForm = document.getElementById('teamEmailForm');
     const teamEmailRecipientList = document.getElementById('teamEmailRecipientList');
@@ -857,7 +950,6 @@ $(document).ready(function() {
     const teamEmailModuleBadge = document.getElementById('teamEmailModuleBadge');
     const teamEmailInstitution = document.getElementById('teamEmailInstitution');
     const teamEmailRegistrationId = document.getElementById('teamEmailRegistrationId');
-    let teamEmailModalInstance = null;
 
     function updateTeamEmailSelectedCount() {
         if (!teamEmailRecipientList || !teamEmailSelectedCount) { return; }
@@ -964,51 +1056,51 @@ $(document).ready(function() {
         });
     }
 
-    document.querySelectorAll('.email-team-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            if (!teamEmailForm || !teamEmailModalEl) { return; }
-            teamEmailForm.reset();
-            const regId = this.getAttribute('data-registration-id') || '';
-            const teamName = this.getAttribute('data-team-name') || 'Team';
-            const module = this.getAttribute('data-team-module') || '';
-            const institution = this.getAttribute('data-team-institution') || '';
-            let members = [];
-            try {
-                members = JSON.parse(this.getAttribute('data-members') || '[]') || [];
-            } catch (err) {
-                members = [];
+    $(document).on('click', '.email-team-btn', function(e) {
+        e.preventDefault();
+        var btn = $(this);
+        if (!teamEmailForm || !teamEmailModalEl) { return; }
+        teamEmailForm.reset();
+        const regId = btn.attr('data-registration-id') || btn.data('registration-id') || '';
+        const teamName = btn.attr('data-team-name') || btn.data('team-name') || 'Team';
+        const module = btn.attr('data-team-module') || btn.data('team-module') || '';
+        const institution = btn.attr('data-team-institution') || btn.data('team-institution') || '';
+        var rawMembers = btn.attr('data-members') || btn.data('members') || '[]';
+        let members = [];
+        try {
+            members = (typeof rawMembers === 'string') ? JSON.parse(rawMembers) : rawMembers;
+        } catch (err) {
+            members = [];
+        }
+        if (teamEmailRegistrationId) {
+            teamEmailRegistrationId.value = regId;
+        }
+        if (teamEmailTeamName) {
+            teamEmailTeamName.textContent = teamName;
+        }
+        if (teamEmailModuleBadge) {
+            teamEmailModuleBadge.classList.add('border', 'border-secondary');
+            teamEmailModuleBadge.classList.remove('bg-secondary', 'text-dark');
+            teamEmailModuleBadge.classList.add('bg-dark');
+            if (module !== '') {
+                teamEmailModuleBadge.textContent = module;
+            } else {
+                teamEmailModuleBadge.textContent = 'Module not provided';
+                teamEmailModuleBadge.classList.remove('bg-dark');
+                teamEmailModuleBadge.classList.add('bg-secondary', 'text-dark');
             }
-            if (teamEmailRegistrationId) {
-                teamEmailRegistrationId.value = regId;
-            }
-            if (teamEmailTeamName) {
-                teamEmailTeamName.textContent = teamName;
-            }
-            if (teamEmailModuleBadge) {
-                teamEmailModuleBadge.classList.add('border', 'border-secondary');
-                teamEmailModuleBadge.classList.remove('bg-secondary', 'text-dark');
-                teamEmailModuleBadge.classList.add('bg-dark');
-                if (module !== '') {
-                    teamEmailModuleBadge.textContent = module;
-                } else {
-                    teamEmailModuleBadge.textContent = 'Module not provided';
-                    teamEmailModuleBadge.classList.remove('bg-dark');
-                    teamEmailModuleBadge.classList.add('bg-secondary', 'text-dark');
-                }
-            }
-            if (teamEmailInstitution) {
-                teamEmailInstitution.textContent = institution !== '' ? institution : 'Institution not provided';
-            }
-            buildTeamEmailRecipientList(Array.isArray(members) ? members : []);
-            if (!teamEmailModalInstance && typeof bootstrap !== 'undefined') {
-                teamEmailModalInstance = new bootstrap.Modal(teamEmailModalEl);
-            }
-            if (teamEmailModalInstance) {
-                teamEmailModalInstance.show();
-            } else if (window.jQuery) {
-                $(teamEmailModalEl).modal('show');
-            }
-        });
+        }
+        if (teamEmailInstitution) {
+            teamEmailInstitution.textContent = institution !== '' ? institution : 'Institution not provided';
+        }
+        buildTeamEmailRecipientList(Array.isArray(members) ? members : []);
+        
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            var modalInstance = bootstrap.Modal.getInstance(teamEmailModalEl) || new bootstrap.Modal(teamEmailModalEl);
+            modalInstance.show();
+        } else if (window.jQuery) {
+            $(teamEmailModalEl).modal('show');
+        }
     });
 
     if (teamEmailForm) {
@@ -1035,8 +1127,9 @@ $(document).ready(function() {
                 const sent = data && typeof data.sent !== 'undefined' ? data.sent : 0;
                 const errors = data && Array.isArray(data.errors) && data.errors.length ? '\nErrors:\n' + data.errors.join('\n') : '';
                 alert('Sent: ' + sent + ' email(s).' + errors);
-                if (teamEmailModalInstance) {
-                    teamEmailModalInstance.hide();
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    var modalInstance = bootstrap.Modal.getInstance(teamEmailModalEl);
+                    if (modalInstance) modalInstance.hide();
                 } else if (window.jQuery) {
                     $(teamEmailModalEl).modal('hide');
                 }
@@ -1063,39 +1156,6 @@ $(document).ready(function() {
     }
 
     resetTeamRecipientsPlaceholder();
-
-    // 9. SEND GATE PASS (single team)
-    document.querySelectorAll('.send-gatepass-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var regId = this.getAttribute('data-registration-id') || '';
-            if(!regId) { return; }
-            if(!confirm('Send gate pass emails to this team?')) { return; }
-            const original = this.innerHTML;
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-            fetch('send_event_gatepass.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'registration_id=' + encodeURIComponent(regId)
-            }).then(function(res){ return res.json(); })
-            .then(function(data){
-                alert((data && data.message) ? data.message : 'Email triggered.');
-            }).catch(function(){
-                alert('Failed to send gate pass.');
-            }).finally(() => {
-                this.disabled = false;
-                this.innerHTML = original;
-            });
-        });
-    });
-
-    $('#vanish-event-btn').click(function() {
-        var current = $(this).data('visible');
-        $.post('toggle_event_status.php', { visible: current == 1 ? 0 : 1 }, function(res) {
-            alert(res.message); location.reload();
-        }, 'json');
-    });
-
 });
 </script>
 

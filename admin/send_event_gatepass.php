@@ -1,13 +1,15 @@
 <?php
+ob_start();
 session_start();
+ini_set('display_errors', 0);
+header('Content-Type: application/json');
+
 if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
     http_response_code(403);
-    header('Content-Type: application/json');
+    ob_end_clean();
     echo json_encode(['sent' => 0, 'errors' => ['Unauthorized access.']]);
     exit;
 }
-
-header('Content-Type: application/json');
 
 require_once __DIR__ . '/../env_loader.php';
 require_once __DIR__ . '/../db_connection.php';
@@ -16,6 +18,7 @@ require_once __DIR__ . '/../event_attendees_helper.php';
 
 $registrationId = (int)($_POST['registration_id'] ?? 0);
 if ($registrationId <= 0) {
+    ob_end_clean();
     echo json_encode(['sent' => 0, 'errors' => ['No registration selected.']]);
     exit;
 }
@@ -29,16 +32,19 @@ $registration = $regRes ? $regRes->fetch_assoc() : null;
 $regStmt->close();
 
 if (!$registration) {
+    ob_end_clean();
     echo json_encode(['sent' => 0, 'errors' => ['Registration not found.']]);
     exit;
 }
 
 if ($registration['status'] !== 'approved') {
+    ob_end_clean();
     echo json_encode(['sent' => 0, 'errors' => ['Registration is not approved. Approve first, then send gate passes.']]);
     exit;
 }
 
 if (!event_attendees_table_exists($conn)) {
+    ob_end_clean();
     echo json_encode(['sent' => 0, 'errors' => ['event_attendees table is missing. Run the migration.']]);
     exit;
 }
@@ -63,8 +69,41 @@ while ($row = $res->fetch_assoc()) {
 }
 $stmt->close();
 
+// Auto-sync fallback if event_attendees had not been populated yet
 if (empty($attendees)) {
-    echo json_encode(['sent' => 0, 'errors' => ['No deliverable emails found for this team.']]);
+    $fullRowStmt = $conn->prepare("SELECT * FROM event_registrations WHERE id = ? LIMIT 1");
+    $fullRowStmt->bind_param('i', $registrationId);
+    $fullRowStmt->execute();
+    $fullRow = $fullRowStmt->get_result()->fetch_assoc();
+    $fullRowStmt->close();
+
+    if ($fullRow && function_exists('event_attendees_from_registration_row') && function_exists('event_attendees_sync')) {
+        $participants = event_attendees_from_registration_row($fullRow);
+        event_attendees_sync($conn, $registrationId, $participants, $registration['status']);
+
+        $stmt = $conn->prepare(
+            "SELECT ea.id, ea.full_name, ea.email, ea.label, ea.person_index, ea.day1_status, ea.day2_status,
+                    er.team_name, er.module_selection
+             FROM event_attendees ea
+             JOIN event_registrations er ON er.id = ea.registration_id
+             WHERE ea.registration_id = ?"
+        );
+        $stmt->bind_param('i', $registrationId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) {
+            $email = trim($row['email'] ?? '');
+            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $attendees[] = $row;
+            }
+        }
+        $stmt->close();
+    }
+}
+
+if (empty($attendees)) {
+    ob_end_clean();
+    echo json_encode(['sent' => 0, 'errors' => ['No deliverable member emails found for this team.']]);
     exit;
 }
 
@@ -112,16 +151,17 @@ foreach ($attendees as $a) {
         $mail->send();
         $sent++;
         sentec_mail_log('send_event_gatepass', 'sent', 'attendee_id=' . $attendeeId . ' email=' . $email);
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         $errors[] = 'Failed for ' . $name . ' (' . $email . ')';
         sentec_mail_log('send_event_gatepass', 'error', $e->getMessage());
     }
 }
 
-$message = $sent . ' email(s) sent.';
+$message = $sent . ' gate pass email(s) sent.';
 if (!empty($errors)) {
     $message .= ' Errors: ' . implode('; ', $errors);
 }
 
+ob_end_clean();
 echo json_encode(['sent' => $sent, 'errors' => $errors, 'message' => $message]);
 exit;

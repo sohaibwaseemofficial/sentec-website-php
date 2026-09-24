@@ -105,6 +105,9 @@ $adminRole = $_SESSION['admin_role'] ?? 'moderator';
     
     <!-- Admin Custom Modern Dark Stylesheet -->
     <link rel="stylesheet" href="css/admin_style.css">
+
+    <!-- Universal jQuery for Admin Portal -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="bg-[#080b0d] text-[#f4f1eb]">
 

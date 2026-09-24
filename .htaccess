@@ -46,7 +46,7 @@ DirectoryIndex index.php index.html
 
     RewriteCond %{REQUEST_METHOD} !POST
     RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+?)\.php[\s?] [NC]
-    RewriteRule ^ %{ENV:REQ_SCHEME}://%{ENV:CLEAN_HOST}/%1 [R=301,L,NE]
+    RewriteRule ^ %{ENV:REQ_SCHEME}://%{ENV:CLEAN_HOST}/%1 [R=301,L,NE,QSA]
 
     # -------------------------------------------------------------
     # 3. INVISIBLE ROUTING: /file -> file.php

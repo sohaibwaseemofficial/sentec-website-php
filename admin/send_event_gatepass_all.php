@@ -1,13 +1,15 @@
 <?php
+ob_start();
 session_start();
+ini_set('display_errors', 0);
+header('Content-Type: application/json');
+
 if (!isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
     http_response_code(403);
-    header('Content-Type: application/json');
+    ob_end_clean();
     echo json_encode(['sent' => 0, 'errors' => ['Unauthorized access.']]);
     exit;
 }
-
-header('Content-Type: application/json');
 
 require_once __DIR__ . '/../env_loader.php';
 require_once __DIR__ . '/../db_connection.php';
@@ -15,8 +17,22 @@ require_once __DIR__ . '/../mailer.php';
 require_once __DIR__ . '/../event_attendees_helper.php';
 
 if (!event_attendees_table_exists($conn)) {
+    ob_end_clean();
     echo json_encode(['sent' => 0, 'errors' => ['event_attendees table is missing. Run the migration.']]);
     exit;
+}
+
+// Auto-backfill any approved registrations that do not have attendee rows yet
+$unsynced = $conn->query(
+    "SELECT er.* FROM event_registrations er
+     LEFT JOIN event_attendees ea ON ea.registration_id = er.id
+     WHERE er.status = 'approved' AND ea.id IS NULL"
+);
+if ($unsynced && $unsynced->num_rows > 0 && function_exists('event_attendees_from_registration_row') && function_exists('event_attendees_sync')) {
+    while ($row = $unsynced->fetch_assoc()) {
+        $participants = event_attendees_from_registration_row($row);
+        event_attendees_sync($conn, (int)$row['id'], $participants, 'approved');
+    }
 }
 
 $appUrl = env('APP_URL', 'https://sentecneduet.live');
@@ -31,7 +47,8 @@ $sql = "SELECT ea.id, ea.full_name, ea.email, ea.label, ea.person_index, ea.day1
 $result = $conn->query($sql);
 
 if (!$result || $result->num_rows === 0) {
-    echo json_encode(['sent' => 0, 'errors' => ['No approved registrations found.']]);
+    ob_end_clean();
+    echo json_encode(['sent' => 0, 'errors' => ['No approved registrations found.'], 'message' => 'No approved registrations found.']);
     exit;
 }
 
@@ -78,16 +95,17 @@ while ($row = $result->fetch_assoc()) {
         $mail->send();
         $sent++;
         sentec_mail_log('send_event_gatepass_all', 'sent', 'attendee_id=' . $attendeeId . ' email=' . $email);
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         $errors[] = 'Failed for ' . $name . ' (' . $email . ')';
         sentec_mail_log('send_event_gatepass_all', 'error', $e->getMessage());
     }
 }
 
-$message = $sent . ' email(s) sent.';
+$message = $sent . ' gate pass email(s) sent.';
 if (!empty($errors)) {
     $message .= ' Errors: ' . implode('; ', $errors);
 }
 
+ob_end_clean();
 echo json_encode(['sent' => $sent, 'errors' => $errors, 'message' => $message]);
 exit;
