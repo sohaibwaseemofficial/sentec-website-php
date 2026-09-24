@@ -514,6 +514,23 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
 
         <section class="secondary-section" style="max-width: 920px; margin: 0 auto; padding-top: 40px;">
             
+            <?php if (!empty($_SESSION['admin']) || !empty($_SESSION['admin_logged_in'])): ?>
+            <!-- Admin Quick Actions Bar -->
+            <div style="background: rgba(255, 68, 68, 0.12); border: 1px solid rgba(255, 68, 68, 0.4); border-radius: 12px; padding: 14px 20px; margin-bottom: 25px;" class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div style="color: #ff9999; font-size: 13px; font-family: 'IBM Plex Mono', monospace;">
+                    <i class="fas fa-shield-alt text-danger me-2"></i><strong>ADMIN TOOLS:</strong> Event Registration Database
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="admin/manage_registrations" class="btn btn-outline-light btn-sm" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase;">
+                        <i class="fas fa-external-link-alt me-1"></i> Admin Portal
+                    </a>
+                    <button id="adminDeleteAllRegs" type="button" class="btn btn-danger btn-sm" style="font-size: 11px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; font-weight: 700; background: #dc3545; border-color: #dc3545;">
+                        <i class="fas fa-trash-alt me-1"></i> Delete All Registrations
+                    </button>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- Hanging L-Bracket Above Form matching Screenshots -->
             <div style="width: 48px; height: 48px; border-left: 1.5px solid var(--orange); border-bottom: 1.5px solid var(--orange); margin: 0 auto 30px auto;"></div>
 
@@ -1168,6 +1185,41 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
             }
         });
     });
+
+    // Admin Delete All Registrations Handler
+    const adminDelAllBtn = document.getElementById('adminDeleteAllRegs');
+    if (adminDelAllBtn) {
+        adminDelAllBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const confirm1 = confirm("⚠️ DANGER: Are you sure you want to PERMANENTLY DELETE ALL event registrations?\n\nThis will remove all team records, attendee passes, and uploaded images!");
+            if (!confirm1) return;
+
+            const confirm2 = prompt("Type DELETE in capital letters to confirm wiping all registrations:");
+            if (confirm2 !== "DELETE") {
+                alert("Action cancelled. You must type DELETE in capital letters to confirm.");
+                return;
+            }
+
+            adminDelAllBtn.disabled = true;
+            adminDelAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Deleting All...';
+
+            fetch('admin/delete_registration.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'delete_all=1'
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert((data && data.message) ? data.message : 'All registrations deleted.');
+                location.reload();
+            })
+            .catch(err => {
+                alert('Failed to delete all registrations: ' + err);
+                adminDelAllBtn.disabled = false;
+                adminDelAllBtn.innerHTML = '<i class="fas fa-trash-alt me-1"></i> Delete All Registrations';
+            });
+        });
+    }
 </script>
 
 <?php include 'footer.php'; ?>

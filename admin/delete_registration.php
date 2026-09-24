@@ -17,96 +17,161 @@ require_once __DIR__ . '/admin_logger.php';
 
 $response = ['success' => false, 'message' => ''];
 
-try {
-    // 2. VALIDATE ID
-    if (!isset($_POST['id']) || empty($_POST['id'])) {
-        throw new Exception('Registration ID is required');
-    }
-    
-    $id = intval($_POST['id']);
-    if ($id <= 0) {
-        throw new Exception('Invalid Registration ID');
-    }
-    
-    // 3. FETCH REGISTRATION DATA
-    // We fetch everything to ensure we have paths for all participant images
-    $stmt = $conn->prepare("SELECT * FROM event_registrations WHERE id = ? LIMIT 1");
-    if (!$stmt) {
-        throw new Exception('Database prepare error: ' . $conn->error);
-    }
-    
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows === 0) {
-        throw new Exception('Registration record not found');
-    }
-    
-    $registration = $result->fetch_assoc();
-    $stmt->close();
-    
-    /**
-     * Helper function to delete file safely
-     * Handles the '../' prefix to reach the root upload directory
-     */
-    function deleteRegistrationFile($filepath) {
-        if (!empty($filepath)) {
-            $clean = ltrim(str_replace(['\\', '//'], '/', $filepath), '/');
-            if (strpos($clean, '../') === 0) {
-                $clean = substr($clean, 3);
-            }
-            $fullPath = __DIR__ . '/../' . $clean;
-            if (file_exists($fullPath) && is_file($fullPath)) {
-                @unlink($fullPath);
-            }
+/**
+ * Helper function to delete file safely
+ * Handles '../' prefix to reach root upload directory
+ */
+function deleteRegistrationFile($filepath) {
+    if (!empty($filepath) && $filepath !== 'Not Collected') {
+        $clean = ltrim(str_replace(['\\', '//'], '/', $filepath), '/');
+        if (strpos($clean, '../') === 0) {
+            $clean = substr($clean, 3);
+        }
+        $fullPath = __DIR__ . '/../' . $clean;
+        if (file_exists($fullPath) && is_file($fullPath)) {
+            @unlink($fullPath);
         }
     }
-    
-    // 4. CLEAN UP SERVER FILES
-    // Delete team fee proof (both legacy fees_screenshot and payment_proof)
-    deleteRegistrationFile($registration['fees_screenshot'] ?? '');
-    deleteRegistrationFile($registration['payment_proof'] ?? '');
-    
-    // Loop through all 6 participants to delete face images and ID cards
+}
+
+/**
+ * Clean up all physical files associated with a registration row
+ */
+function deleteRegistrationRowFiles($row) {
+    if (!is_array($row)) return;
+    deleteRegistrationFile($row['fees_screenshot'] ?? '');
+    deleteRegistrationFile($row['payment_proof'] ?? '');
+
     for ($i = 1; $i <= 6; $i++) {
-        $faceField = "participant{$i}_face_image";
-        $cardField = "participant{$i}_id_card";
+        deleteRegistrationFile($row["participant{$i}_face_image"] ?? '');
+        deleteRegistrationFile($row["participant{$i}_id_card"] ?? '');
+    }
+}
 
-        deleteRegistrationFile($registration[$faceField] ?? '');
-        deleteRegistrationFile($registration[$cardField] ?? '');
+try {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new Exception('Invalid request method.');
     }
 
-    // 4.5 CLEAN UP CHILD RECORDS (event_attendees)
-    $delAttendeesStmt = $conn->prepare("DELETE FROM event_attendees WHERE registration_id = ?");
-    if ($delAttendeesStmt) {
-        $delAttendeesStmt->bind_param("i", $id);
-        $delAttendeesStmt->execute();
-        $delAttendeesStmt->close();
-    }
-    
-    // 5. DELETE DATABASE RECORD
-    $delStmt = $conn->prepare("DELETE FROM event_registrations WHERE id = ?");
-    if (!$delStmt) {
-        throw new Exception('Database delete prepare error: ' . $conn->error);
-    }
-    
-    $delStmt->bind_param("i", $id);
-    
-    if (!$delStmt->execute()) {
-        throw new Exception('Failed to execute delete: ' . $delStmt->error);
-    }
-    
-    $delStmt->close();
-    
-    // Log this action BEFORE closing the database connection
-    log_admin_action('DELETE_REGISTRATION', "Deleted registration ID $id (Team: " . ($registration['team_name'] ?? 'Unknown') . ")", $conn);
-    
-    $conn->close();
+    $isDeleteAll = !empty($_POST['delete_all']) || (isset($_POST['action']) && $_POST['action'] === 'delete_all');
+    $rawIds = $_POST['ids'] ?? [];
+    $singleId = intval($_POST['id'] ?? 0);
 
-    $response['success'] = true;
-    $response['message'] = 'Registration and associated files deleted successfully';
-    
+    // ============================================================
+    // CASE A: DELETE ALL REGISTRATIONS
+    // ============================================================
+    if ($isDeleteAll) {
+        // 1. Fetch all rows to delete associated media files
+        $result = $conn->query("SELECT * FROM event_registrations");
+        $count = 0;
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                deleteRegistrationRowFiles($row);
+                $count++;
+            }
+        }
+
+        // 2. Delete all child records in event_attendees
+        @$conn->query("DELETE FROM event_attendees");
+
+        // 3. Delete all event_registrations
+        if (!$conn->query("DELETE FROM event_registrations")) {
+            throw new Exception("Failed to clear registrations table: " . $conn->error);
+        }
+
+        // Reset auto increment for clean slate
+        @$conn->query("ALTER TABLE event_registrations AUTO_INCREMENT = 1");
+        @$conn->query("ALTER TABLE event_attendees AUTO_INCREMENT = 1");
+
+        log_admin_action('DELETE_ALL_REGISTRATIONS', "Permanently deleted ALL {$count} event registration(s)", $conn);
+
+        $response['success'] = true;
+        $response['message'] = "All {$count} event registration(s) and uploaded files have been permanently deleted.";
+
+    // ============================================================
+    // CASE B: BULK DELETE SELECTED IDS
+    // ============================================================
+    } elseif (is_array($rawIds) && !empty($rawIds)) {
+        $validIds = [];
+        foreach ($rawIds as $v) {
+            $vid = intval($v);
+            if ($vid > 0) $validIds[] = $vid;
+        }
+        $validIds = array_values(array_unique($validIds));
+
+        if (empty($validIds)) {
+            throw new Exception("No valid registration IDs provided for deletion.");
+        }
+
+        $idList = implode(',', $validIds);
+
+        // Fetch to clean up physical files
+        $result = $conn->query("SELECT * FROM event_registrations WHERE id IN ($idList)");
+        $deletedCount = 0;
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                deleteRegistrationRowFiles($row);
+                $deletedCount++;
+            }
+        }
+
+        // Delete child attendees
+        @$conn->query("DELETE FROM event_attendees WHERE registration_id IN ($idList)");
+
+        // Delete registrations
+        if (!$conn->query("DELETE FROM event_registrations WHERE id IN ($idList)")) {
+            throw new Exception("Failed to delete selected registrations: " . $conn->error);
+        }
+
+        log_admin_action('BULK_DELETE_REGISTRATIONS', "Deleted {$deletedCount} registration(s): [$idList]", $conn);
+
+        $response['success'] = true;
+        $response['message'] = "Successfully deleted {$deletedCount} registration(s) and associated files.";
+
+    // ============================================================
+    // CASE C: SINGLE REGISTRATION DELETE
+    // ============================================================
+    } elseif ($singleId > 0) {
+        $stmt = $conn->prepare("SELECT * FROM event_registrations WHERE id = ? LIMIT 1");
+        if (!$stmt) throw new Exception('Database error: ' . $conn->error);
+        $stmt->bind_param("i", $singleId);
+        $stmt->execute();
+        $registration = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$registration) {
+            throw new Exception('Registration record not found.');
+        }
+
+        // Delete files
+        deleteRegistrationRowFiles($registration);
+
+        // Delete attendees
+        $delAtt = $conn->prepare("DELETE FROM event_attendees WHERE registration_id = ?");
+        if ($delAtt) {
+            $delAtt->bind_param("i", $singleId);
+            $delAtt->execute();
+            $delAtt->close();
+        }
+
+        // Delete registration record
+        $delStmt = $conn->prepare("DELETE FROM event_registrations WHERE id = ?");
+        if (!$delStmt) throw new Exception('Database delete error: ' . $conn->error);
+        $delStmt->bind_param("i", $singleId);
+        if (!$delStmt->execute()) {
+            throw new Exception('Failed to execute delete: ' . $delStmt->error);
+        }
+        $delStmt->close();
+
+        log_admin_action('DELETE_REGISTRATION', "Deleted registration ID $singleId (Team: " . ($registration['team_name'] ?? 'Unknown') . ")", $conn);
+
+        $response['success'] = true;
+        $response['message'] = 'Registration and associated files deleted successfully.';
+
+    } else {
+        throw new Exception('No registration ID specified.');
+    }
+
 } catch (Throwable $e) {
     $response['success'] = false;
     $response['message'] = $e->getMessage();

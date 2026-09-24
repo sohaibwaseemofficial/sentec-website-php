@@ -348,13 +348,15 @@ $eventVisible = event_registrations_visible($conn); // NEW: Check visibility
 <div class="glass-panel">
     
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-        <div class="d-flex gap-3 align-items-center">
+        <div class="d-flex gap-3 align-items-center flex-wrap">
             <input type="checkbox" id="selectAll" class="form-check-input" style="width: 20px; height: 20px; cursor: pointer; accent-color: #00FF94;">
             <label for="selectAll" class="text-white fw-bold" style="cursor: pointer;">Select All</label>
             
             <button id="bulkApprove" class="btn-solid-green btn-sm ms-3"><i class="fas fa-check-double"></i> Bulk Approve</button>
             <button id="bulkReject" class="btn-solid-red btn-sm"><i class="fas fa-ban"></i> Bulk Reject</button>
+            <button id="bulkDelete" class="btn btn-outline-danger btn-sm" style="border-radius:999px; padding: 6px 16px; font-weight:700;"><i class="fas fa-trash-alt me-1"></i> Bulk Delete</button>
             <button id="sendAllGatePass" class="btn-outline-info btn-sm ms-2"><i class="fas fa-qrcode"></i> Send Gate Passes (Approved)</button>
+            <button id="deleteAllRegistrations" class="btn btn-danger btn-sm ms-2" style="border-radius:999px; padding: 6px 18px; font-weight:700; background: rgba(255, 68, 68, 0.25); border-color: #ff4444; color: #ff9999;"><i class="fas fa-radiation me-1"></i> Delete All Registrations</button>
         </div>
         
         <div class="d-flex gap-2">
@@ -774,6 +776,72 @@ $(document).ready(function() {
     }
     $(document).on('click', '#bulkApprove', function(e) { e.preventDefault(); bulkAction('approved'); });
     $(document).on('click', '#bulkReject', function(e) { e.preventDefault(); bulkAction('rejected'); });
+
+    // 4c. BULK DELETE (Selected Teams)
+    $(document).on('click', '#bulkDelete', function(e) {
+        e.preventDefault();
+        var ids = $('.reg-checkbox:checked').map(function(){ return $(this).val(); }).get().filter(function(v){ return v && v !== 'on' && parseInt(v, 10) > 0; });
+        if(ids.length === 0) { alert("Select at least one team to delete."); return; }
+        
+        if(!confirm("PERMANENTLY DELETE " + ids.length + " selected team(s)? All member data, photos, and files will be removed.")) return;
+
+        var btn = $(this);
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Deleting...');
+
+        $.post('delete_registration.php', { ids: ids }, function(res) {
+            if (res && res.success) {
+                alert(res.message);
+                location.reload();
+            } else {
+                alert("Error: " + ((res && res.message) ? res.message : "Failed to delete registrations."));
+                btn.prop('disabled', false).html(originalHtml);
+            }
+        }, 'json').fail(function(xhr) {
+            var msg = 'Failed to delete registrations.';
+            try {
+                var json = JSON.parse(xhr.responseText);
+                if (json && json.message) msg = json.message;
+            } catch(e) {}
+            alert("Error: " + msg);
+            btn.prop('disabled', false).html(originalHtml);
+        });
+    });
+
+    // 4d. DELETE ALL REGISTRATIONS (Nuclear Option)
+    $(document).on('click', '#deleteAllRegistrations', function(e) {
+        e.preventDefault();
+        var confirm1 = confirm("⚠️ DANGER: Are you sure you want to PERMANENTLY DELETE ALL event registrations?\n\nThis will remove all team records, attendee gate passes, and uploaded images!");
+        if(!confirm1) return;
+
+        var confirm2 = prompt("Type DELETE in capital letters to confirm wiping all registrations:");
+        if(confirm2 !== "DELETE") {
+            alert("Action cancelled. You must type DELETE in capital letters to confirm.");
+            return;
+        }
+
+        var btn = $(this);
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Deleting All...');
+
+        $.post('delete_registration.php', { delete_all: 1 }, function(res) {
+            if (res && res.success) {
+                alert(res.message);
+                location.reload();
+            } else {
+                alert("Error: " + ((res && res.message) ? res.message : "Failed to delete all registrations."));
+                btn.prop('disabled', false).html(originalHtml);
+            }
+        }, 'json').fail(function(xhr) {
+            var msg = 'Failed to delete all registrations.';
+            try {
+                var json = JSON.parse(xhr.responseText);
+                if (json && json.message) msg = json.message;
+            } catch(e) {}
+            alert("Error: " + msg);
+            btn.prop('disabled', false).html(originalHtml);
+        });
+    });
 
     // 4b. BULK SEND GATE PASSES
     $(document).on('click', '#sendAllGatePass', function(e) {
