@@ -480,7 +480,7 @@
         </div>
         
         <div class="hero-pills">
-            <div class="pill"><i class="fas fa-calendar-alt"></i> 14, 15, 16 October 2026</div>
+            <div class="pill"><i class="fas fa-calendar-alt"></i> 14 and 15 October 2026</div>
             <div class="pill"><i class="fas fa-map-marker-alt"></i> NED MAIN CAMPUS</div>
             <div class="pill"><i class="fas fa-trophy"></i>PRIZE POOL (tbd)</div>
         </div>
