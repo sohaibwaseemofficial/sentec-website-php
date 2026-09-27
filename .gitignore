@@ -25,6 +25,8 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+storage/cache/*.json
+storage/cache/
 
 # Azure deployment files (generated)
 .azure/
