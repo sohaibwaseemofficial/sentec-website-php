@@ -3,7 +3,7 @@
 @set_time_limit(300);
 
 include 'header.php';
-include '../db_connection.php';
+require_once __DIR__ . '/../db_connection.php';
 
 $message = '';
 $created = 0; 
@@ -11,10 +11,8 @@ $updated = 0;
 $errors = [];
 
 $validTypes = ['volunteer' => 'Volunteer Ambassadors', 'brand' => 'Brand Ambassadors'];
-$type = strtolower($_GET['type'] ?? ($_POST['ambassador_type'] ?? ''));
-if (!array_key_exists($type, $validTypes)) {
-    $type = 'volunteer';
-}
+$rawType = strtolower($_GET['type'] ?? ($_POST['ambassador_type'] ?? ''));
+$type = ($rawType === 'volunteer') ? 'volunteer' : 'brand';
 $typeLabel = $validTypes[$type];
 
 // Check if optional columns exist in DB
@@ -162,15 +160,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
   <div class="row">
       <div class="col-md-6">
           <h5 class="text-white mb-3">Upload File</h5>
-                    <form method="post" enctype="multipart/form-data">
-                        <input type="hidden" name="ambassador_type" value="<?php echo htmlspecialchars($type); ?>">
-            <input type="file" name="csv_file" accept=".csv" class="form-control mb-4" required>
-            <div class="d-flex gap-3">
-                <button class="btn-neon w-100" type="submit">
-                    <i class="fas fa-cloud-upload-alt me-2"></i> Upload & Import
-                </button>
-                                <a href="manage_ambassadors?type=<?php echo urlencode($type); ?>" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center" style="text-decoration:none; color:#ccc;">Cancel</a>
-            </div>
+          <form method="post" enctype="multipart/form-data">
+              <div class="mb-3">
+                  <label class="form-label text-white">Import As</label>
+                  <select name="ambassador_type" class="form-select" style="background:#000; border-color:#444; color:#fff;">
+                      <option value="brand" <?php echo $type === 'brand' ? 'selected' : ''; ?>>Brand Ambassadors</option>
+                      <option value="volunteer" <?php echo $type === 'volunteer' ? 'selected' : ''; ?>>Volunteer Ambassadors</option>
+                  </select>
+              </div>
+              <div class="mb-4">
+                  <label class="form-label text-white">Choose CSV File</label>
+                  <input type="file" name="csv_file" accept=".csv" class="form-control" required style="background:#000; border-color:#444; color:#fff;">
+              </div>
+              <div class="d-flex gap-3">
+                  <button class="btn-neon w-100" type="submit">
+                      <i class="fas fa-cloud-upload-alt me-2"></i> Upload & Import
+                  </button>
+                  <a href="manage_ambassadors.php?type=<?php echo urlencode($type); ?>" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center" style="text-decoration:none; color:#ccc;">Cancel</a>
+              </div>
           </form>
       </div>
       

@@ -75,9 +75,6 @@ $idSql = implode(',', $idList);
 $sql = "SELECT id, name, email, code";
 if ($hasTypeColumn) { $sql .= ", ambassador_type"; }
 $sql .= " FROM brand_ambassadors WHERE id IN ($idSql)";
-if ($hasTypeColumn && $ambassadorType) {
-    $sql .= " AND ambassador_type = '" . $conn->real_escape_string($ambassadorType) . "'";
-}
 
 $result = $conn->query($sql);
 if (!$result) {
@@ -103,9 +100,7 @@ while ($row = $result->fetch_assoc()) {
     $name = $row['name'] ?? '';
     $code = $row['code'] ?? '';
 
-    if ($hasTypeColumn && $ambassadorType && strtolower($row['ambassador_type'] ?? '') !== $ambassadorType) {
-        continue;
-    }
+
 
     $tokens = [
         '{{name}}' => $name,

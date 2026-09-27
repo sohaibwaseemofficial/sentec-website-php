@@ -9,11 +9,7 @@ if (!isset($_SESSION['admin'])) {
 
 // 2. CONNECT TO DATABASE
 // Ensure we are pointing to the correct file location
-if (file_exists('../db_connection.php')) {
-    include '../db_connection.php';
-} else {
-    die("Error: Database connection file not found.");
-}
+require_once __DIR__ . '/../db_connection.php';
 
 // 3. PREPARE CSV
 // Clear any previous output to prevent corruption
@@ -75,24 +71,76 @@ fputcsv($output, [
     'Ambassador Code',
     'Status',
     'Ambassador Type',
-    'Total Teams Referred',
-    'Pending Teams',
-    'Approved Teams',
+    'Event Teams Total',
+    'Event Teams Approved',
+    'Event Teams Pending',
+    'Social Passes Total',
+    'Social Passes Confirmed',
+    'Total Impact (Event + Social + Manual)',
     'Manual Registration Credit',
     'Perk Threshold Override',
     'Effective Perk Threshold',
-    'Approved Teams (With Manual)',
-    'Total Teams (With Manual)',
-    'Rejected Teams',
-    'Payments - No Proof',
-    'Payments - Awaiting Verification',
-    'Payments - Confirmed',
     'Perk Status',
+    'Payments - Confirmed',
+    'Payments - Pending',
+    'Payments - No Proof',
     'Joined Date'
 ]);
 
-// 4. FETCH DATA
-// We use a simple query first to ensure it works
+// 4. PRE-FETCH AGGREGATE STATS (High Performance)
+$eventStats = [];
+$resE = $conn->query("SELECT brand_ambassador_code, status, COUNT(*) as c FROM event_registrations WHERE brand_ambassador_code IS NOT NULL AND brand_ambassador_code != '' GROUP BY brand_ambassador_code, status");
+if ($resE) {
+    while ($r = $resE->fetch_assoc()) {
+        $cd = $r['brand_ambassador_code'];
+        if (!isset($eventStats[$cd])) $eventStats[$cd] = ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
+        $st = strtolower($r['status'] ?? '');
+        $cnt = (int)$r['c'];
+        $eventStats[$cd]['total'] += $cnt;
+        if (isset($eventStats[$cd][$st])) $eventStats[$cd][$st] += $cnt;
+        else $eventStats[$cd][$st] = $cnt;
+    }
+}
+
+$socialStats = [];
+$hasSocialTable = false;
+try {
+    $resS = $conn->query("SHOW TABLES LIKE 'social_registrations'");
+    $hasSocialTable = $resS && $resS->num_rows > 0;
+    if ($hasSocialTable) {
+        $sq = $conn->query("SELECT ambassador_code, status, COUNT(*) as c FROM social_registrations WHERE ambassador_code IS NOT NULL AND ambassador_code != '' GROUP BY ambassador_code, status");
+        if ($sq) {
+            while ($r = $sq->fetch_assoc()) {
+                $cd = $r['ambassador_code'];
+                if (!isset($socialStats[$cd])) $socialStats[$cd] = ['total' => 0, 'approved' => 0, 'pending' => 0];
+                $st = strtolower($r['status'] ?? '');
+                $cnt = (int)$r['c'];
+                $socialStats[$cd]['total'] += $cnt;
+                if ($st === 'approved' || $st === 'confirmed') $socialStats[$cd]['approved'] += $cnt;
+                else $socialStats[$cd]['pending'] += $cnt;
+            }
+        }
+    }
+} catch(Exception $e) {}
+
+$paymentStats = [];
+$resP = $conn->query("SELECT brand_ambassador_code,
+    SUM(CASE WHEN payment_status = 'confirmed' THEN 1 ELSE 0 END) AS confirmed,
+    SUM(CASE WHEN payment_status = 'submitted' THEN 1 ELSE 0 END) AS submitted,
+    SUM(CASE WHEN payment_status IS NULL OR payment_status = '' OR payment_status = 'pending' THEN 1 ELSE 0 END) AS not_submitted
+    FROM event_registrations WHERE brand_ambassador_code IS NOT NULL AND brand_ambassador_code != '' GROUP BY brand_ambassador_code");
+if ($resP) {
+    while ($r = $resP->fetch_assoc()) {
+        $cd = $r['brand_ambassador_code'];
+        $paymentStats[$cd] = [
+            'confirmed' => (int)($r['confirmed'] ?? 0),
+            'submitted' => (int)($r['submitted'] ?? 0),
+            'not_submitted' => (int)($r['not_submitted'] ?? 0)
+        ];
+    }
+}
+
+// 5. FETCH DATA
 $query = "SELECT * FROM brand_ambassadors";
 if ($typeFilter) {
     $query .= " WHERE ambassador_type = '" . $conn->real_escape_string($typeFilter) . "'";
@@ -102,48 +150,18 @@ $result = $conn->query($query);
 
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        $code = $conn->real_escape_string($row['code']);
-        
-        // Calculate Stats for this Ambassador
-        $stats = ['total'=>0, 'pending'=>0, 'approved'=>0, 'rejected'=>0];
-        
-        // Check if event_registrations table exists before querying it
-        $checkTable = $conn->query("SHOW TABLES LIKE 'event_registrations'");
-        $hasRegistrations = $checkTable && $checkTable->num_rows > 0;
-        if ($hasRegistrations) {
-            $statQuery = "SELECT status, COUNT(*) as count FROM event_registrations WHERE brand_ambassador_code = '$code' GROUP BY status";
-            $statResult = $conn->query($statQuery);
-            
-            if ($statResult) {
-                while ($statRow = $statResult->fetch_assoc()) {
-                    $stats[$statRow['status']] = $statRow['count'];
-                    $stats['total'] += $statRow['count'];
-                }
-            }
-        }
-
-        // Payment breakdown
-        $paymentStats = ['not_submitted'=>0, 'submitted'=>0, 'confirmed'=>0];
-        if ($hasRegistrations) {
-            $paymentQuery = "SELECT 
-                    SUM(CASE WHEN payment_status = 'confirmed' THEN 1 ELSE 0 END) AS confirmed,
-                    SUM(CASE WHEN payment_status = 'submitted' THEN 1 ELSE 0 END) AS submitted,
-                    SUM(CASE WHEN payment_status IS NULL OR payment_status = '' OR payment_status = 'pending' THEN 1 ELSE 0 END) AS not_submitted
-                FROM event_registrations WHERE brand_ambassador_code = '$code'";
-            $paymentResult = $conn->query($paymentQuery);
-            if ($paymentResult) {
-                $paymentRow = $paymentResult->fetch_assoc();
-                $paymentStats['confirmed'] = (int)($paymentRow['confirmed'] ?? 0);
-                $paymentStats['submitted'] = (int)($paymentRow['submitted'] ?? 0);
-                $paymentStats['not_submitted'] = (int)($paymentRow['not_submitted'] ?? 0);
-            }
-        }
-
-        $manualCredit = $hasManualCredit ? (int)($row['manual_registration_credit'] ?? 0) : 0;
-        $perkOverride = $hasPerkOverride ? (int)($row['perk_threshold_override'] ?? 0) : 0;
+        $code = $row['code'];
         $ambType = strtolower($row['ambassador_type'] ?? 'brand');
         if (!in_array($ambType, ['volunteer','brand'], true)) { $ambType = 'brand'; }
-        $defaultThreshold = $defaultTypeThresholds[$ambType];
+
+        $e = $eventStats[$code] ?? ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
+        $s = $socialStats[$code] ?? ['total' => 0, 'approved' => 0, 'pending' => 0];
+        $p = $paymentStats[$code] ?? ['confirmed' => 0, 'submitted' => 0, 'not_submitted' => 0];
+
+        $manualCredit = $hasManualCredit ? max(0, (int)($row['manual_registration_credit'] ?? 0)) : 0;
+        $perkOverride = $hasPerkOverride ? max(0, (int)($row['perk_threshold_override'] ?? 0)) : 0;
+
+        $defaultThreshold = $defaultTypeThresholds[$ambType] ?? 5;
         foreach ([$ambType . '_perk_threshold', 'ambassador_perk_threshold_' . $ambType, 'ambassador_perk_threshold'] as $settingKey) {
             if (isset($typeSettings[$settingKey]) && $typeSettings[$settingKey] > 0) {
                 $defaultThreshold = $typeSettings[$settingKey];
@@ -151,15 +169,17 @@ if ($result && $result->num_rows > 0) {
             }
         }
         $effectivePerkThreshold = $perkOverride > 0 ? $perkOverride : $defaultThreshold;
-        $approvedWithManual = $stats['approved'] + $manualCredit;
-        $totalWithManual = $stats['total'] + $manualCredit;
+        $approvedWithManual = $e['approved'] + $s['approved'] + $manualCredit;
+        $totalWithManual = $e['total'] + $s['total'] + $manualCredit;
 
         // Determine Perk Status
-        $perkStatus = "N/A";
+        $perkStatus = "In Progress";
         if (isset($row['perk_granted']) && $row['perk_granted'] == 1) {
             $perkStatus = "Granted";
         } elseif (isset($row['perk_requested']) && $row['perk_requested'] == 1) {
             $perkStatus = "Requested";
+        } elseif ($approvedWithManual >= $effectivePerkThreshold) {
+            $perkStatus = "Goal Met";
         }
 
         // Write Row
@@ -172,19 +192,19 @@ if ($result && $result->num_rows > 0) {
             $row['code'],
             ucfirst($row['status']),
             ucfirst($ambType),
-            $stats['total'],
-            $stats['pending'],
-            $stats['approved'],
+            $e['total'],
+            $e['approved'],
+            $e['pending'],
+            $s['total'],
+            $s['approved'],
+            $totalWithManual,
             $manualCredit,
             $perkOverride,
             $effectivePerkThreshold,
-            $approvedWithManual,
-            $totalWithManual,
-            $stats['rejected'],
-            $paymentStats['not_submitted'],
-            $paymentStats['submitted'],
-            $paymentStats['confirmed'],
             $perkStatus,
+            $p['confirmed'],
+            $p['submitted'],
+            $p['not_submitted'],
             date('Y-m-d H:i', strtotime($row['created_at']))
         ]);
     }

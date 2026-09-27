@@ -13,13 +13,14 @@ function bind_dynamic_params(mysqli_stmt $stmt, string $types, array &$values): 
     call_user_func_array([$stmt, 'bind_param'], $params);
 }
 
-$validTypes = ['volunteer', 'brand'];
-$requestedType = strtolower($_REQUEST['ambassador_type'] ?? '');
+$validTypes = ['all', 'volunteer', 'brand'];
+$requestedType = strtolower($_REQUEST['ambassador_type'] ?? 'all');
 if (!in_array($requestedType, $validTypes, true)) {
-    $requestedType = 'volunteer';
+    $requestedType = 'all';
 }
 
-function redirect_back(string $type) {
+function redirect_back(string $type = 'all') {
+    $type = in_array(strtolower($type), ['all', 'volunteer', 'brand'], true) ? strtolower($type) : 'all';
     header('Location: manage_ambassadors.php?type=' . urlencode($type));
     exit;
 }
@@ -33,15 +34,20 @@ function ensure_settings_table($conn) {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
+
 if ($action === 'update_threshold') {
     $threshold = (int)($_POST['threshold'] ?? 2);
     if ($threshold < 1) { $threshold = 1; }
+    $targetType = strtolower($_POST['target_type'] ?? ($_POST['ambassador_type'] ?? 'brand'));
+    if (!in_array($targetType, ['volunteer', 'brand'], true)) {
+        $targetType = 'brand';
+    }
     ensure_settings_table($conn);
     try {
         $value = (string)$threshold;
         $keysToUpdate = [
-            $requestedType . '_perk_threshold',
-            'ambassador_perk_threshold_' . $requestedType
+            $targetType . '_perk_threshold',
+            'ambassador_perk_threshold_' . $targetType
         ];
         foreach ($keysToUpdate as $settingKey) {
             $stmt = $conn->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)");
@@ -55,8 +61,8 @@ if ($action === 'update_threshold') {
     redirect_back($requestedType);
 }
 
-// Column detection (initial_password, manual credit, perk overrides)
-$hasInitialPwd=false; $hasPerk=false; $hasManualCredit=false; $hasPerkOverride=false; $hasTypeColumn=false;
+// Column detection (initial_password, manual credit, perk overrides, event_label)
+$hasInitialPwd=false; $hasPerk=false; $hasManualCredit=false; $hasPerkOverride=false; $hasTypeColumn=false; $hasEventLabel=false;
 try { $c=$conn->query("SHOW COLUMNS FROM brand_ambassadors LIKE 'initial_password'"); $hasInitialPwd = $c && $c->num_rows>0; } catch(Exception $e){}
 try { $c2=$conn->query("SHOW COLUMNS FROM brand_ambassadors LIKE 'perk_requested'"); $hasPerk = $c2 && $c2->num_rows>0; } catch(Exception $e){}
 try {
@@ -69,6 +75,10 @@ try {
 } catch(Exception $e){}
 try {
     $c5=$conn->query("SHOW COLUMNS FROM brand_ambassadors LIKE 'ambassador_type'");
+    if ($c5 && $c5->num_rows===0) {
+        @$conn->query("ALTER TABLE brand_ambassadors ADD COLUMN ambassador_type ENUM('volunteer','brand') NOT NULL DEFAULT 'brand'");
+        $c5=$conn->query("SHOW COLUMNS FROM brand_ambassadors LIKE 'ambassador_type'");
+    }
     $hasTypeColumn = $c5 && $c5->num_rows>0;
 } catch(Exception $e){}
 try {
@@ -79,41 +89,53 @@ try {
     }
     $hasPerkOverride = $c4 && $c4->num_rows>0;
 } catch(Exception $e){}
+try {
+    $c6=$conn->query("SHOW COLUMNS FROM brand_ambassadors LIKE 'event_label'");
+    $hasEventLabel = $c6 && $c6->num_rows>0;
+} catch(Exception $e){}
 
 if ($action === 'add') {
-        // Fetch active event label
-        $activeEventLabel = '';
-        $eventRes = $conn->query("SELECT title FROM events WHERE status = 'upcoming' ORDER BY event_date DESC LIMIT 1");
-        if ($eventRes && $eventRes->num_rows > 0) {
-            $activeEventLabel = $eventRes->fetch_assoc()['title'];
-        } else {
-            $activeEventLabel = 'proxion_2026'; // fallback
-        }
+    // Fetch active event label
+    $activeEventLabel = '';
+    $eventRes = $conn->query("SELECT title FROM events WHERE status = 'upcoming' ORDER BY event_date DESC LIMIT 1");
+    if ($eventRes && $eventRes->num_rows > 0) {
+        $activeEventLabel = $eventRes->fetch_assoc()['title'];
+    } else {
+        $activeEventLabel = 'proxion_2026'; // fallback
+    }
+
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
     $institution = trim($_POST['institution'] ?? '');
-    $code = trim($_POST['code'] ?? '');
+    $code = strtoupper(trim($_POST['code'] ?? ''));
     $status = trim($_POST['status'] ?? 'active');
+    if (!in_array($status, ['active', 'inactive'], true)) { $status = 'active'; }
+    
+    $ambType = strtolower($_POST['ambassador_type'] ?? 'brand');
+    if (!in_array($ambType, ['volunteer', 'brand'], true)) {
+        $ambType = in_array($requestedType, ['volunteer', 'brand'], true) ? $requestedType : 'brand';
+    }
+
     $password = trim($_POST['password'] ?? '');
-    $manualCredit = (int)($_POST['manual_registration_credit'] ?? 0);
-    if ($manualCredit < 0) { $manualCredit = 0; }
-    $thresholdOverride = (int)($_POST['perk_threshold_override'] ?? 0);
-    if ($thresholdOverride < 0) { $thresholdOverride = 0; }
+    if ($password === '') {
+        $password = 'Sentec' . rand(1000, 9999);
+    }
+
+    $manualCredit = max(0, (int)($_POST['manual_registration_credit'] ?? 0));
+    $thresholdOverride = max(0, (int)($_POST['perk_threshold_override'] ?? 0));
 
     if ($name && $email && $code) {
-        $hash = $password ? password_hash($password, PASSWORD_BCRYPT) : null;
-        $columns = ['name','email','phone','institution','code','status'];
-        $types = 'ssssss';
-        $values = [&$name,&$email,&$phone,&$institution,&$code,&$status];
+        $hash = password_hash($password, PASSWORD_BCRYPT);
+        $columns = ['name','email','phone','institution','code','status','password_hash'];
+        $types = 'sssssss';
+        $values = [&$name,&$email,&$phone,&$institution,&$code,&$status,&$hash];
+
         if ($hasTypeColumn) {
             $columns[] = 'ambassador_type';
             $types .= 's';
-            $values[] = &$requestedType;
+            $values[] = &$ambType;
         }
-        $columns[] = 'password_hash';
-        $types .= 's';
-        $values[] = &$hash;
         if ($hasInitialPwd) {
             $columns[] = 'initial_password';
             $types .= 's';
@@ -129,12 +151,12 @@ if ($action === 'add') {
             $types .= 'i';
             $values[] = &$thresholdOverride;
         }
-        $placeholders = implode(', ', array_fill(0, count($columns), '?'));
-        $sql = "INSERT INTO brand_ambassadors (" . implode(', ', $columns) . ", created_at) VALUES ($placeholders, NOW())";
-        // Add event_label column and value
-        $columns[] = 'event_label';
-        $types .= 's';
-        $values[] = &$activeEventLabel;
+        if ($hasEventLabel) {
+            $columns[] = 'event_label';
+            $types .= 's';
+            $values[] = &$activeEventLabel;
+        }
+
         $placeholders = implode(', ', array_fill(0, count($columns), '?'));
         $sql = "INSERT INTO brand_ambassadors (" . implode(', ', $columns) . ", created_at) VALUES ($placeholders, NOW())";
         $stmt = $conn->prepare($sql);
@@ -153,25 +175,26 @@ if ($action === 'update') {
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
     $institution = trim($_POST['institution'] ?? '');
-    $code = trim($_POST['code'] ?? '');
+    $code = strtoupper(trim($_POST['code'] ?? ''));
     $status = trim($_POST['status'] ?? 'active');
+    if (!in_array($status, ['active', 'inactive'], true)) { $status = 'active'; }
+    $ambType = strtolower($_POST['ambassador_type'] ?? '');
     $password = trim($_POST['password'] ?? '');
 
-    $manualCredit = (int)($_POST['manual_registration_credit'] ?? 0);
-    if ($manualCredit < 0) { $manualCredit = 0; }
-    $thresholdOverride = (int)($_POST['perk_threshold_override'] ?? 0);
-    if ($thresholdOverride < 0) { $thresholdOverride = 0; }
+    $manualCredit = max(0, (int)($_POST['manual_registration_credit'] ?? 0));
+    $thresholdOverride = max(0, (int)($_POST['perk_threshold_override'] ?? 0));
 
     if ($id > 0 && $name && $email && $code) {
         $setParts = ['name=?','email=?','phone=?','institution=?','code=?','status=?'];
         $types = 'ssssss';
         $values = [&$name,&$email,&$phone,&$institution,&$code,&$status];
-        if ($hasTypeColumn) {
+
+        if ($hasTypeColumn && in_array($ambType, ['volunteer', 'brand'], true)) {
             $setParts[] = 'ambassador_type=?';
             $types .= 's';
-            $values[] = &$requestedType;
+            $values[] = &$ambType;
         }
-        if ($password) {
+        if ($password !== '') {
             $hash = password_hash($password, PASSWORD_BCRYPT);
             $setParts[] = 'password_hash=?';
             $types .= 's';
@@ -217,26 +240,31 @@ if ($action === 'delete') {
 if ($action === 'grant_perk' && $hasPerk) {
     $id = (int)($_GET['id'] ?? 0);
     if ($id > 0) {
-        // Mark granted
-        $stmt = $conn->prepare("UPDATE brand_ambassadors SET perk_granted=1, perk_granted_at=NOW() WHERE id=? AND perk_requested=1 AND perk_granted=0");
+        // Mark granted even if perk_requested was not previously clicked
+        $stmt = $conn->prepare("UPDATE brand_ambassadors SET perk_granted=1, perk_granted_at=NOW(), perk_requested=1, perk_requested_at=IFNULL(perk_requested_at, NOW()) WHERE id=? AND (perk_granted=0 OR perk_granted IS NULL)");
         if ($stmt) { $stmt->bind_param('i',$id); @$stmt->execute(); $stmt->close(); }
         // Email ambassador about perk granting
         $info = $conn->prepare("SELECT email,name,code FROM brand_ambassadors WHERE id=? LIMIT 1");
-        $info->bind_param('i',$id); $info->execute(); $r=$info->get_result()->fetch_assoc(); $info->close();
-        if ($r && $r['email']) {
-            try {
-                $mailer = sentec_mailer();
-                $mailer->addAddress($r['email'],$r['name']);
-                $mailer->Subject = 'Your DataCamp Premium Perk Has Been Granted';
-                $mailer->isHTML(true);
-                $mailer->Body = "<div style='font-family:Outfit,Arial,sans-serif;background:#0d1117;padding:24px;color:#e0e6ed'>"
-                  ."<h2 style='color:#7c4dff;margin-top:0'>Congratulations!</h2>"
-                  ."<p>Your DataCamp Premium perk request has been approved for Ambassador Code <strong>".htmlspecialchars($r['code'])."</strong>.</p>"
-                  ."<p>Follow the instructions shared separately to activate your account. If you do not receive them shortly, reply to this email.</p>"
-                  ."<p style='font-size:12px;color:#8892a0'>SENTEC Ambassador Program</p></div>";
-                $mailer->AltBody = 'Your DataCamp Premium perk has been granted.';
-                @$mailer->send();
-            } catch(Exception $e) {}
+        if ($info) {
+            $info->bind_param('i',$id); 
+            $info->execute(); 
+            $r = $info->get_result()->fetch_assoc(); 
+            $info->close();
+            if ($r && !empty($r['email'])) {
+                try {
+                    $mailer = sentec_mailer();
+                    $mailer->addAddress($r['email'], $r['name']);
+                    $mailer->Subject = 'Your DataCamp Premium Perk Has Been Granted';
+                    $mailer->isHTML(true);
+                    $mailer->Body = "<div style='font-family:Outfit,Arial,sans-serif;background:#0d1117;padding:24px;color:#e0e6ed'>"
+                      ."<h2 style='color:#7c4dff;margin-top:0'>Congratulations!</h2>"
+                      ."<p>Your DataCamp Premium perk request has been approved for Ambassador Code <strong>".htmlspecialchars($r['code'])."</strong>.</p>"
+                      ."<p>Follow the instructions shared separately to activate your account. If you do not receive them shortly, reply to this email.</p>"
+                      ."<p style='font-size:12px;color:#8892a0'>SENTEC Ambassador Program</p></div>";
+                    $mailer->AltBody = 'Your DataCamp Premium perk has been granted.';
+                    @$mailer->send();
+                } catch(Exception $e) {}
+            }
         }
     }
     redirect_back($requestedType);

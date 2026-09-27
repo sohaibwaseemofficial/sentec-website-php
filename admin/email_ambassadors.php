@@ -6,7 +6,7 @@ if (!isset($_SESSION['admin'])) {
 }
 
 header('Content-Type: application/json');
-require_once '../db_connection.php';
+require_once __DIR__ . '/../db_connection.php';
 require_once __DIR__ . '/../mailer.php';
 
 $ids = $_POST['ids'] ?? [];
@@ -47,7 +47,17 @@ try {
             $code = $row['code'];
             $ambType = strtolower($row['ambassador_type'] ?? '');
             $typeLabel = $ambType === 'volunteer' ? 'Volunteer Ambassador' : 'Brand Ambassador';
-            $pwd = !empty($row['initial_password']) ? $row['initial_password'] : "Contact Admin";
+            $pwd = !empty($row['initial_password']) ? $row['initial_password'] : '';
+            if (empty($pwd)) {
+                $pwd = 'Sentec' . rand(1000, 9999);
+                $newHash = password_hash($pwd, PASSWORD_BCRYPT);
+                $upStmt = $conn->prepare("UPDATE brand_ambassadors SET initial_password = ?, password_hash = ? WHERE id = ?");
+                if ($upStmt) {
+                    $upStmt->bind_param("ssi", $pwd, $newHash, $row['id']);
+                    @$upStmt->execute();
+                    $upStmt->close();
+                }
+            }
 
             try {
                 $mail = sentec_mailer();
