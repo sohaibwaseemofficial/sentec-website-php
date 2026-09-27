@@ -76,46 +76,37 @@ $eventFee = $isSocial
     ? 'PKR ' . number_format((float)($reg['total_amount'] ?? 0))
     : ($moduleFees[$reg['module_selection'] ?? ''] ?? 'PKR 1,200');
 
+require_once __DIR__ . '/image_utils.php';
+
 // 3. HANDLE UPLOAD
 $msg = "";
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['payment_proof'])) {
-    
-    $targetDir = __DIR__ . '/images/uploads/payments/';
-    if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+    $uploadResult = save_image_as_webp(
+        $_FILES['payment_proof'],
+        __DIR__ . '/images/uploads/payments/',
+        'images/uploads/payments/'
+    );
 
-    $file = $_FILES['payment_proof'];
-    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    $allowed = ['jpg', 'jpeg', 'png', 'webp'];
-
-    if ($file['error'] !== UPLOAD_ERR_OK) {
-        $msg = "<div class='alert alert-danger'>Upload Error. Please choose a valid image file.</div>";
-    } elseif (!in_array($ext, $allowed)) {
-        $msg = "<div class='alert alert-danger'>Only JPG, PNG, WEBP allowed.</div>";
+    if (!$uploadResult['success']) {
+        $msg = "<div class='alert alert-danger'>" . htmlspecialchars($uploadResult['error'] ?? 'Upload Error. Please choose a valid image file.') . "</div>";
     } else {
-        $prefix = $isSocial ? 'soc_' : 'evt_';
-        $filename = "pay_" . $prefix . $reg['id'] . "_" . uniqid() . "." . $ext;
-        if (move_uploaded_file($file['tmp_name'], $targetDir . $filename)) {
-            // Update DB
-            $dbPath = "images/uploads/payments/" . $filename;
-            if ($isSocial) {
-                $update = $conn->prepare("UPDATE social_registrations SET payment_proof = ?, payment_status = 'submitted' WHERE id = ?");
-                $update->bind_param("si", $dbPath, $reg['id']);
-                $update->execute();
-                @$conn->query("UPDATE social_attendees SET payment_proof = '" . $conn->real_escape_string($dbPath) . "', payment_status = 'submitted' WHERE registration_id = " . (int)$reg['id']);
-            } else {
-                $update = $conn->prepare("UPDATE event_registrations SET payment_proof = ?, fees_screenshot = ?, payment_status = 'submitted' WHERE id = ?");
-                $update->bind_param("ssi", $dbPath, $dbPath, $reg['id']);
-                $update->execute();
-                @$conn->query("UPDATE event_attendees SET payment_status = 'submitted' WHERE registration_id = " . (int)$reg['id']);
-            }
-            
-            // Refresh
-            $redirectUrl = 'payment_upload' . ($reg_id > 0 ? '?id=' . $reg_id : '');
-            echo "<script>alert('Payment proof uploaded successfully!'); window.location.href='{$redirectUrl}';</script>";
-            exit;
+        $dbPath = $uploadResult['path'];
+        if ($isSocial) {
+            $update = $conn->prepare("UPDATE social_registrations SET payment_proof = ?, payment_status = 'submitted' WHERE id = ?");
+            $update->bind_param("si", $dbPath, $reg['id']);
+            $update->execute();
+            @$conn->query("UPDATE social_attendees SET payment_proof = '" . $conn->real_escape_string($dbPath) . "', payment_status = 'submitted' WHERE registration_id = " . (int)$reg['id']);
         } else {
-            $msg = "<div class='alert alert-danger'>Failed to save file.</div>";
+            $update = $conn->prepare("UPDATE event_registrations SET payment_proof = ?, fees_screenshot = ?, payment_status = 'submitted' WHERE id = ?");
+            $update->bind_param("ssi", $dbPath, $dbPath, $reg['id']);
+            $update->execute();
+            @$conn->query("UPDATE event_attendees SET payment_status = 'submitted' WHERE registration_id = " . (int)$reg['id']);
         }
+        
+        // Refresh
+        $redirectUrl = 'payment_upload' . ($reg_id > 0 ? '?id=' . $reg_id : '');
+        echo "<script>alert('Payment proof uploaded successfully!'); window.location.href='{$redirectUrl}';</script>";
+        exit;
     }
 }
 ?>

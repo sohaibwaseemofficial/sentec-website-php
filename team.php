@@ -477,16 +477,14 @@ if (empty($teamMembers)) {
                     // Image URL resolution
                     $imgSrc = '';
                     if (!empty($img)) {
-                        if (file_exists($img)) {
+                        if (strpos($img, 'http://') === 0 || strpos($img, 'https://') === 0) {
                             $imgSrc = $img;
                         } elseif (file_exists(__DIR__ . '/' . $img)) {
                             $imgSrc = $img;
                         } elseif (file_exists('images/' . basename($img))) {
                             $imgSrc = 'images/' . basename($img);
-                        } elseif (filter_var($img, FILTER_VALIDATE_URL)) {
-                            $imgSrc = $img;
                         } else {
-                            $imgSrc = 'https://sentecneduet.live/images/uploads/team/' . basename($img);
+                            $imgSrc = $img;
                         }
                     }
                 ?>

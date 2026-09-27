@@ -244,7 +244,7 @@ $presCount = count(array_filter($allMembers, fn($m) => $m['category'] === 'Presi
                                     </form>
                                 </td>
                                 <td>
-                                    <img src="../<?= htmlspecialchars($row['image']); ?>" 
+                                    <img src="<?= htmlspecialchars(resolve_image_url($row['image'], '../', '../images/logo.png')); ?>" 
                                          onerror="this.onerror=null;this.src='../images/logo.png';" 
                                          style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:1.5px solid rgba(255,255,255,0.15);" 
                                          alt="<?= htmlspecialchars($row['name']); ?>"

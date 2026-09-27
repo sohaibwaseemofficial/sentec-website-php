@@ -196,11 +196,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-md-4"><label class="form-label">CNIC</label><input type="text" name="participant1_cnic" class="form-control" value="<?= htmlspecialchars($row['participant1_cnic']) ?>"></div>
         <div class="col-md-4"><label class="form-label">Roll Number</label><input type="text" name="participant1_roll_number" class="form-control" value="<?= htmlspecialchars($row['participant1_roll_number']) ?>"></div>
         <div class="col-md-4"><label class="form-label">Photo (replace)</label>
-            <?php if (!empty($row['participant1_face_image'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant1_face_image']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant1_face_image']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant1_face_image'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant1_face_image'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant1_face_image'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant1_face_image" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
         <div class="col-md-4"><label class="form-label">ID Card (replace)</label>
-            <?php if (!empty($row['participant1_id_card'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant1_id_card']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant1_id_card']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant1_id_card'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant1_id_card'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant1_id_card'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant1_id_card" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
 
@@ -212,11 +212,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-md-4"><input placeholder="CNIC" name="participant2_cnic" class="form-control" value="<?= htmlspecialchars($row['participant2_cnic']) ?>"></div>
         <div class="col-md-4"><input placeholder="Roll Number" name="participant2_roll_number" class="form-control" value="<?= htmlspecialchars($row['participant2_roll_number']) ?>"></div>
         <div class="col-md-4"><label class="form-label">Photo (replace)</label>
-            <?php if (!empty($row['participant2_face_image'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant2_face_image']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant2_face_image']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant2_face_image'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant2_face_image'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant2_face_image'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant2_face_image" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
         <div class="col-md-4"><label class="form-label">ID Card (replace)</label>
-            <?php if (!empty($row['participant2_id_card'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant2_id_card']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant2_id_card']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant2_id_card'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant2_id_card'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant2_id_card'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant2_id_card" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
 
@@ -228,11 +228,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-md-4"><input placeholder="CNIC" name="participant3_cnic" class="form-control" value="<?= htmlspecialchars($row['participant3_cnic']) ?>"></div>
         <div class="col-md-4"><input placeholder="Roll Number" name="participant3_roll_number" class="form-control" value="<?= htmlspecialchars($row['participant3_roll_number']) ?>"></div>
         <div class="col-md-4"><label class="form-label">Photo (replace)</label>
-            <?php if (!empty($row['participant3_face_image'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant3_face_image']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant3_face_image']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant3_face_image'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant3_face_image'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant3_face_image'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant3_face_image" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
         <div class="col-md-4"><label class="form-label">ID Card (replace)</label>
-            <?php if (!empty($row['participant3_id_card'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant3_id_card']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant3_id_card']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant3_id_card'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant3_id_card'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant3_id_card'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant3_id_card" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
 
@@ -244,11 +244,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-md-4"><input placeholder="CNIC" name="participant4_cnic" class="form-control" value="<?= htmlspecialchars($row['participant4_cnic']) ?>"></div>
         <div class="col-md-4"><input placeholder="Roll Number" name="participant4_roll_number" class="form-control" value="<?= htmlspecialchars($row['participant4_roll_number']) ?>"></div>
         <div class="col-md-4"><label class="form-label">Photo (replace)</label>
-            <?php if (!empty($row['participant4_face_image'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant4_face_image']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant4_face_image']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant4_face_image'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant4_face_image'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant4_face_image'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant4_face_image" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
         <div class="col-md-4"><label class="form-label">ID Card (replace)</label>
-            <?php if (!empty($row['participant4_id_card'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant4_id_card']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant4_id_card']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant4_id_card'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant4_id_card'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant4_id_card'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant4_id_card" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
 
@@ -260,11 +260,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-md-4"><input placeholder="CNIC" name="participant5_cnic" class="form-control" value="<?= htmlspecialchars($row['participant5_cnic'] ?? '') ?>"></div>
         <div class="col-md-4"><input placeholder="Roll Number" name="participant5_roll_number" class="form-control" value="<?= htmlspecialchars($row['participant5_roll_number'] ?? '') ?>"></div>
         <div class="col-md-4"><label class="form-label">Photo (replace)</label>
-            <?php if (!empty($row['participant5_face_image'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant5_face_image']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant5_face_image']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant5_face_image'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant5_face_image'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant5_face_image'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant5_face_image" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
         <div class="col-md-4"><label class="form-label">ID Card (replace)</label>
-            <?php if (!empty($row['participant5_id_card'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant5_id_card']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant5_id_card']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant5_id_card'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant5_id_card'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant5_id_card'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant5_id_card" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
 
@@ -276,11 +276,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-md-4"><input placeholder="CNIC" name="participant6_cnic" class="form-control" value="<?= htmlspecialchars($row['participant6_cnic'] ?? '') ?>"></div>
         <div class="col-md-4"><input placeholder="Roll Number" name="participant6_roll_number" class="form-control" value="<?= htmlspecialchars($row['participant6_roll_number'] ?? '') ?>"></div>
         <div class="col-md-4"><label class="form-label">Photo (replace)</label>
-            <?php if (!empty($row['participant6_face_image'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant6_face_image']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant6_face_image']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant6_face_image'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant6_face_image'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant6_face_image'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant6_face_image" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
         <div class="col-md-4"><label class="form-label">ID Card (replace)</label>
-            <?php if (!empty($row['participant6_id_card'])): ?><div class="mb-2"><a href="../<?= htmlspecialchars($row['participant6_id_card']) ?>" target="_blank"><img src="../<?= htmlspecialchars($row['participant6_id_card']) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
+            <?php if (!empty($row['participant6_id_card'])): ?><div class="mb-2"><a href="<?= htmlspecialchars(resolve_image_url($row['participant6_id_card'], '../')) ?>" target="_blank"><img src="<?= htmlspecialchars(resolve_image_url($row['participant6_id_card'], '../')) ?>" style="height:40px; border:1px solid #333; border-radius:6px; object-fit:cover"></a></div><?php endif; ?>
             <input type="file" name="participant6_id_card" class="form-control" accept="image/jpeg,image/png,image/webp">
         </div>
 

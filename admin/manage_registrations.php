@@ -1,7 +1,8 @@
 <?php
 include 'header.php';
 include '../db_connection.php';
-require_once __DIR__ . '/../event_registration_settings.php'; // Add this line
+require_once __DIR__ . '/../event_registration_settings.php';
+require_once __DIR__ . '/../image_utils.php';
 
 // 1. FETCH STATS
 $total = $conn->query("SELECT COUNT(*) as count FROM event_registrations")->fetch_assoc()['count'];
@@ -440,16 +441,16 @@ $eventVisible = event_registrations_visible($conn); // NEW: Check visibility
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="row">
-                                <?php for($i=1; $i<=6; $i++): 
+                                 <?php for($i=1; $i<=6; $i++): 
                                     if(!empty($row["participant{$i}_name"])): 
-                                        // Safety check for image paths
-                                        $faceImg = !empty($row["participant{$i}_face_image"]) ? "../".$row["participant{$i}_face_image"] : "../images/default-avatar.png";
-                                        $idImg = !empty($row["participant{$i}_id_card"]) ? "../".$row["participant{$i}_id_card"] : null;
+                                        $svgAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+                                        $faceImg = resolve_image_url($row["participant{$i}_face_image"] ?? '', '../', $svgAvatar);
+                                        $idImg = !empty($row["participant{$i}_id_card"]) ? resolve_image_url($row["participant{$i}_id_card"], '../', '') : null;
                                     ?>
                                     <div class="col-md-6">
                                         <div class="participant-box d-flex gap-3 align-items-center">
-                                            <a href="<?php echo $faceImg; ?>" target="_blank">
-                                                <img src="<?php echo $faceImg; ?>" class="face-img">
+                                            <a href="<?php echo htmlspecialchars($faceImg); ?>" target="_blank">
+                                                <img src="<?php echo htmlspecialchars($faceImg); ?>" class="face-img" onerror="this.onerror=null;this.src='<?php echo $svgAvatar; ?>';">
                                             </a>
                                             
                                             <div class="flex-grow-1">
@@ -462,7 +463,7 @@ $eventVisible = event_registrations_visible($conn); // NEW: Check visibility
                                                 <div class="d-flex justify-content-between">
                                                     <div><span class="info-label">Phone:</span> <span class="text-light small"><?php echo htmlspecialchars($row["participant{$i}_contact"]); ?></span></div>
                                                     <?php if($idImg): ?>
-                                                        <a href="<?php echo $idImg; ?>" target="_blank" class="text-info small text-decoration-none"><i class="fas fa-id-card"></i> ID Card</a>
+                                                        <a href="<?php echo htmlspecialchars($idImg); ?>" target="_blank" class="text-info small text-decoration-none"><i class="fas fa-id-card"></i> ID Card</a>
                                                     <?php endif; ?>
                                                 </div>
                                             </div>
@@ -472,15 +473,22 @@ $eventVisible = event_registrations_visible($conn); // NEW: Check visibility
                             </div>
                         </div>
 
-                                                <div class="col-lg-4 text-center border-start border-secondary ps-4">
-                            <?php if(!empty($row['payment_proof']) && $row['payment_proof'] !== 'Not Collected'): ?>
+                        <div class="col-lg-4 text-center border-start border-secondary ps-4">
+                            <?php 
+                            $proofUrl = resolve_image_url($row['payment_proof'] ?? '', '../', '');
+                            if(!empty($row['payment_proof']) && $row['payment_proof'] !== 'Not Collected'): ?>
                                 <div class="payment-verification-box" style="background: rgba(0,0,0,0.3); border-radius: 16px; padding: 20px 15px; margin-bottom: 15px;">
                                     <p class="info-label mb-3" style="font-size: 0.9rem;">
                                         <i class="fas fa-receipt me-2" style="color: var(--accent);"></i>Payment Verification
                                     </p>
                                     
-                                    <a href="../<?php echo $row['payment_proof']; ?>" target="_blank" class="payment-proof-link" style="display: block; position: relative;">
-                                        <img src="../<?php echo $row['payment_proof']; ?>" class="proof-img mb-2" style="border-color:var(--accent); cursor: pointer;">
+                                    <a href="<?php echo htmlspecialchars($proofUrl); ?>" target="_blank" class="payment-proof-link" style="display: block; position: relative;">
+                                        <img src="<?php echo htmlspecialchars($proofUrl); ?>" class="proof-img mb-2" style="border-color:var(--accent); cursor: pointer;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block';">
+                                        <div class="proof-missing-box p-3 rounded mb-2 text-center" style="display:none; background: rgba(255, 68, 68, 0.08); border: 1px dashed rgba(255, 68, 68, 0.4);">
+                                            <i class="fas fa-file-invoice text-warning fa-2x mb-2"></i>
+                                            <div class="text-white small fw-bold">Image Not on Disk</div>
+                                            <div class="text-muted" style="font-size: 0.72rem;">File wiped during container redeploy</div>
+                                        </div>
                                         <div class="proof-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,255,148,0.1); opacity: 0; transition: 0.3s; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                                             <i class="fas fa-search-plus" style="font-size: 2rem; color: #00FF94;"></i>
                                         </div>

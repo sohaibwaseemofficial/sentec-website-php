@@ -85,7 +85,7 @@ include 'header.php';
             
             <!-- Current Image Preview -->
             <div class="text-center mb-4">
-                <img src="../<?= htmlspecialchars($member['image']) ?>" onerror="this.onerror=null;this.src='../images/logo.png';" alt="Current" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent);">
+                <img src="<?= htmlspecialchars(resolve_image_url($member['image'], '../', '../images/logo.png')) ?>" onerror="this.onerror=null;this.src='../images/logo.png';" alt="Current" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent);">
                 <p class="text-muted small mt-2">Current Photo</p>
             </div>
 
