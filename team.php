@@ -1,13 +1,16 @@
 <?php
+require_once __DIR__ . '/db_connection.php';
 require_once __DIR__ . '/cache_utils.php';
 
 // Canonical team list from DB with caching
 $teamMembers = get_cached_data('team_members', 3600, function() {
-    require_once __DIR__ . '/db_connection.php';
     global $conn;
+    if (!isset($conn) || $conn->connect_error) {
+        require __DIR__ . '/db_connection.php';
+    }
     $members = [];
     if (isset($conn) && !$conn->connect_error) {
-        $query = "SELECT * FROM team_members";
+        $query = "SELECT * FROM team_members ORDER BY sort_order ASC, id ASC";
         $result = $conn->query($query);
         if ($result && $result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
@@ -20,10 +23,6 @@ $teamMembers = get_cached_data('team_members', 3600, function() {
                     'sort_order' => (int)($row['sort_order'] ?? 10)
                 ];
             }
-            usort($members, function ($left, $right) {
-                return ($left['sort_order'] <=> $right['sort_order'])
-                    ?: strcasecmp($left['name'], $right['name']);
-            });
         }
     }
     return $members;

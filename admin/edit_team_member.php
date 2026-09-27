@@ -25,6 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
     $designation = trim($_POST['designation'] ?? '');
     $category = $_POST['category'] ?? '';
+    $domain = trim($_POST['domain'] ?? '');
+    $linkedin = trim($_POST['linkedin'] ?? '');
+    $sortOrder = (int)($_POST['sort_order'] ?? 10);
     $imagePath = $member['image'];
 
     if ($name === '' || $designation === '') {
@@ -46,13 +49,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (empty($error)) {
-            $update = $conn->prepare('UPDATE team_members SET name = ?, designation = ?, category = ?, image = ? WHERE id = ?');
-            $update->bind_param('ssssi', $name, $designation, $category, $imagePath, $id);
+            $update = $conn->prepare('UPDATE team_members SET name = ?, designation = ?, category = ?, domain = ?, linkedin = ?, sort_order = ?, image = ? WHERE id = ?');
+            $update->bind_param('sssssisi', $name, $designation, $category, $domain, $linkedin, $sortOrder, $imagePath, $id);
             if ($update->execute()) {
                 if ($imagePath !== $member['image']) {
-                    $oldImage = __DIR__ . '/../' . $member['image'];
-                    if (is_file($oldImage)) {
-                        unlink($oldImage);
+                    if (!empty($member['image']) && strpos($member['image'], 'images/uploads/') === 0) {
+                        $oldImage = __DIR__ . '/../' . $member['image'];
+                        if (is_file($oldImage)) {
+                            @unlink($oldImage);
+                        }
                     }
                 }
                 invalidate_cache('team_members');
@@ -80,7 +85,7 @@ include 'header.php';
             
             <!-- Current Image Preview -->
             <div class="text-center mb-4">
-                <img src="../<?= $member['image'] ?>" alt="Current" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent);">
+                <img src="../<?= htmlspecialchars($member['image']) ?>" onerror="this.onerror=null;this.src='../images/logo.png';" alt="Current" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent);">
                 <p class="text-muted small mt-2">Current Photo</p>
             </div>
 
@@ -97,12 +102,29 @@ include 'header.php';
                 <div class="col-md-6 mb-3">
                     <label class="form-label text-white">Category</label>
                     <select name="category" class="form-select form-select-dark">
-                        <option value="Presiding Board" <?= $member['category'] == 'Presiding Board' ? 'selected' : '' ?>>Presiding Board</option>
-                        <option value="Directorate" <?= $member['category'] == 'Directorate' ? 'selected' : '' ?>>Directorate</option>
                         <option value="Executive Committee" <?= $member['category'] == 'Executive Committee' ? 'selected' : '' ?>>Executive Committee</option>
+                        <option value="Directorate" <?= $member['category'] == 'Directorate' ? 'selected' : '' ?>>Directorate</option>
+                        <option value="Presiding Board" <?= $member['category'] == 'Presiding Board' ? 'selected' : '' ?>>Presiding Board</option>
                         <option value="Member" <?= $member['category'] == 'Member' ? 'selected' : '' ?>>Member</option>
                     </select>
                 </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-white">Display Order (Priority)</label>
+                    <input type="number" name="sort_order" class="form-control form-control-dark" value="<?= (int)($member['sort_order'] ?? 10) ?>">
+                    <small class="text-muted">Lower number appears first (e.g. 1-28).</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-white">Domain (Optional)</label>
+                    <input type="text" name="domain" class="form-control form-control-dark" value="<?= htmlspecialchars($member['domain'] ?? '') ?>" placeholder="e.g. AI, Web Dev">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-white">LinkedIn URL (Optional)</label>
+                <input type="url" name="linkedin" class="form-control form-control-dark" value="<?= htmlspecialchars($member['linkedin'] ?? '') ?>" placeholder="https://linkedin.com/in/...">
             </div>
 
             <div class="mb-3">
