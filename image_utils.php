@@ -196,6 +196,9 @@ if (!function_exists('save_image_as_webp')) {
         // =========================================================
         // 2. LOCAL DISK STORAGE (FALLBACK OR DEFAULT)
         // =========================================================
+        $destinationDir = rtrim(str_replace('\\', '/', $destinationDir), '/') . '/';
+        $publicPrefix   = $publicPrefix !== '' ? (rtrim(str_replace('\\', '/', $publicPrefix), '/') . '/') : '';
+
         if (!is_dir($destinationDir)) {
             if (!mkdir($destinationDir, 0755, true) && !is_dir($destinationDir)) {
                 $result['error'] = 'Unable to prepare upload directory.';
@@ -203,7 +206,6 @@ if (!function_exists('save_image_as_webp')) {
             }
         }
 
-        $destinationDir = rtrim($destinationDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         $hasWebp = function_exists('imagewebp');
 
         if ($mime === 'image/webp') {

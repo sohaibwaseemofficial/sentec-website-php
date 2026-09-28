@@ -384,9 +384,9 @@ $eventVisible = event_registrations_visible($conn); // NEW: Check visibility
         } elseif ($result->num_rows > 0) {
             $rowNum = 0;
             while ($row = $result->fetch_assoc()) {
-                $rowNum++;
-                $paymentProof = (string)($row['payment_proof'] ?? '');
-                $feeImg = "../" . htmlspecialchars($paymentProof, ENT_QUOTES, 'UTF-8');
+                $rawProof = !empty($row['payment_proof']) ? $row['payment_proof'] : (!empty($row['fees_screenshot']) ? $row['fees_screenshot'] : '');
+                $paymentProof = (string)$rawProof;
+                $feeImg = resolve_image_url($paymentProof, '../', '');
                 $payStatus = !empty($row['payment_status']) ? strtolower($row['payment_status']) : 'pending';
 
                 // 1. DATA GATHERING: Updated for full 6-member support
@@ -475,8 +475,9 @@ $eventVisible = event_registrations_visible($conn); // NEW: Check visibility
 
                         <div class="col-lg-4 text-center border-start border-secondary ps-4">
                             <?php 
-                            $proofUrl = resolve_image_url($row['payment_proof'] ?? '', '../', '');
-                            if(!empty($row['payment_proof']) && $row['payment_proof'] !== 'Not Collected'): ?>
+                            $rawProofBox = !empty($row['payment_proof']) ? $row['payment_proof'] : (!empty($row['fees_screenshot']) ? $row['fees_screenshot'] : '');
+                            $proofUrl = resolve_image_url($rawProofBox, '../', '');
+                            if(!empty($rawProofBox) && $rawProofBox !== 'Not Collected'): ?>
                                 <div class="payment-verification-box" style="background: rgba(0,0,0,0.3); border-radius: 16px; padding: 20px 15px; margin-bottom: 15px;">
                                     <p class="info-label mb-3" style="font-size: 0.9rem;">
                                         <i class="fas fa-receipt me-2" style="color: var(--accent);"></i>Payment Verification

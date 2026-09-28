@@ -26,7 +26,7 @@ if (!function_exists('event_attendees_table_exists')) {
 
     function event_attendees_from_registration_row(array $row): array {
         $participants = [];
-        for ($i = 1; $i <= 4; $i++) {
+        for ($i = 1; $i <= 6; $i++) {
             $nameKey = "participant{$i}_name";
             $emailKey = "participant{$i}_email";
             $phoneKey = "participant{$i}_contact";
