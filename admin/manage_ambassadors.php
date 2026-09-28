@@ -349,6 +349,12 @@ if ($sort === 'name_asc' || $sort === 'name_desc') {
     </div>
 </div>
 
+<?php if (($_GET['notice'] ?? '') === 'duplicate'): ?>
+    <div class="alert alert-warning mb-4" role="alert">
+        That referral code or email address is already in use. Enter a unique value and try again.
+    </div>
+<?php endif; ?>
+
 <?php if (!$hasTable): ?>
     <div class="alert alert-warning mb-4" style="background: rgba(255,187,51,0.1); border: 1px solid #ffbb33; color: #ffbb33;">
         <strong>System Alert:</strong> The <code>brand_ambassadors</code> table is missing from your database.

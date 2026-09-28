@@ -19,9 +19,13 @@ if (!in_array($requestedType, $validTypes, true)) {
     $requestedType = 'all';
 }
 
-function redirect_back(string $type = 'all') {
+function redirect_back(string $type = 'all', string $notice = '') {
     $type = in_array(strtolower($type), ['all', 'volunteer', 'brand'], true) ? strtolower($type) : 'all';
-    header('Location: manage_ambassadors.php?type=' . urlencode($type));
+    $query = ['type' => $type];
+    if ($notice === 'duplicate') {
+        $query['notice'] = $notice;
+    }
+    header('Location: manage_ambassadors.php?' . http_build_query($query));
     exit;
 }
 
@@ -162,7 +166,15 @@ if ($action === 'add') {
         $stmt = $conn->prepare($sql);
         if ($stmt) {
             bind_dynamic_params($stmt, $types, $values);
-            @$stmt->execute();
+            try {
+                $stmt->execute();
+            } catch (mysqli_sql_exception $e) {
+                if ((int)$e->getCode() === 1062) {
+                    $stmt->close();
+                    redirect_back($requestedType, 'duplicate');
+                }
+                throw $e;
+            }
             $stmt->close();
         }
     }
@@ -221,7 +233,15 @@ if ($action === 'update') {
         $stmt = $conn->prepare($sql);
         if ($stmt) {
             bind_dynamic_params($stmt, $types, $values);
-            @$stmt->execute();
+            try {
+                $stmt->execute();
+            } catch (mysqli_sql_exception $e) {
+                if ((int)$e->getCode() === 1062) {
+                    $stmt->close();
+                    redirect_back($requestedType, 'duplicate');
+                }
+                throw $e;
+            }
             $stmt->close();
         }
     }
