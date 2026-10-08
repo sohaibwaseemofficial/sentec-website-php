@@ -27,6 +27,7 @@ temp/
 *.tmp
 storage/cache/*.json
 storage/cache/
+*.apk
 
 # Azure deployment files (generated)
 .azure/
