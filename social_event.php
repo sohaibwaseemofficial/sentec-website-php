@@ -1030,7 +1030,7 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="ribbon-icon"><i class="fas fa-id-badge"></i></div>
                     <div class="ribbon-meta">
                         <div class="ribbon-label">Eligibility</div>
-                        <div class="ribbon-value">NEDians & External Guests</div>
+                        <div class="ribbon-value">Exclusively for NEDians</div>
                     </div>
                 </div>
             </div>
@@ -1290,7 +1290,7 @@ $socialSettings = social_registrations_get_settings($conn);
                     
                     <div>
                         <h3 class="tier-name">Individual Pass</h3>
-                        <p class="tier-subtitle">Standard single entry pass for students & guests</p>
+                        <p class="tier-subtitle">Standard single entry pass for NED students</p>
                         
                         <div class="price-box">
                             <?php if ($evIndActive && $evIndOrig > $evIndDisc): ?>
@@ -1400,10 +1400,10 @@ $socialSettings = social_registrations_get_settings($conn);
                     </div>
 
                     <div class="venue-item">
-                        <div class="venue-item-icon"><i class="fas fa-users"></i></div>
+                        <div class="venue-item-icon"><i class="fas fa-user-graduate"></i></div>
                         <div>
-                            <div class="venue-item-title">Non-NEDians & Guests Welcome</div>
-                            <div class="venue-item-desc">External university delegations, alumni, and music lovers are officially welcomed through university security with verified passes.</div>
+                            <div class="venue-item-title">Exclusively for NEDians</div>
+                            <div class="venue-item-desc">Entry is strictly restricted to enrolled NED University students. Valid NED Student ID card is required. Non-NEDians are strictly not allowed.</div>
                         </div>
                     </div>
 
@@ -1431,7 +1431,7 @@ $socialSettings = social_registrations_get_settings($conn);
                 <span class="section-tag">COMMON QUESTIONS</span>
                 <h2 class="section-title">Frequently Asked Questions</h2>
                 <p class="section-desc">
-                    Everything you need to know about attendance, gate access, food, and passes.
+                    Everything you need to know about attendance, gate access, and passes.
                 </p>
             </div>
 
@@ -1443,7 +1443,7 @@ $socialSettings = social_registrations_get_settings($conn);
                         <i class="fas fa-chevron-down faq-chevron"></i>
                     </button>
                     <div class="faq-answer">
-                        Yes, absolutely! RUH-E-RAQS is open to all university students, alumni, and invited guests across Pakistan. As long as you have registered and received an approved QR E-Gatepass, you will be cleared at the NED University main security gate.
+                        No, RUH-E-RAQS is strictly restricted to currently enrolled students of NED University. Non-NEDians are not permitted, and an original valid NED Student ID card is mandatory at the gate along with your digital QR E-Gatepass.
                     </div>
                 </div>
 
@@ -1463,7 +1463,7 @@ $socialSettings = social_registrations_get_settings($conn);
                         <i class="fas fa-chevron-down faq-chevron"></i>
                     </button>
                     <div class="faq-answer">
-                        RUH-E-RAQS is an authentic live Sufi Qawwali night featuring traditional vocals, harmonium, and tabla rhythms, creating a powerful spiritual and cultural atmosphere in the NED Main Auditorium.
+                        RUH-E-RAQS is an authentic live Sufi Qawwali evening featuring traditional vocals, harmonium, and tabla rhythms, creating a powerful spiritual and cultural atmosphere in the NED Main Auditorium.
                     </div>
                 </div>
 
