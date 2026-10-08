@@ -6,7 +6,7 @@ $socialSettings = social_registrations_get_settings($conn);
 ?>
 
 <script>
-    document.title = "RUH-E-RAQS // روحِ رقص - SENTEC '26 Annual Social Night | NED University";
+    document.title = "RUH-E-RAQS // روحِ رقص - SENTEC '26 Annual Sufi Evening | NED University";
 </script>
 
 <style>
@@ -329,9 +329,15 @@ $socialSettings = social_registrations_get_settings($conn);
        ========================================================= */
     .highlights-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
         margin-bottom: 30px;
+    }
+
+    @media (max-width: 991px) {
+        .highlights-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     .highlight-card {
@@ -984,14 +990,14 @@ $socialSettings = social_registrations_get_settings($conn);
             
             <div class="hero-badge">
                 <span class="hero-badge-pulse"></span>
-                SENTEC '26 OFFICIAL SOCIAL NIGHT
+                SENTEC '26 OFFICIAL SUFI EVENING
             </div>
 
             <div class="hero-urdu">روحِ رقص</div>
             <h1 class="hero-title">RUH-E-RAQS</h1>
             
             <p class="hero-lead">
-                An authentic, soul-stirring Sufi Qawwali night. Experience the timeless rhythm of harmonium, tabla, and spiritual kalaam in the Syed Mahmood Alam Auditorium at NED University.
+                An authentic, soul-stirring Sufi Qawwali evening. Experience the timeless rhythm of harmonium, tabla, and spiritual kalaam in the Syed Mahmood Alam Auditorium at NED University.
             </p>
 
             <!-- Key Info Ribbon -->
@@ -1008,7 +1014,7 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="ribbon-icon"><i class="fas fa-clock"></i></div>
                     <div class="ribbon-meta">
                         <div class="ribbon-label">Gates & Timing</div>
-                        <div class="ribbon-value">04:00 PM - 10:00 PM</div>
+                        <div class="ribbon-value">02:30 PM - 04:00 PM</div>
                     </div>
                 </div>
 
@@ -1050,7 +1056,7 @@ $socialSettings = social_registrations_get_settings($conn);
             
             <div class="section-head">
                 <span class="section-tag">WHAT TO EXPECT</span>
-                <h2 class="section-title">An Authentic Sufi Musical Night</h2>
+                <h2 class="section-title">An Authentic Sufi Musical Evening</h2>
                 <p class="section-desc">
                     Ruh-e-Raqs brings the raw spiritual energy of classical Sufi Qawwali to NED University with live traditional instruments and passionate vocals.
                 </p>
@@ -1080,16 +1086,6 @@ $socialSettings = social_registrations_get_settings($conn);
 
                 <div class="highlight-card">
                     <div class="highlight-icon-wrap">
-                        <i class="fas fa-landmark"></i>
-                    </div>
-                    <h3 class="highlight-title">Main Auditorium Stage</h3>
-                    <p class="highlight-text">
-                        Experience the grand acoustics and vibrant collegiate crowd inside NED University's prestigious Syed Mahmood Alam Auditorium.
-                    </p>
-                </div>
-
-                <div class="highlight-card">
-                    <div class="highlight-icon-wrap">
                         <i class="fas fa-qrcode"></i>
                     </div>
                     <h3 class="highlight-title">Digital Fast-Track Pass</h3>
@@ -1111,9 +1107,9 @@ $socialSettings = social_registrations_get_settings($conn);
             
             <div class="section-head">
                 <span class="section-tag">EVENT TIMELINE</span>
-                <h2 class="section-title">Evening Schedule & Program</h2>
+                <h2 class="section-title">Program Schedule & Timing</h2>
                 <p class="section-desc">
-                    Carefully curated from late afternoon till night for an immersive experience.
+                    Carefully curated from 02:30 PM to 04:00 PM for an intense, soul-stirring spiritual musical experience.
                 </p>
             </div>
 
@@ -1124,10 +1120,10 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="timeline-card">
                         <div class="timeline-header">
                             <h4 class="timeline-card-title">Gates Open & Digital Verification</h4>
-                            <span class="timeline-time">04:00 PM</span>
+                            <span class="timeline-time">02:30 PM</span>
                         </div>
                         <p class="timeline-desc">
-                            Attendees arrive at NED University Gate 1 / 2. Fast-track QR Gatepass scanning, wristband collection, and auditorium seating.
+                            Attendees arrive at NED University Gate 1 / 2. Fast-track QR Gatepass verification, security clearance, and auditorium seating.
                         </p>
                     </div>
                 </div>
@@ -1136,24 +1132,11 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="timeline-dot"><i class="fas fa-microphone-alt"></i></div>
                     <div class="timeline-card">
                         <div class="timeline-header">
-                            <h4 class="timeline-card-title">Welcoming Address & Introduction</h4>
-                            <span class="timeline-time">05:15 PM</span>
+                            <h4 class="timeline-card-title">Welcoming Address & Opening Prelude</h4>
+                            <span class="timeline-time">02:45 PM</span>
                         </div>
                         <p class="timeline-desc">
-                            Welcoming address by the SENTEC Directorate, introducing the spiritual theme and traditions of RUH-E-RAQS.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="timeline-item">
-                    <div class="timeline-dot"><i class="fas fa-drum"></i></div>
-                    <div class="timeline-card">
-                        <div class="timeline-header">
-                            <h4 class="timeline-card-title">Harmonium & Tabla Prelude</h4>
-                            <span class="timeline-time">05:45 PM</span>
-                        </div>
-                        <p class="timeline-desc">
-                            Opening acoustic prelude with traditional harmonium melodies, tabla taals, and opening Hamd-o-Naat kalaam.
+                            Brief welcoming address by the SENTEC Directorate followed by a traditional harmonium and tabla Hamd-o-Naat prelude.
                         </p>
                     </div>
                 </div>
@@ -1162,11 +1145,11 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="timeline-dot"><i class="fas fa-fire-alt"></i></div>
                     <div class="timeline-card">
                         <div class="timeline-header">
-                            <h4 class="timeline-card-title">The Grand Sufi Qawwali Session</h4>
-                            <span class="timeline-time">06:45 PM</span>
+                            <h4 class="timeline-card-title">The Grand Live Qawwali Session (1 Hour)</h4>
+                            <span class="timeline-time">03:00 PM</span>
                         </div>
                         <p class="timeline-desc">
-                            The headline performance of the night: authentic Sufi Qawwali ensemble performing timeless sufi poetry, ecstatic choruses, and clapping rhythms.
+                            The main headline Qawwali performance: authentic Sufi ensemble performing timeless kalams, high-energy choruses, and spiritual rhythms.
                         </p>
                     </div>
                 </div>
@@ -1175,11 +1158,11 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="timeline-dot"><i class="fas fa-award"></i></div>
                     <div class="timeline-card">
                         <div class="timeline-header">
-                            <h4 class="timeline-card-title">Concluding Kalaam & Closing Remarks</h4>
-                            <span class="timeline-time">09:30 PM</span>
+                            <h4 class="timeline-card-title">Concluding Kalaam & Wrap Up</h4>
+                            <span class="timeline-time">04:00 PM</span>
                         </div>
                         <p class="timeline-desc">
-                            Soul-stirring final kalaam, vote of thanks by SENTEC, and official conclusion of the night.
+                            Soulful final verses, vote of thanks by SENTEC, and official wrap up of the evening by 04:00 PM.
                         </p>
                     </div>
                 </div>
