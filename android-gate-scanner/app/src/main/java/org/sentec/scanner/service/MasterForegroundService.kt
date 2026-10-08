@@ -55,7 +55,7 @@ class MasterForegroundService : Service() {
     private fun startServer() {
         if (server == null) {
             val db = AppDatabase.getInstance(applicationContext)
-            server = MasterHubServer(8080, db)
+            server = MasterHubServer(8080, db, applicationContext)
             try {
                 server?.start()
             } catch (e: Exception) {

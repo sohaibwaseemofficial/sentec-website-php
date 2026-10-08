@@ -1,5 +1,6 @@
 package org.sentec.scanner.network
 
+import android.content.Context
 import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
@@ -7,12 +8,15 @@ import org.json.JSONObject
 import org.sentec.scanner.database.AppDatabase
 import org.sentec.scanner.database.AuditLogEntity
 import org.sentec.scanner.util.QrParser
+import java.io.File
+import java.io.FileInputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
 class MasterHubServer(
     port: Int = 8080,
-    private val database: AppDatabase
+    private val database: AppDatabase,
+    private val context: Context? = null
 ) : NanoHTTPD(port) {
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
@@ -35,8 +39,40 @@ class MasterHubServer(
             method == Method.POST && uri == "/api/scan" -> handleScan(session)
             method == Method.GET && uri == "/api/stats" -> handleStats()
             method == Method.POST && uri == "/api/sync" -> handleBatchSync(session)
+            method == Method.GET && uri.startsWith("/media/") -> handleMedia(uri)
             else -> newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Not Found")
         }
+    }
+
+    private fun getMediaUris(ticketId: String, cloudFace: String?, cloudCard: String?): Pair<String, String> {
+        val cleanTicket = ticketId.replace("[^A-Za-z0-9_-]".toRegex(), "")
+        val photoDir = File(context?.filesDir, "cached_photos")
+        val localFace = File(photoDir, "${cleanTicket}_face.webp")
+        val localCard = File(photoDir, "${cleanTicket}_card.webp")
+
+        val faceUri = if (localFace.exists()) "http://192.168.43.1:8080/media/${cleanTicket}_face.webp" else (cloudFace ?: "")
+        val cardUri = if (localCard.exists()) "http://192.168.43.1:8080/media/${cleanTicket}_card.webp" else (cloudCard ?: "")
+        return Pair(faceUri, cardUri)
+    }
+
+    private fun handleMedia(uri: String): Response {
+        val filename = uri.substringAfterLast("/")
+        val photoDir = File(context?.filesDir, "cached_photos")
+        val file = File(photoDir, filename)
+        if (file.exists() && file.isFile) {
+            val mime = when {
+                filename.endsWith(".webp", true) -> "image/webp"
+                filename.endsWith(".png", true) -> "image/png"
+                else -> "image/jpeg"
+            }
+            return try {
+                val fis = FileInputStream(file)
+                newFixedLengthResponse(Response.Status.OK, mime, fis, file.length())
+            } catch (e: Exception) {
+                newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "File read error: ${e.message}")
+            }
+        }
+        return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Media not found")
     }
 
     private fun handlePinAuth(session: IHTTPSession): Response {
@@ -119,6 +155,8 @@ class MasterHubServer(
                 val statusStr = if (isDuplicate) "DUPLICATE_REJECTED" else "READY_TO_ADMIT"
                 val msg = if (isDuplicate) "Pass already scanned at ${attendee.used_at ?: "earlier"}" else "Pass verified. Confirm physical ID."
 
+                val (faceUri, cardUri) = getMediaUris(attendee.ticket_id, attendee.face_image, attendee.id_card_image)
+
                 val resp = JSONObject().apply {
                     put("success", !isDuplicate)
                     put("status", statusStr)
@@ -131,8 +169,8 @@ class MasterHubServer(
                         put("roll_number", attendee.roll_number ?: "")
                         put("event_name", attendee.event_name)
                         put("gate_type", attendee.gate_type)
-                        put("face_image", attendee.face_image ?: "")
-                        put("id_card_image", attendee.id_card_image ?: "")
+                        put("face_image", faceUri)
+                        put("id_card_image", cardUri)
                         put("is_used", attendee.is_used)
                         put("used_at", attendee.used_at ?: "")
                     })
@@ -154,6 +192,8 @@ class MasterHubServer(
                 )
                 auditLogDao.insert(log)
 
+                val (faceUri, cardUri) = getMediaUris(attendee.ticket_id, attendee.face_image, attendee.id_card_image)
+
                 val resp = JSONObject().apply {
                     put("success", false)
                     put("status", "DUPLICATE_REJECTED")
@@ -166,9 +206,9 @@ class MasterHubServer(
                         put("roll_number", attendee.roll_number ?: "")
                         put("event_name", attendee.event_name)
                         put("gate_type", attendee.gate_type)
-                        put("face_image", attendee.face_image ?: "")
-                        put("id_card_image", attendee.id_card_image ?: "")
-                        put("used_at", attendee.used_at)
+                        put("face_image", faceUri)
+                        put("id_card_image", cardUri)
+                        put("used_at", attendee.used_at ?: "")
                     })
                 }
                 newFixedLengthResponse(Response.Status.OK, "application/json", resp.toString())
@@ -193,6 +233,8 @@ class MasterHubServer(
                 )
                 auditLogDao.insert(log)
 
+                val (faceUri, cardUri) = getMediaUris(attendee.ticket_id, attendee.face_image, attendee.id_card_image)
+
                 val resp = JSONObject().apply {
                     put("success", true)
                     put("status", "APPROVED")
@@ -205,8 +247,8 @@ class MasterHubServer(
                         put("roll_number", attendee.roll_number ?: "")
                         put("event_name", attendee.event_name)
                         put("gate_type", attendee.gate_type)
-                        put("face_image", attendee.face_image ?: "")
-                        put("id_card_image", attendee.id_card_image ?: "")
+                        put("face_image", faceUri)
+                        put("id_card_image", cardUri)
                     })
                 }
                 newFixedLengthResponse(Response.Status.OK, "application/json", resp.toString())
@@ -248,12 +290,12 @@ class MasterHubServer(
                 val item = logs.getJSONObject(i)
                 val log = AuditLogEntity(
                     ticket_id = item.optString("ticket_id"),
-                    attendee_name = item.optString("attendee_name"),
-                    gate_type = item.optString("gate_type"),
-                    station_id = item.optString("station_id"),
-                    volunteer_id = item.optString("volunteer_id"),
+                    attendee_name = item.optString("attendee_name").ifEmpty { null },
+                    gate_type = item.optString("gate_type", "social"),
+                    station_id = item.optString("station_id", "CLIENT_DEVICE"),
+                    volunteer_id = item.optString("volunteer_id", "Volunteer"),
                     device_id = item.optString("device_id"),
-                    status = item.optString("status"),
+                    status = item.optString("status", "APPROVED"),
                     notes = item.optString("notes"),
                     created_at = item.optString("created_at"),
                     synced = false
@@ -263,7 +305,7 @@ class MasterHubServer(
 
             val resp = JSONObject().apply {
                 put("success", true)
-                put("received", logs.length())
+                put("synced_count", logs.length())
             }
             newFixedLengthResponse(Response.Status.OK, "application/json", resp.toString())
         } catch (e: Exception) {

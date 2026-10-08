@@ -41,6 +41,8 @@ import org.sentec.scanner.network.GateApiClient
 import org.sentec.scanner.service.MasterForegroundService
 import org.sentec.scanner.util.QrParser
 import org.sentec.scanner.util.SoundHelper
+import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -720,8 +722,40 @@ class MainActivity : AppCompatActivity() {
             return
         }
         lifecycleScope.launch(Dispatchers.IO) {
+            val photoDir = File(filesDir, "cached_photos")
+            val cleanTicket = activeInspectedTicket.replace("[^A-Za-z0-9_-]".toRegex(), "")
+            val localCandidate = if (url.contains("card") || url.contains("id_card")) {
+                File(photoDir, "${cleanTicket}_card.webp")
+            } else {
+                File(photoDir, "${cleanTicket}_face.webp")
+            }
+
+            // 1. Try local disk cache first (offline instant load)
+            if (localCandidate.exists() && localCandidate.length() > 0) {
+                try {
+                    val bmp = BitmapFactory.decodeFile(localCandidate.absolutePath)
+                    if (bmp != null) {
+                        withContext(Dispatchers.Main) { onLoaded(bmp) }
+                        return@launch
+                    }
+                } catch (_: Exception) {}
+            }
+
+            // 2. Direct file path check
+            val directFile = File(url)
+            if (directFile.exists() && directFile.isFile && directFile.length() > 0) {
+                try {
+                    val bmp = BitmapFactory.decodeFile(directFile.absolutePath)
+                    if (bmp != null) {
+                        withContext(Dispatchers.Main) { onLoaded(bmp) }
+                        return@launch
+                    }
+                } catch (_: Exception) {}
+            }
+
+            // 3. Fallback to HTTP download
             try {
-                val secureUrl = if (url.startsWith("http://")) url.replaceFirst("http://", "https://") else url
+                val secureUrl = if (url.startsWith("http://") && !url.contains("192.168.")) url.replaceFirst("http://", "https://") else url
                 val req = Request.Builder()
                     .url(secureUrl)
                     .header("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36")
@@ -730,6 +764,12 @@ class MainActivity : AppCompatActivity() {
                 if (resp.isSuccessful) {
                     val bytes = resp.body?.bytes()
                     if (bytes != null && bytes.isNotEmpty()) {
+                        // Persist to disk cache
+                        try {
+                            photoDir.mkdirs()
+                            localCandidate.writeBytes(bytes)
+                        } catch (_: Exception) {}
+
                         val opts = BitmapFactory.Options().apply {
                             inPreferredConfig = Bitmap.Config.ARGB_8888
                         }
@@ -803,8 +843,6 @@ class MainActivity : AppCompatActivity() {
             binding.btnHubDownloadWhitelist.text = "Downloading Whitelist..."
 
             val result = apiClient.fetchCloudWhitelist(token)
-            binding.btnHubDownloadWhitelist.isEnabled = true
-            binding.btnHubDownloadWhitelist.text = "Sync Whitelist from Cloud DB"
 
             result.onSuccess { json ->
                 val items = json.optJSONArray("whitelist")
@@ -812,40 +850,104 @@ class MainActivity : AppCompatActivity() {
                     val list = mutableListOf<AttendeeEntity>()
                     for (i in 0 until items.length()) {
                         val item = items.getJSONObject(i)
+                        val ticketId = item.optString("ticket_id", "").ifEmpty { item.optString("t", "") }
+                        if (ticketId.isBlank()) continue
+
+                        val name = item.optString("name", "").ifEmpty { item.optString("n", "Guest") }
                         val face = item.optString("face_image", "").ifEmpty { item.optString("p", "") }
                         val idCard = item.optString("id_card_image", "").ifEmpty { item.optString("card", "") }
-                        val cnicVal = item.optString("cnic", "")
-                        val rollVal = item.optString("roll_number", "")
+                        val cnicVal = item.optString("cnic", "").ifEmpty { item.optString("c", "") }
+                        val rollVal = item.optString("roll_number", "").ifEmpty { item.optString("c", "") }
                         val deptVal = item.optString("dept", "")
+                        val role = item.optString("gate_type", "").ifEmpty { item.optString("r", "social") }
+                        val eventName = item.optString("event_name", "").ifEmpty { item.optString("m", "SENTEC Event") }
                         val usedAtVal = item.optString("used_at", "")
+                        val isUsed = if (item.has("is_used")) (item.optInt("is_used", 0) == 1) else (item.optInt("u", 0) == 1)
 
                         list.add(
                             AttendeeEntity(
-                                ticket_id = item.getString("ticket_id"),
+                                ticket_id = ticketId,
                                 attendee_id = item.optInt("attendee_id", 0),
-                                name = item.getString("name"),
+                                name = name,
                                 cnic = cnicVal.ifEmpty { null },
                                 roll_number = rollVal.ifEmpty { null },
                                 department = deptVal.ifEmpty { null },
-                                event_name = item.optString("event_name", "SENTEC Event"),
-                                gate_type = item.optString("gate_type", "social"),
+                                event_name = eventName,
+                                gate_type = role,
                                 face_image = face.ifEmpty { null },
                                 id_card_image = idCard.ifEmpty { null },
-                                is_used = item.optInt("is_used", 0) == 1,
+                                is_used = isUsed,
                                 used_at = usedAtVal.ifEmpty { null }
                             )
                         )
                     }
+
                     withContext(Dispatchers.IO) {
                         database.attendeeDao().insertAll(list)
                     }
-                    Toast.makeText(this@MainActivity, "Saved ${list.size} attendees to SQLite!", Toast.LENGTH_SHORT).show()
+
                     updateMasterHubStats()
+                    Toast.makeText(this@MainActivity, "Saved ${list.size} attendees to SQLite!", Toast.LENGTH_SHORT).show()
+
+                    // Asynchronously download and cache attendee photos in the background
+                    val photoDir = File(filesDir, "cached_photos").apply { mkdirs() }
+                    var cachedCount = 0
+                    binding.btnHubDownloadWhitelist.text = "Caching Photos (0/${list.size})..."
+
+                    withContext(Dispatchers.IO) {
+                        for (attendee in list) {
+                            val cleanTicket = attendee.ticket_id.replace("[^A-Za-z0-9_-]".toRegex(), "")
+                            if (!attendee.face_image.isNullOrBlank()) {
+                                val f = File(photoDir, "${cleanTicket}_face.webp")
+                                if (!f.exists() || f.length() == 0L) {
+                                    downloadFile(attendee.face_image, f)
+                                }
+                            }
+                            if (!attendee.id_card_image.isNullOrBlank()) {
+                                val c = File(photoDir, "${cleanTicket}_card.webp")
+                                if (!c.exists() || c.length() == 0L) {
+                                    downloadFile(attendee.id_card_image, c)
+                                }
+                            }
+                            cachedCount++
+                            if (cachedCount % 15 == 0 || cachedCount == list.size) {
+                                withContext(Dispatchers.Main) {
+                                    binding.btnHubDownloadWhitelist.text = "Caching Photos ($cachedCount/${list.size})..."
+                                }
+                            }
+                        }
+                    }
+
+                    binding.btnHubDownloadWhitelist.isEnabled = true
+                    binding.btnHubDownloadWhitelist.text = "Sync Whitelist from Cloud DB"
+                    Toast.makeText(this@MainActivity, "✓ All ${list.size} attendee records & photos cached offline!", Toast.LENGTH_LONG).show()
+
+                } else {
+                    binding.btnHubDownloadWhitelist.isEnabled = true
+                    binding.btnHubDownloadWhitelist.text = "Sync Whitelist from Cloud DB"
+                    Toast.makeText(this@MainActivity, "No whitelist items found in server response.", Toast.LENGTH_SHORT).show()
                 }
             }.onFailure {
+                binding.btnHubDownloadWhitelist.isEnabled = true
+                binding.btnHubDownloadWhitelist.text = "Sync Whitelist from Cloud DB"
                 Toast.makeText(this@MainActivity, "Download failed: ${it.message}", Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    private fun downloadFile(url: String, dest: File) {
+        try {
+            val secureUrl = if (url.startsWith("http://") && !url.contains("192.168.")) url.replaceFirst("http://", "https://") else url
+            val req = Request.Builder().url(secureUrl).build()
+            val resp = imageHttpClient.newCall(req).execute()
+            if (resp.isSuccessful) {
+                resp.body?.byteStream()?.use { input ->
+                    dest.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            }
+        } catch (_: Exception) {}
     }
 
     private fun flushOutboxToCloud() {
