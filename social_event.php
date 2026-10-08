@@ -991,7 +991,7 @@ $socialSettings = social_registrations_get_settings($conn);
             <h1 class="hero-title">RUH-E-RAQS</h1>
             
             <p class="hero-lead">
-                An unforgettable evening of soulful Sufi Qawwali, captivating instrumental harmonies, renowned poetry, and a lavish dinner banquet under the starry skies of NED University.
+                An authentic, soul-stirring Sufi Qawwali night. Experience the timeless rhythm of harmonium, tabla, and spiritual kalaam in the Syed Mahmood Alam Auditorium at NED University.
             </p>
 
             <!-- Key Info Ribbon -->
@@ -1050,9 +1050,9 @@ $socialSettings = social_registrations_get_settings($conn);
             
             <div class="section-head">
                 <span class="section-tag">WHAT TO EXPECT</span>
-                <h2 class="section-title">An Enchanting Musical & Cultural Showcase</h2>
+                <h2 class="section-title">An Authentic Sufi Musical Night</h2>
                 <p class="section-desc">
-                    Ruh-e-Raqs brings together the rich heritage of South Asian classical arts and contemporary collegiate celebration into one magical night.
+                    Ruh-e-Raqs brings the raw spiritual energy of classical Sufi Qawwali to NED University with live traditional instruments and passionate vocals.
                 </p>
             </div>
 
@@ -1060,41 +1060,31 @@ $socialSettings = social_registrations_get_settings($conn);
                 
                 <div class="highlight-card">
                     <div class="highlight-icon-wrap">
-                        <i class="fas fa-music"></i>
+                        <i class="fas fa-microphone-alt"></i>
                     </div>
-                    <h3 class="highlight-title">Soulful Sufi Qawwali</h3>
+                    <h3 class="highlight-title">Live Sufi Qawwali</h3>
                     <p class="highlight-text">
-                        Lose yourself in the hypnotic rhythms and ecstatic poetry of legendary Sufi kalams performed live by master vocalists and accompanists.
+                        Immerse yourself in legendary Sufi kalams, mystical poetry, and ecstatic vocal improvisations performed live by master Qawwals.
                     </p>
                 </div>
 
                 <div class="highlight-card">
                     <div class="highlight-icon-wrap">
-                        <i class="fas fa-guitar"></i>
+                        <i class="fas fa-drum"></i>
                     </div>
-                    <h3 class="highlight-title">Instrumental Fusion</h3>
+                    <h3 class="highlight-title">Harmonium & Tabla Rhythms</h3>
                     <p class="highlight-text">
-                        Mesmerizing blend of acoustic strings, rubab melodies, flute, and ambient percussions woven into an uplifting soundtrack.
+                        The authentic acoustic heartbeat of genuine Qawwali — soulful harmonium melodies, thunderous tabla beats, and synchronized rhythmic handclaps.
                     </p>
                 </div>
 
                 <div class="highlight-card">
                     <div class="highlight-icon-wrap">
-                        <i class="fas fa-feather-alt"></i>
+                        <i class="fas fa-landmark"></i>
                     </div>
-                    <h3 class="highlight-title">Grand Mushaira</h3>
+                    <h3 class="highlight-title">Main Auditorium Stage</h3>
                     <p class="highlight-text">
-                        A celebrated gathering of eloquent poets sharing stirring couplets, lyrical nazms, and witty verse that capture the heart.
-                    </p>
-                </div>
-
-                <div class="highlight-card">
-                    <div class="highlight-icon-wrap">
-                        <i class="fas fa-utensils"></i>
-                    </div>
-                    <h3 class="highlight-title">Buffet Dinner & Treats</h3>
-                    <p class="highlight-text">
-                        Every pass includes a warm dinner banquet and beverages served post-performance for all registered attendees.
+                        Experience the grand acoustics and vibrant collegiate crowd inside NED University's prestigious Syed Mahmood Alam Auditorium.
                     </p>
                 </div>
 
@@ -1104,17 +1094,7 @@ $socialSettings = social_registrations_get_settings($conn);
                     </div>
                     <h3 class="highlight-title">Digital Fast-Track Pass</h3>
                     <p class="highlight-text">
-                        Instant QR-enabled digital Gatepass sent straight to your email and portal dashboard for effortless security clearance.
-                    </p>
-                </div>
-
-                <div class="highlight-card">
-                    <div class="highlight-icon-wrap">
-                        <i class="fas fa-camera-retro"></i>
-                    </div>
-                    <h3 class="highlight-title">Red Carpet & Memories</h3>
-                    <p class="highlight-text">
-                        Professional media coverage, themed photo booths, and dedicated networking spaces with university delegations.
+                        Instant QR-enabled digital Gatepass sent straight to your email and portal dashboard for effortless security clearance at NED gates.
                     </p>
                 </div>
 
@@ -1156,24 +1136,11 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="timeline-dot"><i class="fas fa-microphone-alt"></i></div>
                     <div class="timeline-card">
                         <div class="timeline-header">
-                            <h4 class="timeline-card-title">Opening Symphony & Instrumental Prelude</h4>
-                            <span class="timeline-time">05:00 PM</span>
+                            <h4 class="timeline-card-title">Welcoming Address & Introduction</h4>
+                            <span class="timeline-time">05:15 PM</span>
                         </div>
                         <p class="timeline-desc">
-                            Welcoming address by the SENTEC Directorate followed by a serene instrumental fusion performance.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="timeline-item">
-                    <div class="timeline-dot"><i class="fas fa-scroll"></i></div>
-                    <div class="timeline-card">
-                        <div class="timeline-header">
-                            <h4 class="timeline-card-title">Grand Mushaira & Spoken Word</h4>
-                            <span class="timeline-time">06:15 PM</span>
-                        </div>
-                        <p class="timeline-desc">
-                            A showcase of distinguished guest poets presenting their classic and modern couplets, reviving the rich literary tradition of Karachi.
+                            Welcoming address by the SENTEC Directorate, introducing the spiritual theme and traditions of RUH-E-RAQS.
                         </p>
                     </div>
                 </div>
@@ -1182,24 +1149,37 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="timeline-dot"><i class="fas fa-drum"></i></div>
                     <div class="timeline-card">
                         <div class="timeline-header">
-                            <h4 class="timeline-card-title">Soulful Qawwali Night (Main Stage)</h4>
-                            <span class="timeline-time">07:30 PM</span>
+                            <h4 class="timeline-card-title">Harmonium & Tabla Prelude</h4>
+                            <span class="timeline-time">05:45 PM</span>
                         </div>
                         <p class="timeline-desc">
-                            The grand crescendo of the evening: dynamic Sufi ensemble performing classic qawwalis, sufi rock melodies, and crowd favorites.
+                            Opening acoustic prelude with traditional harmonium melodies, tabla taals, and opening Hamd-o-Naat kalaam.
                         </p>
                     </div>
                 </div>
 
                 <div class="timeline-item">
-                    <div class="timeline-dot"><i class="fas fa-utensils"></i></div>
+                    <div class="timeline-dot"><i class="fas fa-fire-alt"></i></div>
                     <div class="timeline-card">
                         <div class="timeline-header">
-                            <h4 class="timeline-card-title">Dinner Banquet & Social Networking</h4>
+                            <h4 class="timeline-card-title">The Grand Sufi Qawwali Session</h4>
+                            <span class="timeline-time">06:45 PM</span>
+                        </div>
+                        <p class="timeline-desc">
+                            The headline performance of the night: authentic Sufi Qawwali ensemble performing timeless sufi poetry, ecstatic choruses, and clapping rhythms.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"><i class="fas fa-award"></i></div>
+                    <div class="timeline-card">
+                        <div class="timeline-header">
+                            <h4 class="timeline-card-title">Concluding Kalaam & Closing Remarks</h4>
                             <span class="timeline-time">09:30 PM</span>
                         </div>
                         <p class="timeline-desc">
-                            Buffet dinner and refreshments served to all pass holders. Meet participants, executives, and guests before closing.
+                            Soul-stirring final kalaam, vote of thanks by SENTEC, and official conclusion of the night.
                         </p>
                     </div>
                 </div>
@@ -1255,10 +1235,10 @@ $socialSettings = social_registrations_get_settings($conn);
 
                         <ul class="pricing-perks">
                             <li><i class="fas fa-check-circle"></i> Single Entry for 1 Registered Participant</li>
-                            <li><i class="fas fa-check-circle"></i> Full Access to Qawwali & Concert Stage</li>
-                            <li><i class="fas fa-check-circle"></i> Grand Mushaira & Seating Included</li>
-                            <li><i class="fas fa-check-circle"></i> Dinner Box & Refreshments Included</li>
-                            <li><i class="fas fa-check-circle"></i> Digital QR Gatepass for Entry</li>
+                            <li><i class="fas fa-check-circle"></i> Guaranteed Main Auditorium Seating</li>
+                            <li><i class="fas fa-check-circle"></i> Full Access to Live Qawwali Performance</li>
+                            <li><i class="fas fa-check-circle"></i> Traditional Harmonium & Tabla Ensemble</li>
+                            <li><i class="fas fa-check-circle"></i> Digital QR Gatepass for NED Entry</li>
                         </ul>
                     </div>
 
@@ -1297,9 +1277,9 @@ $socialSettings = social_registrations_get_settings($conn);
 
                         <ul class="pricing-perks">
                             <li><i class="fas fa-check-circle"></i> <strong>Full Access for 3 People (1 Bundle)</strong></li>
-                            <li><i class="fas fa-check-circle"></i> Full Access to Qawwali & Concert Stage</li>
-                            <li><i class="fas fa-check-circle"></i> Grand Mushaira & Seating Included</li>
-                            <li><i class="fas fa-check-circle"></i> 3x Dinner Boxes & Refreshments Included</li>
+                            <li><i class="fas fa-check-circle"></i> Guaranteed Main Auditorium Seating</li>
+                            <li><i class="fas fa-check-circle"></i> Full Access to Live Qawwali Performance</li>
+                            <li><i class="fas fa-check-circle"></i> Traditional Harmonium & Tabla Ensemble</li>
                             <li><i class="fas fa-check-circle"></i> 3 Individual QR E-Gatepasses Generated</li>
                         </ul>
                     </div>
@@ -1344,9 +1324,9 @@ $socialSettings = social_registrations_get_settings($conn);
 
                         <ul class="pricing-perks">
                             <li><i class="fas fa-check-circle"></i> Single Entry Pass for 1 Person</li>
-                            <li><i class="fas fa-check-circle"></i> Full Access to Qawwali & Concert Stage</li>
-                            <li><i class="fas fa-check-circle"></i> Grand Mushaira & Seating Included</li>
-                            <li><i class="fas fa-check-circle"></i> Dinner Box & Refreshments Included</li>
+                            <li><i class="fas fa-check-circle"></i> Guaranteed Main Auditorium Seating</li>
+                            <li><i class="fas fa-check-circle"></i> Full Access to Live Qawwali Performance</li>
+                            <li><i class="fas fa-check-circle"></i> Traditional Harmonium & Tabla Ensemble</li>
                             <li><i class="fas fa-check-circle"></i> Instant Digital QR E-Gatepass</li>
                         </ul>
                     </div>
@@ -1496,11 +1476,11 @@ $socialSettings = social_registrations_get_settings($conn);
 
                 <div class="faq-item">
                     <button class="faq-question" type="button">
-                        <span>Is dinner included with the ticket price?</span>
+                        <span>What kind of performance is RUH-E-RAQS?</span>
                         <i class="fas fa-chevron-down faq-chevron"></i>
                     </button>
                     <div class="faq-answer">
-                        Yes! All passes (Individual, Participant, and Group) include full access to the dinner banquet / refreshment boxes served after the main performances.
+                        RUH-E-RAQS is an authentic live Sufi Qawwali night featuring traditional vocals, harmonium, and tabla rhythms, creating a powerful spiritual and cultural atmosphere in the NED Main Auditorium.
                     </div>
                 </div>
 
