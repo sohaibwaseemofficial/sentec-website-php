@@ -7,6 +7,9 @@ on:
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,32 +24,24 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Gradle Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Grant Execute Permission for Gradlew
-        run: chmod +x ./android-gate-scanner/gradlew || true
+      - name: Setup Gradle 8.5
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
 
       - name: Build Debug APK with Gradle
         working-directory: ./android-gate-scanner
         run: |
-          if [ -f gradlew ]; then
-            ./gradlew assembleDebug --stacktrace
-          else
-            gradle assembleDebug --stacktrace
-          fi
+          gradle assembleDebug --stacktrace
 
       - name: Rename APK for Easy Distribution
         run: |
           mkdir -p output_apk
           find android-gate-scanner/app/build/outputs/apk/ -name "*.apk" -exec cp {} output_apk/SENTEC-Gate-Scanner.apk \;
+          ls -la output_apk/
 
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
@@ -54,3 +49,20 @@ jobs:
           name: SENTEC-Gate-Scanner-APK
           path: output_apk/SENTEC-Gate-Scanner.apk
           retention-days: 30
+
+      - name: Create or Update GitHub Release with Direct APK Download
+        uses: softprops/action-gh-release@v2
+        if: success()
+        with:
+          tag_name: "v1.0.0-apk"
+          name: "SENTEC Gate Scanner App (Latest APK)"
+          body: |
+            ### 📱 SENTEC Gate Scanner Mobile App
+            - Two-Step ID Card & Photo Inspection before admission.
+            - Prevents duplicate admissions & alerts for wrong gate passes.
+            - Full offline Mesh Hotspot & Cloud Sync support.
+            
+            **Direct Download:** Click `SENTEC-Gate-Scanner.apk` below to install on your Android device.
+          files: output_apk/SENTEC-Gate-Scanner.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
