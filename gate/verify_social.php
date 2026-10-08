@@ -16,6 +16,7 @@ if (file_exists('../db_connection.php')) {
 }
 
 require_once __DIR__ . '/../social_attendees_helper.php';
+require_once __DIR__ . '/../image_utils.php';
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $attendeeId = isset($_GET['attendee']) ? intval($_GET['attendee']) : 0;
@@ -258,7 +259,7 @@ if ($attendeeMode && !empty($participants)) {
 
             <div class="img-wrap">
                 <?php 
-                $img = (!empty($currentMember['face'])) ? "../".$currentMember['face'] : "../assets/img/default_user.png"; 
+                $img = resolve_image_url($currentMember['face'] ?? '', '../', '../assets/img/default_user.png'); 
                 ?>
                 <img src="<?php echo $img; ?>" class="user-img">
             </div>

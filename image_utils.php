@@ -16,7 +16,7 @@ if (!function_exists('get_cloudinary_config')) {
         require_once __DIR__ . '/env_loader.php';
 
         // Check CLOUDINARY_URL format: cloudinary://api_key:api_secret@cloud_name
-        $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL');
+        $cloudinaryUrl = env('CLOUDINARY_URL') ?: getenv('CLOUDINARY_URL') ?: ($_ENV['CLOUDINARY_URL'] ?? '') ?: ($_SERVER['CLOUDINARY_URL'] ?? '');
         if ($cloudinaryUrl) {
             $parsed = parse_url($cloudinaryUrl);
             if ($parsed && !empty($parsed['host']) && !empty($parsed['user']) && !empty($parsed['pass'])) {
@@ -28,9 +28,9 @@ if (!function_exists('get_cloudinary_config')) {
             }
         }
 
-        $cloudName = env('CLOUDINARY_CLOUD_NAME') ?: getenv('CLOUDINARY_CLOUD_NAME');
-        $apiKey    = env('CLOUDINARY_API_KEY') ?: getenv('CLOUDINARY_API_KEY');
-        $apiSecret = env('CLOUDINARY_API_SECRET') ?: getenv('CLOUDINARY_API_SECRET');
+        $cloudName = env('CLOUDINARY_CLOUD_NAME') ?: getenv('CLOUDINARY_CLOUD_NAME') ?: ($_ENV['CLOUDINARY_CLOUD_NAME'] ?? '') ?: ($_SERVER['CLOUDINARY_CLOUD_NAME'] ?? '');
+        $apiKey    = env('CLOUDINARY_API_KEY') ?: getenv('CLOUDINARY_API_KEY') ?: ($_ENV['CLOUDINARY_API_KEY'] ?? '') ?: ($_SERVER['CLOUDINARY_API_KEY'] ?? '');
+        $apiSecret = env('CLOUDINARY_API_SECRET') ?: getenv('CLOUDINARY_API_SECRET') ?: ($_ENV['CLOUDINARY_API_SECRET'] ?? '') ?: ($_SERVER['CLOUDINARY_API_SECRET'] ?? '');
 
         if (!empty($cloudName) && !empty($apiKey) && !empty($apiSecret)) {
             return [
@@ -80,7 +80,7 @@ if (!function_exists('upload_to_cloudinary')) {
             'signature' => $signature,
         ];
 
-        $apiUrl = "https://api.cloudinary.com/v1_1/" . rawurlencode($config['cloud_name']) . "/image/upload";
+        $apiUrl = "https://api.cloudinary.com/v1_1/" . rawurlencode($config['cloud_name']) . "/auto/upload";
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $apiUrl);
@@ -127,7 +127,8 @@ if (!function_exists('resolve_image_url')) {
 
 if (!function_exists('save_image_as_webp')) {
     /**
-     * Store image in Cloudinary if configured, otherwise convert to WebP and save locally.
+     * Store image or PDF in Cloudinary if configured, otherwise convert/save locally.
+     * Handles JPG, PNG, WebP, GIF, HEIC/HEIF, BMP, and PDF receipts.
      * Returns an array with success status, stored path (URL or local path), and optional warnings.
      */
     function save_image_as_webp(array $file, string $destinationDir, string $publicPrefix = '', int $quality = 82): array
@@ -140,180 +141,242 @@ if (!function_exists('save_image_as_webp')) {
             'converted' => false,
         ];
 
+        // 1. Basic Upload Validation
         if (!isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK) {
-            $result['error'] = 'Upload failed or no file provided.';
+            $result['error'] = 'Upload failed or no file provided (Code: ' . ($file['error'] ?? 'none') . ').';
             return $result;
         }
 
-        if (!isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
-            $result['error'] = 'No valid upload found.';
+        $tmpName = $file['tmp_name'] ?? '';
+        if (empty($tmpName) || (!is_uploaded_file($tmpName) && !file_exists($tmpName))) {
+            $result['error'] = 'No valid uploaded file found on server.';
             return $result;
         }
 
-        $info = @getimagesize($file['tmp_name']);
-        if (!$info || empty($info['mime'])) {
-            $result['error'] = 'Unsupported or unreadable image file.';
+        // 2. Prepare Destination Directory
+        $destinationDir = rtrim(str_replace('\\', '/', $destinationDir), '/') . '/';
+        $publicPrefix   = $publicPrefix !== '' ? (rtrim(str_replace('\\', '/', $publicPrefix), '/') . '/') : '';
+
+        if (!is_dir($destinationDir)) {
+            @mkdir($destinationDir, 0777, true);
+        }
+        if (!is_dir($destinationDir)) {
+            $result['error'] = 'Unable to prepare upload destination folder.';
+            return $result;
+        }
+        @chmod($destinationDir, 0777);
+
+        // 3. Multi-Layer File Format Detection (Magic Bytes + Finfo + Extension + MIME)
+        $magic = '';
+        $fh = @fopen($tmpName, 'rb');
+        if ($fh) {
+            $magic = fread($fh, 32);
+            fclose($fh);
+        }
+
+        $rawName = trim($file['name'] ?? '');
+        $ext = strtolower(pathinfo($rawName, PATHINFO_EXTENSION));
+        if ($ext === 'jpeg') $ext = 'jpg';
+
+        $info = @getimagesize($tmpName);
+        $mime = ($info && !empty($info['mime'])) ? strtolower($info['mime']) : '';
+
+        if (empty($mime) && function_exists('mime_content_type')) {
+            $mct = @mime_content_type($tmpName);
+            if ($mct) $mime = strtolower($mct);
+        }
+        if (empty($mime) && function_exists('finfo_open')) {
+            $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo) {
+                $fmime = @finfo_file($finfo, $tmpName);
+                if ($fmime) $mime = strtolower($fmime);
+                @finfo_close($finfo);
+            }
+        }
+
+        $browserType = strtolower($file['type'] ?? '');
+
+        // Detect Format Flags
+        $isPdf = (strncmp($magic, '%PDF', 4) === 0)
+                 || ($ext === 'pdf')
+                 || (stripos($browserType, 'pdf') !== false)
+                 || (stripos($mime, 'pdf') !== false);
+
+        $isJpeg = (strncmp($magic, "\xFF\xD8\xFF", 3) === 0)
+                  || in_array($ext, ['jpg', 'jpeg', 'jfif'], true)
+                  || ($mime === 'image/jpeg')
+                  || ($browserType === 'image/jpeg');
+
+        $isPng = (strncmp($magic, "\x89PNG\r\n\x1a\n", 8) === 0)
+                 || ($ext === 'png')
+                 || ($mime === 'image/png')
+                 || ($browserType === 'image/png');
+
+        $isGif = (strncmp($magic, "GIF87a", 6) === 0 || strncmp($magic, "GIF89a", 6) === 0)
+                 || ($ext === 'gif')
+                 || ($mime === 'image/gif')
+                 || ($browserType === 'image/gif');
+
+        $isWebp = (strncmp($magic, 'RIFF', 4) === 0 && substr($magic, 8, 4) === 'WEBP')
+                  || ($ext === 'webp')
+                  || ($mime === 'image/webp')
+                  || ($browserType === 'image/webp');
+
+        $isHeic = (stripos($magic, 'ftyp') !== false && (stripos($magic, 'heic') !== false || stripos($magic, 'mif1') !== false || stripos($magic, 'heix') !== false))
+                  || in_array($ext, ['heic', 'heif'], true)
+                  || (stripos($mime, 'heic') !== false || stripos($mime, 'heif') !== false);
+
+        $isBmp = (strncmp($magic, 'BM', 2) === 0)
+                 || ($ext === 'bmp')
+                 || ($mime === 'image/bmp')
+                 || ($browserType === 'image/bmp');
+
+        // Check if format is recognized
+        if (!$isPdf && !$isJpeg && !$isPng && !$isGif && !$isWebp && !$isHeic && !$isBmp) {
+            $result['error'] = 'Unsupported or unreadable file format. Please upload JPG, PNG, WebP, or PDF.';
             return $result;
         }
 
-        $mime = strtolower($info['mime']);
-        $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!in_array($mime, $allowed, true)) {
-            $result['error'] = 'Unsupported image format.';
-            return $result;
+        // Determine Cloudinary folder if applicable
+        $folder = 'sentec_uploads';
+        if (stripos($publicPrefix, 'team') !== false || stripos($destinationDir, 'team') !== false) {
+            $folder = 'sentec_uploads/team';
+        } elseif (stripos($publicPrefix, 'payment') !== false || stripos($destinationDir, 'payment') !== false) {
+            $folder = 'sentec_uploads/payments';
+        } elseif (stripos($publicPrefix, 'event_registration') !== false || stripos($destinationDir, 'event_registration') !== false) {
+            $folder = 'sentec_uploads/event_registrations';
+        } elseif (stripos($publicPrefix, 'partner') !== false || stripos($destinationDir, 'partner') !== false) {
+            $folder = 'sentec_uploads/partners';
+        } elseif (stripos($publicPrefix, 'gallery') !== false || stripos($destinationDir, 'gallery') !== false) {
+            $folder = 'sentec_uploads/gallery';
+        } elseif (stripos($publicPrefix, 'social') !== false || stripos($destinationDir, 'social') !== false) {
+            $folder = 'sentec_uploads/social_registrations';
         }
 
         // =========================================================
-        // 1. CLOUDINARY UPLOAD (PRIORITIZED IF CONFIGURED)
+        // 4. PDF HANDLING (Document Receipts)
         // =========================================================
-        $cloudinaryConfig = get_cloudinary_config();
-        if ($cloudinaryConfig) {
-            // Determine a clean folder in Cloudinary
-            $folder = 'sentec_uploads';
-            if (stripos($publicPrefix, 'team') !== false || stripos($destinationDir, 'team') !== false) {
-                $folder = 'sentec_uploads/team';
-            } elseif (stripos($publicPrefix, 'payment') !== false || stripos($destinationDir, 'payment') !== false) {
-                $folder = 'sentec_uploads/payments';
-            } elseif (stripos($publicPrefix, 'event_registration') !== false || stripos($destinationDir, 'event_registration') !== false) {
-                $folder = 'sentec_uploads/event_registrations';
-            } elseif (stripos($publicPrefix, 'partner') !== false || stripos($destinationDir, 'partner') !== false) {
-                $folder = 'sentec_uploads/partners';
-            } elseif (stripos($publicPrefix, 'gallery') !== false || stripos($destinationDir, 'gallery') !== false) {
-                $folder = 'sentec_uploads/gallery';
+        if ($isPdf) {
+            // Try Cloudinary first
+            $cloudinaryConfig = get_cloudinary_config();
+            if ($cloudinaryConfig) {
+                $cloudinaryUrl = upload_to_cloudinary($tmpName, $folder);
+                if ($cloudinaryUrl) {
+                    $result['success'] = true;
+                    $result['path']    = $cloudinaryUrl;
+                    return $result;
+                }
             }
 
-            $cloudinaryUrl = upload_to_cloudinary($file['tmp_name'], $folder);
+            // Local disk fallback
+            $filename = uniqid('doc_', true) . '.pdf';
+            $targetPath = $destinationDir . $filename;
+            if (@move_uploaded_file($tmpName, $targetPath) || @copy($tmpName, $targetPath)) {
+                $result['success'] = true;
+                $result['path']    = $publicPrefix . $filename;
+                return $result;
+            }
+
+            $result['error'] = 'Failed to store uploaded PDF document. Please verify server directory permissions.';
+            return $result;
+        }
+
+        // =========================================================
+        // 5. IMAGE HANDLING (JPG, PNG, WebP, GIF, HEIC, BMP)
+        // =========================================================
+
+        // Try Cloudinary first for all images
+        $cloudinaryConfig = get_cloudinary_config();
+        if ($cloudinaryConfig) {
+            $cloudinaryUrl = upload_to_cloudinary($tmpName, $folder);
             if ($cloudinaryUrl) {
                 $result['success']   = true;
                 $result['path']      = $cloudinaryUrl;
                 $result['converted'] = true;
                 return $result;
             }
-            // If Cloudinary failed, log and gracefully fall back to local disk storage
             $result['warning'] = 'Cloudinary upload unreachable; saved to local disk.';
         }
 
-        // =========================================================
-        // 2. LOCAL DISK STORAGE (FALLBACK OR DEFAULT)
-        // =========================================================
-        $destinationDir = rtrim(str_replace('\\', '/', $destinationDir), '/') . '/';
-        $publicPrefix   = $publicPrefix !== '' ? (rtrim(str_replace('\\', '/', $publicPrefix), '/') . '/') : '';
-
-        if (!is_dir($destinationDir)) {
-            if (!mkdir($destinationDir, 0755, true) && !is_dir($destinationDir)) {
-                $result['error'] = 'Unable to prepare upload directory.';
-                return $result;
-            }
-        }
-
-        $hasWebp = function_exists('imagewebp');
-
-        if ($mime === 'image/webp') {
+        // Direct storage for already-optimized WebP
+        if ($isWebp || $mime === 'image/webp') {
             $filename = uniqid('img_', true) . '.webp';
             $targetPath = $destinationDir . $filename;
-
-            if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+            if (@move_uploaded_file($tmpName, $targetPath) || @copy($tmpName, $targetPath)) {
                 $result['success']   = true;
                 $result['converted'] = true;
                 $result['path']      = $publicPrefix . $filename;
                 return $result;
             }
-
             $result['error'] = 'Failed to store WebP image.';
             return $result;
         }
 
-        if (!$hasWebp) {
-            $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
-            if ($ext === '') {
-                $ext = [
-                    'image/jpeg' => 'jpg',
-                    'image/png'  => 'png',
-                    'image/gif'  => 'gif',
-                ][$mime] ?? 'img';
-            }
-
-            $filename = uniqid('img_', true) . '.' . $ext;
+        // Direct storage for HEIC/HEIF and BMP (original format)
+        if ($isHeic || $isBmp) {
+            $saveExt = $isHeic ? 'heic' : ($ext ?: 'bmp');
+            $filename = uniqid('img_', true) . '.' . $saveExt;
             $targetPath = $destinationDir . $filename;
-
-            if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+            if (@move_uploaded_file($tmpName, $targetPath) || @copy($tmpName, $targetPath)) {
                 $result['success'] = true;
                 $result['path']    = $publicPrefix . $filename;
-                $result['warning'] = 'WebP conversion unavailable; stored original format.';
+                $result['warning'] = 'Stored in original format without WebP conversion.';
                 return $result;
             }
-
             $result['error'] = 'Failed to store uploaded image.';
             return $result;
         }
 
-        $resource = null;
-        switch ($mime) {
-            case 'image/jpeg':
-                if (function_exists('imagecreatefromjpeg')) {
-                    $resource = @imagecreatefromjpeg($file['tmp_name']);
-                }
-                break;
-            case 'image/png':
-                if (function_exists('imagecreatefrompng')) {
-                    $resource = @imagecreatefrompng($file['tmp_name']);
-                }
-                break;
-            case 'image/gif':
-                if (function_exists('imagecreatefromgif')) {
-                    $resource = @imagecreatefromgif($file['tmp_name']);
-                }
-                break;
-        }
-
-        if (!$resource) {
-            $result['error'] = 'Failed to read uploaded image.';
-            return $result;
-        }
-
-        if ($mime === 'image/png' || $mime === 'image/gif') {
-            if (function_exists('imagepalettetotruecolor')) {
-                @imagepalettetotruecolor($resource);
+        // Convert JPEG / PNG / GIF to WebP using GD if available
+        $hasWebp = function_exists('imagewebp');
+        if ($hasWebp) {
+            $resource = null;
+            if ($isJpeg && function_exists('imagecreatefromjpeg')) {
+                $resource = @imagecreatefromjpeg($tmpName);
+            } elseif ($isPng && function_exists('imagecreatefrompng')) {
+                $resource = @imagecreatefrompng($tmpName);
+            } elseif ($isGif && function_exists('imagecreatefromgif')) {
+                $resource = @imagecreatefromgif($tmpName);
             }
-            imagealphablending($resource, true);
-            imagesavealpha($resource, true);
+
+            if ($resource) {
+                if ($isPng || $isGif) {
+                    if (function_exists('imagepalettetotruecolor')) {
+                        @imagepalettetotruecolor($resource);
+                    }
+                    imagealphablending($resource, true);
+                    imagesavealpha($resource, true);
+                }
+
+                $filename = uniqid('img_', true) . '.webp';
+                $targetPath = $destinationDir . $filename;
+
+                if (@imagewebp($resource, $targetPath, $quality)) {
+                    imagedestroy($resource);
+                    if (isset($file['tmp_name']) && is_file($file['tmp_name'])) {
+                        @unlink($file['tmp_name']);
+                    }
+                    $result['success']   = true;
+                    $result['converted'] = true;
+                    $result['path']      = $publicPrefix . $filename;
+                    return $result;
+                }
+                imagedestroy($resource);
+            }
         }
 
-        $filename = uniqid('img_', true) . '.webp';
+        // Fallback: save raw image format locally
+        $fallbackExt = $ext ?: ($isJpeg ? 'jpg' : ($isPng ? 'png' : ($isGif ? 'gif' : 'img')));
+        $filename = uniqid('img_', true) . '.' . $fallbackExt;
         $targetPath = $destinationDir . $filename;
-
-        if (!imagewebp($resource, $targetPath, $quality)) {
-            imagedestroy($resource);
-
-            $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
-            if ($ext === '') {
-                $ext = [
-                    'image/jpeg' => 'jpg',
-                    'image/png'  => 'png',
-                    'image/gif'  => 'gif',
-                ][$mime] ?? 'img';
-            }
-
-            $fallbackPath = $destinationDir . uniqid('img_', true) . '.' . $ext;
-            if (move_uploaded_file($file['tmp_name'], $fallbackPath)) {
-                $result['success'] = true;
-                $result['path']    = $publicPrefix . basename($fallbackPath);
-                $result['warning'] = 'WebP conversion failed; stored original format.';
-                return $result;
-            }
-
-            $result['error'] = 'Failed to convert and store image.';
+        if (@move_uploaded_file($tmpName, $targetPath) || @copy($tmpName, $targetPath)) {
+            $result['success'] = true;
+            $result['path']    = $publicPrefix . $filename;
+            $result['warning'] = 'Stored in original format without WebP conversion.';
             return $result;
         }
 
-        imagedestroy($resource);
-        if (isset($file['tmp_name']) && is_file($file['tmp_name'])) {
-            @unlink($file['tmp_name']);
-        }
-
-        $result['success']   = true;
-        $result['converted'] = true;
-        $result['path']      = $publicPrefix . $filename;
+        $result['error'] = 'Failed to save uploaded image to local storage.';
         return $result;
     }
 }

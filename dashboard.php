@@ -256,7 +256,7 @@ if($checkTable && $checkTable->num_rows > 0) {
         $socialVisible = social_registrations_visible($conn);
 
         $showCompetitions = ($eventVisible || !empty($registrations));
-        $showSocial = false;
+        $showSocial = ($socialVisible || !empty($social_reg));
         
         $colClass = ($showCompetitions && $showSocial) ? 'col-lg-6' : 'col-lg-8 offset-lg-2';
         ?>
@@ -322,6 +322,65 @@ if($checkTable && $checkTable->num_rows > 0) {
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <?php if ($showSocial): ?>
+            <div class="<?php echo $colClass; ?>">
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <h3 style="margin:0;">
+                            <i class="fas fa-ticket-alt text-orange-500 me-2"></i> Social Night Pass
+                        </h3>
+                    </div>
+                    
+                    <div class="flex-grow-1">
+                        <?php if (empty($social_reg)): ?>
+                            <div class="text-center py-5">
+                                <?php if($socialOpen): ?>
+                                    <i class="fas fa-music mb-3 text-orange-500" style="font-size:2.8rem;"></i>
+                                    <h4 class="text-white">Join the Social Night!</h4>
+                                    <p class="mb-3" style="color: #888;">Grab your Standard, Participant, or Group Pass for PROXION Social Night.</p>
+                                    <a href="social_register" class="btn-action-primary">Register for Social Night</a>
+                                <?php else: ?>
+                                    <i class="fas fa-lock" style="font-size: 2.5rem; color: #666; margin-bottom: 15px;"></i>
+                                    <p class="mb-0" style="color: #888;">Social night registrations are currently closed.</p>
+                                <?php endif; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="table-responsive reg-table">
+                                <table class="table table-dark table-hover" style="background: transparent; border-color: var(--border);">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid var(--border);">
+                                            <th style="font-family:'IBM Plex Mono', monospace; font-size: 0.72rem; text-transform: uppercase; color: #888; letter-spacing: 0.08em;">Pass Type</th>
+                                            <th class="text-end" style="font-family:'IBM Plex Mono', monospace; font-size: 0.72rem; text-transform: uppercase; color: #888; letter-spacing: 0.08em;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style="border-bottom: 1px solid var(--border);">
+                                            <td data-label="Pass">
+                                                <strong style="color: #f5f5f5; font-size: 1rem;"><?php echo htmlspecialchars(ucfirst($social_reg['registration_type'])); ?> Pass</strong><br>
+                                                <small style="color: #888; font-family:'IBM Plex Mono', monospace;">Amount: PKR <?php echo number_format($social_reg['total_amount']); ?></small>
+                                            </td>
+                                            <td class="text-end" data-label="Status">
+                                                <span class="status-badge status-<?php echo $social_reg['status'] ?? 'pending'; ?>">
+                                                    <?php echo ucfirst($social_reg['status'] ?? 'pending'); ?>
+                                                </span>
+                                                <div style="margin-top: 8px;">
+                                                    <?php if ($social_reg['payment_status'] === 'confirmed'): ?>
+                                                        <small style="color:#34d399; font-weight:600; font-family:'IBM Plex Mono', monospace;"><i class="fas fa-check-circle"></i> Confirmed</small>
+                                                    <?php else: ?>
+                                                        <small style="color:#f59e0b; font-weight:600; font-family:'IBM Plex Mono', monospace;"><i class="fas fa-clock"></i> Verification Pending</small>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>

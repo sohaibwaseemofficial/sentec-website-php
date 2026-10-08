@@ -3,13 +3,65 @@ include 'header.php';
 include '../db_connection.php';
 require_once __DIR__ . '/../social_attendees_helper.php';
 require_once __DIR__ . '/../social_registration_settings.php';
+require_once __DIR__ . '/../image_utils.php';
 
 $socialOpen = social_registrations_open($conn);
 $socialLimit = social_registrations_limit();
 $socialCount = social_registrations_count($conn);
+$tierSettings = social_registrations_get_settings($conn);
 ?>
 
 <style>
+    /* PASS TIER SWITCHBOARD STYLES */
+    .tier-control-panel {
+        background: linear-gradient(135deg, rgba(17, 25, 40, 0.95), rgba(8, 14, 24, 0.98));
+        border: 1px solid rgba(255, 106, 0, 0.35);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    .tier-control-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding-bottom: 16px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .tier-control-card {
+        background: rgba(4, 9, 20, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        padding: 20px;
+        height: 100%;
+        transition: all 0.25s ease;
+        position: relative;
+    }
+    .tier-control-card.active {
+        border-color: #00FF94;
+        box-shadow: 0 0 15px rgba(0, 255, 148, 0.15);
+    }
+    .tier-control-card.disabled-tier {
+        border-color: rgba(255, 255, 255, 0.06);
+        opacity: 0.65;
+    }
+    .tier-switch-wrap {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    .form-check-input:checked {
+        background-color: #00FF94 !important;
+        border-color: #00FF94 !important;
+    }
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(0, 255, 148, 0.25) !important;
+    }
+
     /* NEON THEME STYLES */
     .glass-panel {
         background: rgba(17, 25, 40, 0.75);
@@ -191,6 +243,141 @@ $socialCount = social_registrations_count($conn);
             <i class="fas fa-file-csv me-2"></i>Export CSV
         </a>
     </div>
+</div>
+
+<!-- PASS TIER & EARLY BIRD PRICING SWITCHBOARD -->
+<div class="tier-control-panel mb-4">
+    <div class="tier-control-header">
+        <div>
+            <h4 class="m-0 text-white fw-bold"><i class="fas fa-sliders-h text-warning me-2"></i> Pass Tiers & Early Bird Pricing Switchboard</h4>
+            <small class="text-muted">Turn pass types ON/OFF to hide or display them smoothly on the public registration form. Control early bird slashed prices in real time.</small>
+        </div>
+        <div>
+            <button type="button" class="btn btn-success px-4 fw-bold" id="btn-save-tier-settings">
+                <i class="fas fa-save me-1"></i> Save All Tier & Price Settings
+            </button>
+        </div>
+    </div>
+
+    <form id="tierSettingsForm">
+        <div class="row g-3">
+            <!-- Tier 1: Individual -->
+            <div class="col-lg-4 col-md-12">
+                <div class="tier-control-card <?php echo !empty($tierSettings['enable_individual']) ? 'active' : 'disabled-tier'; ?>" id="card-tier-individual">
+                    <div class="tier-switch-wrap">
+                        <div>
+                            <span class="badge bg-primary mb-1">Pass Tier 1</span>
+                            <h5 class="m-0 text-white fw-bold">Individual Pass</h5>
+                        </div>
+                        <div class="form-check form-switch fs-4 m-0">
+                            <input class="form-check-input tier-switch" type="checkbox" id="switch_enable_individual" name="enable_individual" value="1" <?php echo !empty($tierSettings['enable_individual']) ? 'checked' : ''; ?>>
+                        </div>
+                    </div>
+                    <p class="small text-muted mb-3">Single attendee registration form with portrait and ID card upload.</p>
+                    
+                    <div class="p-3 rounded bg-dark border border-secondary mb-3">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="switch_early_bird_active" name="early_bird_active" value="1" <?php echo !empty($tierSettings['early_bird_active']) ? 'checked' : ''; ?>>
+                            <label class="form-check-label text-warning fw-bold small ms-1" for="switch_early_bird_active">
+                                <i class="fas fa-bolt text-warning me-1"></i> Early Bird Discount Active
+                            </label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="small text-muted mb-1" for="input_ind_orig">Regular Price (Cut)</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-black text-muted border-secondary">PKR</span>
+                                    <input type="number" min="0" step="50" class="form-control bg-black text-white border-secondary" id="input_ind_orig" name="individual_original_price" value="<?php echo (int)$tierSettings['individual_original_price']; ?>">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-warning fw-bold mb-1" for="input_ind_price">Discounted / Active</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-black text-warning border-secondary">PKR</span>
+                                    <input type="number" min="0" step="50" class="form-control bg-black text-warning fw-bold border-secondary" id="input_ind_price" name="individual_price" value="<?php echo (int)$tierSettings['individual_price']; ?>">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tier-live-preview">
+                        <small class="text-muted d-block mb-1">Live Registration Preview:</small>
+                        <div class="p-2 rounded bg-black text-center border border-secondary" id="preview-ind-price">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tier 2: Event Participant -->
+            <div class="col-lg-4 col-md-12">
+                <div class="tier-control-card <?php echo !empty($tierSettings['enable_participant']) ? 'active' : 'disabled-tier'; ?>" id="card-tier-participant">
+                    <div class="tier-switch-wrap">
+                        <div>
+                            <span class="badge bg-secondary mb-1">Pass Tier 2</span>
+                            <h5 class="m-0 text-white fw-bold">Event Participant</h5>
+                        </div>
+                        <div class="form-check form-switch fs-4 m-0">
+                            <input class="form-check-input tier-switch" type="checkbox" id="switch_enable_participant" name="enable_participant" value="1" <?php echo !empty($tierSettings['enable_participant']) ? 'checked' : ''; ?>>
+                        </div>
+                    </div>
+                    <p class="small text-muted mb-3">Subsidized / arena attendees pass for registered competition participants.</p>
+                    
+                    <div class="p-3 rounded bg-dark border border-secondary mb-3">
+                        <label class="small text-muted mb-1" for="input_participant_price">Participant Fee (PKR)</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-black text-muted border-secondary">PKR</span>
+                            <input type="number" min="0" step="50" class="form-control bg-black text-white border-secondary" id="input_participant_price" name="participant_price" value="<?php echo (int)$tierSettings['participant_price']; ?>">
+                        </div>
+                        <small class="text-muted mt-1 d-block">Set to 0 for 100% free passes (skips payment proof requirement).</small>
+                    </div>
+
+                    <div class="tier-live-preview">
+                        <small class="text-muted d-block mb-1">Live Status:</small>
+                        <div class="p-2 rounded bg-black text-center border border-secondary">
+                            <span class="badge <?php echo !empty($tierSettings['enable_participant']) ? 'bg-success' : 'bg-secondary'; ?>" id="badge-participant-status">
+                                <?php echo !empty($tierSettings['enable_participant']) ? 'Visible on Form (PKR ' . (int)$tierSettings['participant_price'] . ')' : 'Hidden (Single Entry Mode)'; ?>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tier 3: Group Pass -->
+            <div class="col-lg-4 col-md-12">
+                <div class="tier-control-card <?php echo !empty($tierSettings['enable_group']) ? 'active' : 'disabled-tier'; ?>" id="card-tier-group">
+                    <div class="tier-switch-wrap">
+                        <div>
+                            <span class="badge bg-info text-dark mb-1">Pass Tier 3</span>
+                            <h5 class="m-0 text-white fw-bold">Group Pass (3 People)</h5>
+                        </div>
+                        <div class="form-check form-switch fs-4 m-0">
+                            <input class="form-check-input tier-switch" type="checkbox" id="switch_enable_group" name="enable_group" value="1" <?php echo !empty($tierSettings['enable_group']) ? 'checked' : ''; ?>>
+                        </div>
+                    </div>
+                    <p class="small text-muted mb-3">Bundle pass requiring attendee 1, 2, and 3 names, CNICs, portraits & ID cards.</p>
+                    
+                    <div class="p-3 rounded bg-dark border border-secondary mb-3">
+                        <label class="small text-muted mb-1" for="input_group_price">Group Package Price (PKR)</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-black text-muted border-secondary">PKR</span>
+                            <input type="number" min="0" step="100" class="form-control bg-black text-white border-secondary" id="input_group_price" name="group_price" value="<?php echo (int)$tierSettings['group_price']; ?>">
+                        </div>
+                        <small class="text-muted mt-1 d-block">Total bundle price for all 3 members.</small>
+                    </div>
+
+                    <div class="tier-live-preview">
+                        <small class="text-muted d-block mb-1">Live Status:</small>
+                        <div class="p-2 rounded bg-black text-center border border-secondary">
+                            <span class="badge <?php echo !empty($tierSettings['enable_group']) ? 'bg-success' : 'bg-secondary'; ?>" id="badge-group-status">
+                                <?php echo !empty($tierSettings['enable_group']) ? 'Visible on Form (PKR ' . (int)$tierSettings['group_price'] . ')' : 'Hidden (Single Entry Mode)'; ?>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
 
 <div class="glass-panel">
@@ -396,18 +583,22 @@ $socialCount = social_registrations_count($conn);
                                 <td data-label="Photos / IDs">
                                     <div class="participant-photo-grid">
                                         <?php foreach ($attendees as $person): ?>
-                                            <?php if (!empty($person['face'])): ?>
+                                            <?php if (!empty($person['face'])): 
+                                                $faceImgUrl = resolve_image_url($person['face'], '../');
+                                            ?>
                                                 <div class="participant-photo" title="<?php echo htmlspecialchars($person['name']); ?> - Photo">
-                                                    <a href="../<?php echo $person['face']; ?>" target="_blank">
-                                                        <img src="../<?php echo $person['face']; ?>" class="proof-thumb" style="border-radius:50%; border:2px solid #00FF94;">
+                                                    <a href="<?php echo htmlspecialchars($faceImgUrl); ?>" target="_blank">
+                                                        <img src="<?php echo htmlspecialchars($faceImgUrl); ?>" class="proof-thumb" style="border-radius:50%; border:2px solid #00FF94;">
                                                     </a>
                                                     <span><?php echo $person['label']; ?></span>
                                                 </div>
                                             <?php endif; ?>
-                                            <?php if (!empty($person['card'])): ?>
+                                            <?php if (!empty($person['card'])): 
+                                                $cardImgUrl = resolve_image_url($person['card'], '../');
+                                            ?>
                                                 <div class="participant-photo" title="<?php echo htmlspecialchars($person['name']); ?> - ID Card">
-                                                    <a href="../<?php echo $person['card']; ?>" target="_blank">
-                                                        <img src="../<?php echo $person['card']; ?>" class="proof-thumb">
+                                                    <a href="<?php echo htmlspecialchars($cardImgUrl); ?>" target="_blank">
+                                                        <img src="<?php echo htmlspecialchars($cardImgUrl); ?>" class="proof-thumb">
                                                     </a>
                                                     <span>ID</span>
                                                 </div>
@@ -416,9 +607,11 @@ $socialCount = social_registrations_count($conn);
                                     </div>
                                 </td>
                                 <td data-label="Payment Proof">
-                                    <?php if (!empty($row['payment_proof'])): ?>
-                                        <a href="../<?php echo $row['payment_proof']; ?>" target="_blank">
-                                            <img src="../<?php echo $row['payment_proof']; ?>" class="proof-thumb">
+                                    <?php if (!empty($row['payment_proof'])): 
+                                        $proofImgUrl = resolve_image_url($row['payment_proof'], '../');
+                                    ?>
+                                        <a href="<?php echo htmlspecialchars($proofImgUrl); ?>" target="_blank">
+                                            <img src="<?php echo htmlspecialchars($proofImgUrl); ?>" class="proof-thumb">
                                         </a>
                                         <br>
                                         <span class="pay-badge pay-<?php echo $payStatus; ?>"><?php echo ucfirst($payStatus); ?></span>
@@ -571,6 +764,80 @@ $(document).ready(function() {
         $.post('toggle_social_registrations.php', { visible: current == 1 ? 0 : 1 }, function(res) {
             alert(res.message); location.reload();
         }, 'json');
+    });
+
+    // 4. TIER SWITCHBOARD LOGIC
+    function updateIndPreview() {
+        var ebOn = $('#switch_early_bird_active').is(':checked');
+        var orig = parseInt($('#input_ind_orig').val()) || 0;
+        var active = parseInt($('#input_ind_price').val()) || 0;
+
+        if (ebOn && orig > active) {
+            $('#preview-ind-price').html(
+                '<span style="text-decoration: line-through; opacity: 0.6; color: #ff6a6a; margin-right: 8px; font-weight: 600;">PKR ' + orig.toLocaleString() + '</span>' +
+                '<strong style="color: #00FF94; font-size: 1.15rem;">PKR ' + active.toLocaleString() + '</strong> ' +
+                '<span class="badge bg-warning text-dark ms-2 fw-bold"><i class="fas fa-bolt me-1"></i>EARLY BIRD</span>'
+            );
+        } else {
+            var finalPrice = ebOn ? active : orig;
+            $('#preview-ind-price').html(
+                '<strong style="color: #00FF94; font-size: 1.15rem;">PKR ' + finalPrice.toLocaleString() + '</strong> ' +
+                '<span class="badge bg-secondary ms-2">STANDARD</span>'
+            );
+        }
+    }
+
+    // Toggle card styling on switch changes
+    $('#switch_enable_individual').change(function() {
+        $('#card-tier-individual').toggleClass('active', this.checked).toggleClass('disabled-tier', !this.checked);
+    });
+
+    $('#switch_enable_participant').change(function() {
+        var price = parseInt($('#input_participant_price').val()) || 0;
+        $('#card-tier-participant').toggleClass('active', this.checked).toggleClass('disabled-tier', !this.checked);
+        $('#badge-participant-status').text(this.checked ? ('Visible on Form (PKR ' + price.toLocaleString() + ')') : 'Hidden (Single Entry Mode)')
+            .toggleClass('bg-success', this.checked).toggleClass('bg-secondary', !this.checked);
+    });
+
+    $('#switch_enable_group').change(function() {
+        var price = parseInt($('#input_group_price').val()) || 0;
+        $('#card-tier-group').toggleClass('active', this.checked).toggleClass('disabled-tier', !this.checked);
+        $('#badge-group-status').text(this.checked ? ('Visible on Form (PKR ' + price.toLocaleString() + ')') : 'Hidden (Single Entry Mode)')
+            .toggleClass('bg-success', this.checked).toggleClass('bg-secondary', !this.checked);
+    });
+
+    $('#switch_early_bird_active, #input_ind_orig, #input_ind_price').on('input change', updateIndPreview);
+    updateIndPreview();
+
+    // Save All Tier & Pricing Settings
+    $('#btn-save-tier-settings').click(function() {
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');
+
+        var payload = {
+            save_all_tiers: 1,
+            enable_individual: $('#switch_enable_individual').is(':checked') ? 1 : 0,
+            enable_participant: $('#switch_enable_participant').is(':checked') ? 1 : 0,
+            enable_group: $('#switch_enable_group').is(':checked') ? 1 : 0,
+            early_bird_active: $('#switch_early_bird_active').is(':checked') ? 1 : 0,
+            individual_original_price: $('#input_ind_orig').val(),
+            individual_price: $('#input_ind_price').val(),
+            participant_price: $('#input_participant_price').val(),
+            group_price: $('#input_group_price').val()
+        };
+
+        $.post('toggle_social_registrations.php', payload, function(res) {
+            btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i> Save All Tier & Price Settings');
+            if (res.success) {
+                alert(res.message);
+                location.reload();
+            } else {
+                alert('Error: ' + res.message);
+            }
+        }, 'json').fail(function(xhr) {
+            btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i> Save All Tier & Price Settings');
+            alert('Server error: ' + xhr.responseText);
+        });
     });
 
 });

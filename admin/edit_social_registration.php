@@ -8,6 +8,7 @@ if (!isset($_SESSION['admin'])) {
 include 'header.php';
 include '../db_connection.php';
 require_once __DIR__ . '/../social_attendees_helper.php';
+require_once __DIR__ . '/../image_utils.php';
 
 $registrationId = intval($_GET['id'] ?? 0);
 if ($registrationId <= 0) {
@@ -46,22 +47,18 @@ function save_upload(?array $file, string $prefix, int $id)
     if (!empty($file['error']) && $file['error'] !== UPLOAD_ERR_OK) {
         return false;
     }
-    $allowed = ['jpg', 'jpeg', 'png', 'webp', 'heic'];
+    $allowed = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'pdf'];
     $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
     if (!in_array($ext, $allowed, true)) {
         return false;
     }
-    $dir = realpath(__DIR__ . '/../images/uploads/social');
-    if ($dir === false) {
-        $dir = __DIR__ . '/../images/uploads/social';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
+    $dir = __DIR__ . '/../images/uploads/social/';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
     }
-    $filename = $prefix . '_' . $id . '_' . uniqid('', true) . '.' . $ext;
-    $target = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . $filename;
-    if (move_uploaded_file($file['tmp_name'], $target)) {
-        return 'images/uploads/social/' . $filename;
+    $res = save_image_as_webp($file, $dir, 'images/uploads/social/', 82);
+    if (!empty($res['success']) && !empty($res['path'])) {
+        return $res['path'];
     }
     return false;
 }
@@ -257,9 +254,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="col-md-6">
                 <label class="form-label">Payment Proof (replace)</label>
                 <input type="file" name="payment_proof" class="form-control" accept="image/*">
-                <?php if (!empty($registration['payment_proof'])): ?>
+                <?php if (!empty($registration['payment_proof'])): 
+                    $pProof = resolve_image_url($registration['payment_proof'], '../');
+                ?>
                     <div class="mt-2">
-                        <a href="../<?php echo $registration['payment_proof']; ?>" target="_blank"><img src="../<?php echo $registration['payment_proof']; ?>" class="thumb"></a>
+                        <a href="<?php echo htmlspecialchars($pProof); ?>" target="_blank"><img src="<?php echo htmlspecialchars($pProof); ?>" class="thumb"></a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -284,15 +283,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="col-md-4">
                             <label class="form-label">Face Image (replace)</label>
                             <input type="file" name="face_<?php echo $att['id']; ?>" class="form-control" accept="image/*">
-                            <?php if (!empty($att['face_image'])): ?>
-                                <div class="mt-2"><a href="../<?php echo $att['face_image']; ?>" target="_blank"><img src="../<?php echo $att['face_image']; ?>" class="thumb"></a></div>
+                            <?php if (!empty($att['face_image'])): 
+                                $aFace = resolve_image_url($att['face_image'], '../');
+                            ?>
+                                <div class="mt-2"><a href="<?php echo htmlspecialchars($aFace); ?>" target="_blank"><img src="<?php echo htmlspecialchars($aFace); ?>" class="thumb"></a></div>
                             <?php endif; ?>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">ID Card (replace)</label>
                             <input type="file" name="card_<?php echo $att['id']; ?>" class="form-control" accept="image/*">
-                            <?php if (!empty($att['id_card_image'])): ?>
-                                <div class="mt-2"><a href="../<?php echo $att['id_card_image']; ?>" target="_blank"><img src="../<?php echo $att['id_card_image']; ?>" class="thumb"></a></div>
+                            <?php if (!empty($att['id_card_image'])): 
+                                $aCard = resolve_image_url($att['id_card_image'], '../');
+                            ?>
+                                <div class="mt-2"><a href="<?php echo htmlspecialchars($aCard); ?>" target="_blank"><img src="<?php echo htmlspecialchars($aCard); ?>" class="thumb"></a></div>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -305,8 +308,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="col-md-6"><label class="form-label">CNIC</label><input type="text" name="p1_cnic" class="form-control" value="<?php echo htmlspecialchars($registration['cnic']); ?>"></div>
                 <div class="col-md-6"><label class="form-label">Email</label><input type="email" name="p1_email" class="form-control" value="<?php echo htmlspecialchars($registration['email']); ?>"></div>
                 <div class="col-md-6"><label class="form-label">Phone</label><input type="text" name="p1_phone" class="form-control" value="<?php echo htmlspecialchars($registration['phone']); ?>"></div>
-                <div class="col-md-6"><label class="form-label">Face Image</label><input type="file" name="face1" class="form-control" accept="image/*"><?php if (!empty($registration['face_image'])): ?><div class="mt-2"><a href="../<?php echo $registration['face_image']; ?>" target="_blank"><img src="../<?php echo $registration['face_image']; ?>" class="thumb"></a></div><?php endif; ?></div>
-                <div class="col-md-6"><label class="form-label">ID Card</label><input type="file" name="card1" class="form-control" accept="image/*"><?php if (!empty($registration['id_card_image'])): ?><div class="mt-2"><a href="../<?php echo $registration['id_card_image']; ?>" target="_blank"><img src="../<?php echo $registration['id_card_image']; ?>" class="thumb"></a></div><?php endif; ?></div>
+                <div class="col-md-6"><label class="form-label">Face Image</label><input type="file" name="face1" class="form-control" accept="image/*"><?php if (!empty($registration['face_image'])): $f1 = resolve_image_url($registration['face_image'], '../'); ?><div class="mt-2"><a href="<?php echo htmlspecialchars($f1); ?>" target="_blank"><img src="<?php echo htmlspecialchars($f1); ?>" class="thumb"></a></div><?php endif; ?></div>
+                <div class="col-md-6"><label class="form-label">ID Card</label><input type="file" name="card1" class="form-control" accept="image/*"><?php if (!empty($registration['id_card_image'])): $c1 = resolve_image_url($registration['id_card_image'], '../'); ?><div class="mt-2"><a href="<?php echo htmlspecialchars($c1); ?>" target="_blank"><img src="<?php echo htmlspecialchars($c1); ?>" class="thumb"></a></div><?php endif; ?></div>
             </div>
 
             <h5 class="section-title mb-3">Person 2</h5>
@@ -315,8 +318,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="col-md-6"><label class="form-label">CNIC</label><input type="text" name="p2_cnic" class="form-control" value="<?php echo htmlspecialchars($registration['participant2_cnic']); ?>"></div>
                 <div class="col-md-6"><label class="form-label">Email</label><input type="email" name="p2_email" class="form-control" value="<?php echo htmlspecialchars($registration['participant2_email']); ?>"></div>
                 <div class="col-md-6"><label class="form-label">Phone</label><input type="text" name="p2_phone" class="form-control" value="<?php echo htmlspecialchars($registration['participant2_phone']); ?>"></div>
-                <div class="col-md-6"><label class="form-label">Face Image</label><input type="file" name="face2" class="form-control" accept="image/*"><?php if (!empty($registration['participant2_face'])): ?><div class="mt-2"><a href="../<?php echo $registration['participant2_face']; ?>" target="_blank"><img src="../<?php echo $registration['participant2_face']; ?>" class="thumb"></a></div><?php endif; ?></div>
-                <div class="col-md-6"><label class="form-label">ID Card</label><input type="file" name="card2" class="form-control" accept="image/*"><?php if (!empty($registration['participant2_card'])): ?><div class="mt-2"><a href="../<?php echo $registration['participant2_card']; ?>" target="_blank"><img src="../<?php echo $registration['participant2_card']; ?>" class="thumb"></a></div><?php endif; ?></div>
+                <div class="col-md-6"><label class="form-label">Face Image</label><input type="file" name="face2" class="form-control" accept="image/*"><?php if (!empty($registration['participant2_face'])): $f2 = resolve_image_url($registration['participant2_face'], '../'); ?><div class="mt-2"><a href="<?php echo htmlspecialchars($f2); ?>" target="_blank"><img src="<?php echo htmlspecialchars($f2); ?>" class="thumb"></a></div><?php endif; ?></div>
+                <div class="col-md-6"><label class="form-label">ID Card</label><input type="file" name="card2" class="form-control" accept="image/*"><?php if (!empty($registration['participant2_card'])): $c2 = resolve_image_url($registration['participant2_card'], '../'); ?><div class="mt-2"><a href="<?php echo htmlspecialchars($c2); ?>" target="_blank"><img src="<?php echo htmlspecialchars($c2); ?>" class="thumb"></a></div><?php endif; ?></div>
             </div>
 
             <h5 class="section-title mb-3">Person 3</h5>
@@ -325,8 +328,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="col-md-6"><label class="form-label">CNIC</label><input type="text" name="p3_cnic" class="form-control" value="<?php echo htmlspecialchars($registration['participant3_cnic']); ?>"></div>
                 <div class="col-md-6"><label class="form-label">Email</label><input type="email" name="p3_email" class="form-control" value="<?php echo htmlspecialchars($registration['participant3_email']); ?>"></div>
                 <div class="col-md-6"><label class="form-label">Phone</label><input type="text" name="p3_phone" class="form-control" value="<?php echo htmlspecialchars($registration['participant3_phone']); ?>"></div>
-                <div class="col-md-6"><label class="form-label">Face Image</label><input type="file" name="face3" class="form-control" accept="image/*"><?php if (!empty($registration['participant3_face'])): ?><div class="mt-2"><a href="../<?php echo $registration['participant3_face']; ?>" target="_blank"><img src="../<?php echo $registration['participant3_face']; ?>" class="thumb"></a></div><?php endif; ?></div>
-                <div class="col-md-6"><label class="form-label">ID Card</label><input type="file" name="card3" class="form-control" accept="image/*"><?php if (!empty($registration['participant3_card'])): ?><div class="mt-2"><a href="../<?php echo $registration['participant3_card']; ?>" target="_blank"><img src="../<?php echo $registration['participant3_card']; ?>" class="thumb"></a></div><?php endif; ?></div>
+                <div class="col-md-6"><label class="form-label">Face Image</label><input type="file" name="face3" class="form-control" accept="image/*"><?php if (!empty($registration['participant3_face'])): $f3 = resolve_image_url($registration['participant3_face'], '../'); ?><div class="mt-2"><a href="<?php echo htmlspecialchars($f3); ?>" target="_blank"><img src="<?php echo htmlspecialchars($f3); ?>" class="thumb"></a></div><?php endif; ?></div>
+                <div class="col-md-6"><label class="form-label">ID Card</label><input type="file" name="card3" class="form-control" accept="image/*"><?php if (!empty($registration['participant3_card'])): $c3 = resolve_image_url($registration['participant3_card'], '../'); ?><div class="mt-2"><a href="<?php echo htmlspecialchars($c3); ?>" target="_blank"><img src="<?php echo htmlspecialchars($c3); ?>" class="thumb"></a></div><?php endif; ?></div>
             </div>
         <?php endif; ?>
 

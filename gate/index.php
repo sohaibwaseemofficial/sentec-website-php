@@ -8,6 +8,7 @@ if (isset($_GET['logout'])) { session_destroy(); header("Location: login.php"); 
 
 include '../db_connection.php';
 require_once __DIR__ . '/../social_attendees_helper.php';
+require_once __DIR__ . '/../image_utils.php';
 
 // 3. SEARCH LOGIC
 $results = [];
@@ -116,7 +117,7 @@ if (!empty($search)) {
                 <?php else: ?>
                     <?php foreach ($results as $r): 
                         $imgPath = $r['face_image'] ?? '';
-                        $img = !empty($imgPath) ? "../" . ltrim($imgPath, '/') : "../assets/img/default_user.png";
+                        $img = resolve_image_url($imgPath, '../', '../assets/img/default_user.png');
                         $statusKey = isset($r['status']) ? $r['status'] : ($r['group_status'] ?? 'pending');
                         $cls = 'bg-' . $statusKey;
                         $link = isset($r['attendee_id']) ? "verify_social.php?attendee=" . $r['attendee_id'] : "verify_social.php?id=" . $r['id'];

@@ -52,30 +52,29 @@ try {
 
                 if ($status === 'approved') {
                     $qrLink = "https://sentecneduet.live/gate/verify_social.php?attendee=" . $attendeeId;
-                    $qrImg = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=000000&bgcolor=00ff94&data=" . urlencode($qrLink);
+                    $qrImg = "https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=000000&bgcolor=00ff94&data=" . urlencode($qrLink);
                     $recipientName = htmlspecialchars($attendee['full_name'] ?? 'Guest', ENT_QUOTES);
                     $cnicLine = !empty($attendee['cnic'])
                         ? "<p style='margin:4px 0'><strong style='color:#00ff94;'>CNIC:</strong> " . htmlspecialchars($attendee['cnic'], ENT_QUOTES) . "</p>"
                         : '';
 
-                    $detailHtml = "<div style='background:#0b1120;border:1px solid #1b2235;border-radius:12px;padding:18px;margin:24px 0;'>"
-                        . $cnicLine .
-                        "<p style='margin:4px 0'><strong style='color:#00ff94;'>Date:</strong> 28th December, 2025</p>"
-                        . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Venue:</strong>Syed Mahmood Alam Auditorium (Main Auditorium), NED University Main Campus </p>"
-                        . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Time:</strong> 04:00 onwards PM</p>"
-                        . "</div>"
-                        . "<p style='margin:0 0 12px 0;color:#cfd3dc;text-align:center;'>Present this QR code at the gate. Each QR is unique.</p>"
-                        . "<div style='text-align:center;margin-bottom:12px;'>"
-                        . "<span style='display:inline-block;background:#ffffff;padding:10px;border-radius:12px;'><img src='{$qrImg}' width='180' height='180' alt='Entry QR Code' style='display:block;'></span>"
+                    $qrBlock = "<div style='text-align:center; margin:22px 0;'><img src='{$qrImg}' alt='Gate QR' style='width:220px;height:220px;border:2px solid #00ff94;border-radius:12px;background:#000;' loading='lazy'></div>"
+                        . "<p style='margin:0 0 16px 0;color:#cfd3dc;text-align:center;'>Present this QR code at the gate. Each QR is unique.</p>";
+
+                    $detailHtml = "<div style='background:#0b1120;border:1px solid #1b2235;border-radius:12px;padding:18px;margin:20px 0;'>"
+                        . $cnicLine
+                        . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Date:</strong> 15th October 2026</p>"
+                        . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Venue:</strong> Syed Mahmood Alam Auditorium (Main Auditorium), NED University</p>"
+                        . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Time:</strong> 04:00 PM onwards</p>"
                         . "</div>"
                         . "<p style='margin:0;color:#ff7878;font-size:13px;text-align:center;'>Note: This pass allows single entry only.</p>";
 
                     $mail->Subject = "Social Event E-Pass - " . ($attendee['full_name'] ?: 'Guest');
                     $mail->Body = sentec_build_email_html(
-                        'Social Event 2025',
+                        'Social Event 2026',
                         'E-PASS READY',
                         "Dear <strong>{$recipientName}</strong>",
-                        "<p style='margin:0 0 12px 0;'>Your entry pass for RUH-E-RAQS Social Event has been approved.</p>" . $detailHtml,
+                        "<p style='margin:0 0 12px 0;'>Your entry pass for RUH-E-RAQS Social Event has been approved.</p>" . $qrBlock . $detailHtml,
                         null,
                         null,
                         'Show this email to gate staff along with your CNIC.'
@@ -89,7 +88,7 @@ try {
 
                     $mail->Subject = "Registration Update - RUH-E-RAQS Social Event";
                     $mail->Body = sentec_build_email_html(
-                        'Social Event 2025',
+                        'Social Event 2026',
                         'Registration Update',
                         "Dear <strong>{$recipientName}</strong>,",
                         $bodyCopy,
@@ -179,31 +178,29 @@ try {
 
                     if ($status == 'approved') {
                         $qrLink = "https://sentecneduet.live/gate/verify_social.php?id=" . $id . "&member=" . $person['index'];
-                        $qrImg = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=000000&bgcolor=00ff94&data=" . urlencode($qrLink);
+                        $qrImg = "https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=000000&bgcolor=00ff94&data=" . urlencode($qrLink);
                         $recipientName = htmlspecialchars($person['name'] ?? 'Guest', ENT_QUOTES);
                         $cnicLine = !empty($person['cnic'])
                             ? "<p style='margin:4px 0'><strong style='color:#00ff94;'>CNIC:</strong> " . htmlspecialchars($person['cnic'], ENT_QUOTES) . "</p>"
                             : '';
 
-                        $detailHtml = "<div style='background:#0b1120;border:1px solid #1b2235;border-radius:12px;padding:18px;margin:24px 0;'>"
-                            . $cnicLine .
-                            "<p style='margin:4px 0'><strong style='color:#00ff94;'>Date:</strong> 28th December, 2025</p>"
-                            . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Venue:</strong> NED University Main Campus</p>"
+                        $qrBlock = "<div style='text-align:center; margin:22px 0;'><img src='{$qrImg}' alt='Gate QR' style='width:220px;height:220px;border:2px solid #00ff94;border-radius:12px;background:#000;' loading='lazy'></div>"
+                            . "<p style='margin:0 0 16px 0;color:#cfd3dc;text-align:center;'>Please arrive on time and carry your ID card and CNIC with you. Present this QR code at the gate, as each QR code is unique.</p>";
+
+                        $detailHtml = "<div style='background:#0b1120;border:1px solid #1b2235;border-radius:12px;padding:18px;margin:20px 0;'>"
+                            . $cnicLine
+                            . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Date:</strong> 15th October 2026</p>"
+                            . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Venue:</strong> Syed Mahmood Alam Auditorium (Main Auditorium), NED University</p>"
                             . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Time:</strong> 04:00 PM onwards</p>"
-                            . "</div>"
-                            . "<p style='margin:0 0 12px 0;color:#cfd3dc;text-align:center;'>Please arrive on time and carry your ID card and CNIC with you. Present this QR code at the gate, as each QR code is unique.</p>"
-                            
-                            . "<div style='text-align:center;margin-bottom:12px;'>"
-                            . "<span style='display:inline-block;background:#ffffff;padding:10px;border-radius:12px;'><img src='{$qrImg}' width='180' height='180' alt='Entry QR Code' style='display:block;'></span>"
                             . "</div>"
                             . "<p style='margin:0;color:#ff7878;font-size:13px;text-align:center;'>Note: This pass allows single entry only.</p>";
 
                         $mail->Subject = "Social Event E-Pass - " . ($person['name'] ?: 'Guest');
                         $mail->Body = sentec_build_email_html(
-                            'Social Event 2025',
+                            'Social Event 2026',
                             'E-PASS READY',
                             "Dear <strong>{$recipientName}</strong>",
-                            "<p style='margin:0 0 12px 0;'>Your entry pass for RUH-E-RAQS Social Event has been approved.</p>" . $detailHtml,
+                            "<p style='margin:0 0 12px 0;'>Your entry pass for RUH-E-RAQS Social Event has been approved.</p>" . $qrBlock . $detailHtml,
                             null,
                             null,
                             'Show this email to gate staff along with your CNIC.'
@@ -217,7 +214,7 @@ try {
 
                         $mail->Subject = "Registration Update - RUH-E-RAQS Social Event";
                         $mail->Body = sentec_build_email_html(
-                            'Social Event 2025',
+                            'Social Event 2026',
                             'Registration Update',
                             "Dear <strong>{$recipientName}</strong>,",
                             $bodyCopy,

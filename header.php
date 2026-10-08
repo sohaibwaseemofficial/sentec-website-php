@@ -59,6 +59,9 @@ $logoutUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_logout' : '
         })();
     </script>
     
+    <!-- SENTEC Local Image Compressor (Zero External CDN Dependency) -->
+    <script src="js/sentec-compressor.js"></script>
+    
     <link rel="icon" href="images/favicon2.png" type="image/png">
     <link rel="shortcut icon" href="images/favicon2.png" type="image/png">
     <link rel="apple-touch-icon" href="images/favicon2.png">

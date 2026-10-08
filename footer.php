@@ -99,71 +99,45 @@
     <!-- Full Proof Automatic Client-Side WebP Converter & Compressor -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const fileInputs = document.querySelectorAll('input[type="file"]');
-        fileInputs.forEach(input => {
-            input.addEventListener('change', async function(e) {
-                const originalFile = e.target.files[0];
-                if (!originalFile) return;
+        // Delegate change listener to support both static and dynamically inserted file inputs
+        document.addEventListener('change', async function(e) {
+            const input = e.target;
+            if (!input || input.type !== 'file') return;
+            const originalFile = input.files && input.files[0];
+            if (!originalFile) return;
 
-                const parent = input.parentElement;
-                let status = parent.querySelector('.conversion-status');
-                if (!status) {
-                    status = document.createElement('div');
-                    status.className = 'conversion-status text-xs mt-1.5 font-mono';
-                    parent.appendChild(status);
-                }
-                status.innerHTML = '<span class="text-[#00ff94]"><i class="fas fa-circle-notch fa-spin mr-1"></i> Optimizing image (WebP)...</span>';
+            // Skip PDFs or files already small
+            if (originalFile.type === 'application/pdf' || originalFile.name.toLowerCase().endsWith('.pdf')) return;
+            if (originalFile.size <= 250 * 1024) return;
 
-                try {
-                    const convertedFile = await convertToWebP(originalFile);
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(convertedFile);
-                    input.files = dataTransfer.files;
+            const parent = input.parentElement;
+            if (!parent) return;
+
+            let status = parent.querySelector('.conversion-status');
+            if (!status) {
+                status = document.createElement('div');
+                status.className = 'conversion-status text-xs mt-1.5 font-mono';
+                parent.appendChild(status);
+            }
+            status.innerHTML = '<span class="text-[#00ff94]"><i class="fas fa-circle-notch fa-spin mr-1"></i> Optimizing image (WebP)...</span>';
+
+            try {
+                if (window.sentecCompressFile) {
+                    const convertedFile = await window.sentecCompressFile(originalFile);
+                    try {
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(convertedFile);
+                        input.files = dataTransfer.files;
+                    } catch (dtErr) {}
                     status.innerHTML = `<span class="text-[#00ff94]">✔ Ready! ${(originalFile.size/1024/1024).toFixed(1)}MB → ${(convertedFile.size/1024).toFixed(0)}KB</span>`;
-                } catch (err) {
-                    console.warn("Client WebP conversion fallback:", err);
-                    status.innerHTML = '<span class="text-orange-400">⚠ Original file preserved</span>';
+                } else {
+                    status.innerHTML = '';
                 }
-            });
+            } catch (err) {
+                console.warn("Client WebP conversion fallback:", err);
+                status.innerHTML = '<span class="text-orange-400">⚠ Original file preserved</span>';
+            }
         });
-
-        function convertToWebP(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-                        const MAX_WIDTH = 1920;
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob(function(blob) {
-                            if (blob) {
-                                const newFile = new File([blob], file.name.split('.')[0] + ".webp", {
-                                    type: "image/webp",
-                                    lastModified: Date.now()
-                                });
-                                resolve(newFile);
-                            } else {
-                                reject("Blob creation failed");
-                            }
-                        }, 'image/webp', 0.82);
-                    };
-                    img.onerror = reject;
-                };
-                reader.onerror = reject;
-            });
-        }
     });
     </script>
 </body>

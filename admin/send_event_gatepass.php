@@ -127,7 +127,7 @@ foreach ($attendees as $a) {
         . "<p style='margin:0 0 10px 0;'><strong>Team:</strong> " . htmlspecialchars($teamName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "<br>"
         . "<strong>Module:</strong> " . htmlspecialchars($module, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "<br>"
         . "<strong>Role:</strong> " . htmlspecialchars($role, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "<br>"
-        . "<strong>Venue:</strong> Syed Mahmood Alam Auditorium (Main Auditorium), NED University</p>"
+        . "<strong>Venue:</strong> NED University Of Engineering & Technology</p>"
         . "<ul style='color:#d1d5db;line-height:1.6;padding-left:18px;'>"
         . "<li>Carry your student ID/CNIC. Name must match the registration.</li>"
         . "<li>Each member has a unique QR; do not share screenshots.</li>"
@@ -137,17 +137,17 @@ foreach ($attendees as $a) {
     try {
         $mail = sentec_mailer();
         $mail->addAddress($email, $name);
-        $mail->Subject = "Your Engineer's Code 2025 Gate Pass";
+        $mail->Subject = "Your Engineer's Code 2026 E-Pass";
         $mail->Body = sentec_build_email_html(
             'Gate Access',
-            "Your Engineer's Code 2025 E-Pass",
+            "Your Engineer's Code 2026 E-Pass",
             'Hello ' . htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . ',',
             $bodyHtml,
             $qrLink,
             'Open Pass',
             null
         );
-        $mail->AltBody = "Hello {$name},\n\nShow this QR at the gate: {$qrLink}\nTeam: {$teamName}\nModule: {$module}\nVenue: Syed Mahmood Alam Auditorium (Main Auditorium), NED University";
+        $mail->AltBody = "Hello {$name},\n\nShow this QR at the gate: {$qrLink}\nTeam: {$teamName}\nModule: {$module}\nVenue: NED University Of Engineering & Technology";
         $mail->send();
         $sent++;
         sentec_mail_log('send_event_gatepass', 'sent', 'attendee_id=' . $attendeeId . ' email=' . $email);

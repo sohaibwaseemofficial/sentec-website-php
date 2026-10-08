@@ -148,17 +148,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             "AI Energy Saver Dashboard" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"]
         ];
 
+        // Require payment screenshot
+        if (empty($feesImg)) {
+            throw new Exception("Please upload the registration fee payment receipt / transaction screenshot.");
+        }
+
         if (isset($serverLimits[$module])) {
             $minRequired = $serverLimits[$module]['min'];
             $maxAllowed  = $serverLimits[$module]['max'];
 
             // Validate required participants
             for ($i = 1; $i <= $minRequired; $i++) {
-                if (empty($p[$i]['name'])) throw new Exception("Participant $i (Name) is required for $module.");
-                if (empty($p[$i]['contact'])) throw new Exception("Participant $i (Contact) is required.");
-                if (empty($p[$i]['email'])) throw new Exception("Participant $i (Email) is required.");
-                if (empty($p[$i]['cnic'])) throw new Exception("Participant $i (CNIC) is required.");
-                if (empty($p[$i]['roll'])) throw new Exception("Participant $i (Roll Number) is required.");
+                $label = ($minRequired === 1 && $maxAllowed === 1) ? 'Solo Participant' : ($i === 1 ? 'Team Leader' : 'Participant 0' . $i);
+                if (empty($p[$i]['name'])) throw new Exception("$label (Full Name) is required for $module.");
+                if (empty($p[$i]['contact'])) throw new Exception("$label (Contact) is required.");
+                if (empty($p[$i]['email'])) throw new Exception("$label (Email) is required.");
+                if (empty($p[$i]['cnic'])) throw new Exception("$label (CNIC) is required.");
+                if (empty($p[$i]['roll'])) throw new Exception("$label (Roll Number) is required.");
+                if (empty($p[$i]['face'])) throw new Exception("Face Photograph is required for $label.");
+                if (empty($p[$i]['card'])) throw new Exception("Student ID Card Photo is required for $label.");
+            }
+
+            // Validate optional participants: if any field is filled, all fields and photos must be complete
+            for ($i = $minRequired + 1; $i <= $maxAllowed; $i++) {
+                $hasAny = !empty($p[$i]['name']) || !empty($p[$i]['contact']) || !empty($p[$i]['email']) || 
+                          !empty($p[$i]['cnic']) || !empty($p[$i]['roll']) || !empty($p[$i]['face']) || !empty($p[$i]['card']);
+                if ($hasAny) {
+                    $label = 'Participant 0' . $i;
+                    if (empty($p[$i]['name'])) throw new Exception("$label (Full Name) is required (or clear all fields for this member).");
+                    if (empty($p[$i]['contact'])) throw new Exception("$label (Contact) is required.");
+                    if (empty($p[$i]['email'])) throw new Exception("$label (Email) is required.");
+                    if (empty($p[$i]['cnic'])) throw new Exception("$label (CNIC) is required.");
+                    if (empty($p[$i]['roll'])) throw new Exception("$label (Roll Number) is required.");
+                    if (empty($p[$i]['face'])) throw new Exception("Face Photograph is required for $label.");
+                    if (empty($p[$i]['card'])) throw new Exception("Student ID Card Photo is required for $label.");
+                }
             }
 
             // Validate maximum participants
@@ -172,9 +196,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // ---------------------------------------------------------
-        // D. DUPLICATE CHECK
+        // D. DUPLICATE CHECK (Allow re-registration if rejected)
         // ---------------------------------------------------------
-        $checkSql = "SELECT id FROM event_registrations WHERE user_id = ? AND module_selection = ? AND event_label = ?";
+        $checkSql = "SELECT id FROM event_registrations WHERE user_id = ? AND module_selection = ? AND event_label = ? AND status != 'rejected'";
         $checkStmt = $conn->prepare($checkSql);
         $checkStmt->bind_param("iss", $user_id, $module, $activeEventLabel);
         $checkStmt->execute();
@@ -182,6 +206,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("You are already registered for the " . $module . " module!");
         }
         $checkStmt->close();
+
+        // Sanitize string lengths to prevent MySQL strict mode truncation errors
+        for ($i = 1; $i <= 6; $i++) {
+            $p[$i]['name']    = mb_substr((string)$p[$i]['name'], 0, 100);
+            $p[$i]['contact'] = mb_substr((string)$p[$i]['contact'], 0, 50);
+            $p[$i]['email']   = mb_substr((string)$p[$i]['email'], 0, 100);
+            $p[$i]['cnic']    = mb_substr((string)$p[$i]['cnic'], 0, 50);
+            $p[$i]['roll']    = mb_substr((string)$p[$i]['roll'], 0, 50);
+        }
+        $teamName    = mb_substr($teamName, 0, 100);
+        $institution = mb_substr($institution, 0, 100);
+        $module      = mb_substr($module, 0, 100);
+        $brandCode   = !empty($brandCode) ? mb_substr($brandCode, 0, 50) : null;
 
         // ---------------------------------------------------------
         // E. DATABASE INSERTION (STRICT MODE COMPLIANT)
@@ -711,8 +748,8 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                         </div>
 
                         <div style="margin-bottom: 28px;">
-                            <label class="signal-label" for="receiptInput">SELECT RECEIPT / SCREENSHOT (JPG, PNG, WEBP) *</label>
-                            <input type="file" id="receiptInput" name="fees_screenshot" accept="image/*" class="form-control" style="background: #101518; border: 1px solid var(--line); color: var(--paper); border-radius: 0; padding: 10px; font-size: 13px;">
+                            <label class="signal-label" for="receiptInput">SELECT RECEIPT / SCREENSHOT (JPG, PNG, WEBP, PDF) *</label>
+                            <input type="file" id="receiptInput" name="fees_screenshot" accept="image/*,application/pdf" class="form-control" style="background: #101518; border: 1px solid var(--line); color: var(--paper); border-radius: 0; padding: 10px; font-size: 13px;">
                         </div>
 
                         <div id="submitAlertContainer" style="display: none; margin-bottom: 20px;"></div>
@@ -756,7 +793,8 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
     </main>
 </div>
 
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
+<!-- Local Bulletproof Image Compressor (Zero External CDN Dependency) -->
+<script type="text/javascript" src="js/sentec-compressor.js"></script>
 <script>
     // Module Rules Database matching 13 official competition modules
     const MODULE_RULES = {
@@ -911,6 +949,14 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
 
     function renderParticipantCards(minCount, maxCount) {
         const container = document.getElementById('participantCardsContainer');
+        // Cache existing field values so changing modules does not erase filled inputs
+        const cached = {};
+        container.querySelectorAll('input').forEach(inp => {
+            if (inp.name && inp.type !== 'file') {
+                cached[inp.name] = inp.value;
+            }
+        });
+
         container.innerHTML = '';
 
         for (let i = 1; i <= maxCount; i++) {
@@ -929,6 +975,12 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                 cardTitle = 'PARTICIPANT 0' + i + (isRequired ? ' *' : ' (OPTIONAL)');
             }
 
+            const valName = cached[`participant${i}_name`] !== undefined ? cached[`participant${i}_name`] : (isLeader ? loggedInUser.name : '');
+            const valContact = cached[`participant${i}_contact`] || '';
+            const valEmail = cached[`participant${i}_email`] !== undefined ? cached[`participant${i}_email`] : (isLeader ? loggedInUser.email : '');
+            const valCnic = cached[`participant${i}_cnic`] || '';
+            const valRoll = cached[`participant${i}_roll_number`] || '';
+
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--line); padding-bottom: 10px;">
                     <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: ${isRequired ? 'var(--orange)' : 'var(--muted)'}; font-family: 'Space Grotesk', sans-serif;">
@@ -942,44 +994,81 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="signal-label">FULL NAME ${isRequired ? '*' : ''}</label>
-                        <input type="text" name="participant${i}_name" class="signal-input" ${isRequired ? 'required' : ''} placeholder="Full Name" value="${isLeader ? loggedInUser.name : ''}">
+                        <input type="text" name="participant${i}_name" class="signal-input" ${isRequired ? 'required' : ''} placeholder="Full Name" value="${valName}">
                     </div>
                     <div class="col-md-6">
                         <label class="signal-label">PHONE / WHATSAPP NUMBER ${isRequired ? '*' : ''}</label>
-                        <input type="tel" name="participant${i}_contact" class="signal-input" ${isRequired ? 'required' : ''} placeholder="+92 300 1234567">
+                        <input type="tel" name="participant${i}_contact" class="signal-input" ${isRequired ? 'required' : ''} placeholder="+92 300 1234567" value="${valContact}">
                     </div>
                 </div>
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="signal-label">EMAIL ADDRESS ${isRequired ? '*' : ''}</label>
-                        <input type="email" name="participant${i}_email" class="signal-input" ${isRequired ? 'required' : ''} placeholder="email@example.com" value="${isLeader ? loggedInUser.email : ''}">
+                        <input type="email" name="participant${i}_email" class="signal-input" ${isRequired ? 'required' : ''} placeholder="email@example.com" value="${valEmail}">
                     </div>
                     <div class="col-md-6">
                         <label class="signal-label">CNIC / B-FORM NUMBER ${isRequired ? '*' : ''}</label>
-                        <input type="text" name="participant${i}_cnic" class="signal-input" ${isRequired ? 'required' : ''} placeholder="42101-1234567-1">
+                        <input type="text" name="participant${i}_cnic" class="signal-input" ${isRequired ? 'required' : ''} placeholder="42101-1234567-1" value="${valCnic}">
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label class="signal-label">STUDENT ROLL NUMBER / STUDENT ID ${isRequired ? '*' : ''}</label>
-                    <input type="text" name="participant${i}_roll_number" class="signal-input" ${isRequired ? 'required' : ''} placeholder="e.g. CS-2024-042 or College Roll No">
+                    <input type="text" name="participant${i}_roll_number" class="signal-input" ${isRequired ? 'required' : ''} placeholder="e.g. CS-2024-042 or College Roll No" value="${valRoll}">
                 </div>
 
                 <div class="row g-3 mt-1">
                     <div class="col-md-6">
-                        <label class="signal-label">FACE PHOTOGRAPH *</label>
-                        <input type="file" name="participant${i}_face_image" accept="image/*" class="form-control" style="background:#101518; border:1px solid var(--line); color:var(--muted); font-size:11px; border-radius:0; padding:8px;">
-                        <span style="font-size:10px; color:var(--muted);">Clear photo for participant pass badge</span>
+                        <label class="signal-label">FACE PHOTOGRAPH ${isRequired ? '*' : '(IF ADDING MEMBER) *'}</label>
+                        <input type="file" name="participant${i}_face_image" accept="image/*" class="form-control" style="background:#101518; border:1px solid var(--line); color:var(--muted); font-size:11px; border-radius:0; padding:8px;" onchange="handleFileSelected(this)">
+                        <span style="font-size:10px; color:var(--muted); display:block; margin-top:2px;">Clear photo for participant pass badge</span>
+                        <div class="file-name-preview" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#00ff94; margin-top:5px; display:none;"></div>
                     </div>
                     <div class="col-md-6">
-                        <label class="signal-label">STUDENT ID CARD PHOTO *</label>
-                        <input type="file" name="participant${i}_id_card" accept="image/*" class="form-control" style="background:#101518; border:1px solid var(--line); color:var(--muted); font-size:11px; border-radius:0; padding:8px;">
-                        <span style="font-size:10px; color:var(--muted);">Front side of University/College ID card</span>
+                        <label class="signal-label">STUDENT ID CARD PHOTO ${isRequired ? '*' : '(IF ADDING MEMBER) *'}</label>
+                        <input type="file" name="participant${i}_id_card" accept="image/*" class="form-control" style="background:#101518; border:1px solid var(--line); color:var(--muted); font-size:11px; border-radius:0; padding:8px;" onchange="handleFileSelected(this)">
+                        <span style="font-size:10px; color:var(--muted); display:block; margin-top:2px;">Front side of University/College ID card</span>
+                        <div class="file-name-preview" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#00ff94; margin-top:5px; display:none;"></div>
                     </div>
                 </div>
             `;
             container.appendChild(card);
+        }
+
+        // Attach input listeners to clear red borders on typing
+        container.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', function() {
+                this.style.borderColor = 'var(--line)';
+                this.style.boxShadow = 'none';
+            });
+        });
+    }
+
+    function handleFileSelected(input) {
+        input.style.borderColor = 'var(--line)';
+        input.style.boxShadow = 'none';
+        const preview = input.parentElement.querySelector('.file-name-preview');
+        if (preview) {
+            if (input.files && input.files[0]) {
+                const f = input.files[0];
+                const kb = Math.round(f.size / 1024);
+                preview.textContent = `✓ Selected: ${f.name} (${kb} KB)`;
+                preview.style.display = 'block';
+            } else {
+                preview.textContent = '';
+                preview.style.display = 'none';
+            }
+        }
+    }
+
+    function highlightErrorInput(el, msg) {
+        alert(msg);
+        if (el) {
+            el.style.borderColor = '#f87171';
+            el.style.boxShadow = '0 0 12px rgba(248, 113, 113, 0.45)';
+            el.focus();
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 
@@ -992,26 +1081,65 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
             }
         }
         if (stepNumber === 3 && currentStep === 2) {
-            const teamName = document.getElementById('teamNameInput').value.trim();
+            const teamNameInput = document.getElementById('teamNameInput');
+            const teamName = teamNameInput.value.trim();
             if (!teamName) {
-                alert("Please enter a Team Name.");
-                document.getElementById('teamNameInput').focus();
+                highlightErrorInput(teamNameInput, "Please enter a Team Name.");
                 return;
             }
         }
         if (stepNumber === 4 && currentStep === 3) {
             const mod = document.getElementById('moduleSelectInput').value;
             const rule = MODULE_RULES[mod] || { min: 2, max: 4 };
+
+            // 1. Validate required participants (text AND both images required)
             for (let i = 1; i <= rule.min; i++) {
-                const name = document.querySelector(`[name="participant${i}_name"]`)?.value.trim();
-                const contact = document.querySelector(`[name="participant${i}_contact"]`)?.value.trim();
-                const email = document.querySelector(`[name="participant${i}_email"]`)?.value.trim();
-                const cnic = document.querySelector(`[name="participant${i}_cnic"]`)?.value.trim();
-                const roll = document.querySelector(`[name="participant${i}_roll_number"]`)?.value.trim();
-                if (!name || !contact || !email || !cnic || !roll) {
-                    const label = (rule.min === 1 && rule.max === 1) ? 'Solo Participant' : (i === 1 ? 'Team Leader' : 'Participant 0' + i);
-                    alert(`Please complete required fields for ${label}.`);
-                    return;
+                const label = (rule.min === 1 && rule.max === 1) ? 'Solo Participant' : (i === 1 ? 'Team Leader' : 'Participant 0' + i);
+                const nameEl = document.querySelector(`[name="participant${i}_name"]`);
+                const contactEl = document.querySelector(`[name="participant${i}_contact"]`);
+                const emailEl = document.querySelector(`[name="participant${i}_email"]`);
+                const cnicEl = document.querySelector(`[name="participant${i}_cnic"]`);
+                const rollEl = document.querySelector(`[name="participant${i}_roll_number"]`);
+                const faceEl = document.querySelector(`[name="participant${i}_face_image"]`);
+                const cardEl = document.querySelector(`[name="participant${i}_id_card"]`);
+
+                if (!nameEl?.value.trim()) { highlightErrorInput(nameEl, `Please enter Full Name for ${label}.`); return; }
+                if (!contactEl?.value.trim()) { highlightErrorInput(contactEl, `Please enter Phone / WhatsApp Number for ${label}.`); return; }
+                if (!emailEl?.value.trim()) { highlightErrorInput(emailEl, `Please enter Email Address for ${label}.`); return; }
+                if (!cnicEl?.value.trim()) { highlightErrorInput(cnicEl, `Please enter CNIC / B-Form Number for ${label}.`); return; }
+                if (!rollEl?.value.trim()) { highlightErrorInput(rollEl, `Please enter Student Roll Number / ID for ${label}.`); return; }
+                if (!faceEl?.files || faceEl.files.length === 0) { highlightErrorInput(faceEl, `Please upload Face Photograph for ${label}.`); return; }
+                if (!cardEl?.files || cardEl.files.length === 0) { highlightErrorInput(cardEl, `Please upload Student ID Card Photo for ${label}.`); return; }
+            }
+
+            // 2. Validate optional participants: if someone edited/filled any field, all fields + images are required
+            for (let i = rule.min + 1; i <= rule.max; i++) {
+                const label = 'Participant 0' + i;
+                const nameEl = document.querySelector(`[name="participant${i}_name"]`);
+                const contactEl = document.querySelector(`[name="participant${i}_contact"]`);
+                const emailEl = document.querySelector(`[name="participant${i}_email"]`);
+                const cnicEl = document.querySelector(`[name="participant${i}_cnic"]`);
+                const rollEl = document.querySelector(`[name="participant${i}_roll_number"]`);
+                const faceEl = document.querySelector(`[name="participant${i}_face_image"]`);
+                const cardEl = document.querySelector(`[name="participant${i}_id_card"]`);
+
+                const hasName = !!nameEl?.value.trim();
+                const hasContact = !!contactEl?.value.trim();
+                const hasEmail = !!emailEl?.value.trim();
+                const hasCnic = !!cnicEl?.value.trim();
+                const hasRoll = !!rollEl?.value.trim();
+                const hasFace = !!(faceEl?.files && faceEl.files.length > 0);
+                const hasCard = !!(cardEl?.files && cardEl.files.length > 0);
+
+                const isEditing = hasName || hasContact || hasEmail || hasCnic || hasRoll || hasFace || hasCard;
+                if (isEditing) {
+                    if (!hasName) { highlightErrorInput(nameEl, `Please enter Full Name for ${label} (or clear all fields if not adding this member).`); return; }
+                    if (!hasContact) { highlightErrorInput(contactEl, `Please enter Phone / WhatsApp Number for ${label}.`); return; }
+                    if (!hasEmail) { highlightErrorInput(emailEl, `Please enter Email Address for ${label}.`); return; }
+                    if (!hasCnic) { highlightErrorInput(cnicEl, `Please enter CNIC / B-Form Number for ${label}.`); return; }
+                    if (!hasRoll) { highlightErrorInput(rollEl, `Please enter Student Roll Number for ${label}.`); return; }
+                    if (!hasFace) { highlightErrorInput(faceEl, `Please upload Face Photograph for ${label}.`); return; }
+                    if (!hasCard) { highlightErrorInput(cardEl, `Please upload Student ID Card Photo for ${label}.`); return; }
                 }
             }
         }
@@ -1062,11 +1190,49 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
 
         onModuleChange();
 
+        // Also add receipt change listener
+        const receiptInput = document.getElementById('receiptInput');
+        if (receiptInput) {
+            receiptInput.addEventListener('change', function() {
+                this.style.borderColor = 'var(--line)';
+                this.style.boxShadow = 'none';
+                let preview = this.parentElement.querySelector('.file-name-preview');
+                if (!preview) {
+                    preview = document.createElement('div');
+                    preview.className = 'file-name-preview';
+                    preview.style.cssText = "font-family:'IBM Plex Mono',monospace; font-size:11px; color:#00ff94; margin-top:6px;";
+                    this.parentElement.appendChild(preview);
+                }
+                if (this.files && this.files[0]) {
+                    const f = this.files[0];
+                    const kb = Math.round(f.size / 1024);
+                    preview.textContent = `✓ Selected: ${f.name} (${kb} KB)`;
+                    preview.style.display = 'block';
+                } else {
+                    preview.textContent = '';
+                    preview.style.display = 'none';
+                }
+            });
+        }
+
         document.getElementById('multiStepRegForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('finalSubmitBtn');
             const btnText = document.getElementById('submitBtnText');
             const alertDiv = document.getElementById('submitAlertContainer');
+
+            // VALIDATE PAYMENT SCREENSHOT BEFORE PROCEEDING
+            const receiptInput = document.getElementById('receiptInput');
+            if (!receiptInput || !receiptInput.files || receiptInput.files.length === 0) {
+                alertDiv.style.display = 'block';
+                alertDiv.innerHTML = `
+                    <div style="background: rgba(248,113,113,0.15); border: 1px solid rgba(248,113,113,0.5); color: #f87171; padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; margin-bottom: 12px; border-radius: 4px;">
+                        ⚠️ PAYMENT RECEIPT REQUIRED: You must select and attach your payment receipt / transaction screenshot before submitting registration.
+                    </div>
+                `;
+                highlightErrorInput(receiptInput, "Please upload your payment receipt / transaction screenshot before submitting.");
+                return;
+            }
 
             btn.disabled = true;
             alertDiv.style.display = 'none';
@@ -1085,32 +1251,36 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
             }
 
             try {
-                const options = {
-                    maxSizeMB: 0.3,
-                    maxWidthOrHeight: 1600,
-                    useWebWorker: true,
-                    fileType: 'image/webp'
-                };
-
                 for (let i = 0; i < fileEntries.length; i++) {
                     const item = fileEntries[i];
-                    btnText.textContent = `COMPRESSING IMAGE ${i + 1} OF ${fileEntries.length}...`;
+                    btnText.textContent = `PREPARING IMAGE ${i + 1} OF ${fileEntries.length}...`;
 
-                    const compressedFile = await imageCompression(item.file, options);
-                    const newFileName = item.file.name.replace(/\.[^/.]+$/, "") + ".webp";
-                    const webpFile = new File([compressedFile], newFileName, {
-                        type: "image/webp",
-                    });
-
-                    finalFormData.append(item.key, webpFile);
+                    let readyFile = item.file;
+                    // Only compress if the file is not already WebP and is larger than 150KB
+                    const isAlreadyWebp = readyFile.type === 'image/webp' || (readyFile.name && readyFile.name.toLowerCase().endsWith('.webp'));
+                    if (window.sentecCompressFile && !isAlreadyWebp && readyFile.size > 150 * 1024) {
+                        try {
+                            btnText.textContent = `OPTIMIZING IMAGE ${i + 1} OF ${fileEntries.length}...`;
+                            readyFile = await window.sentecCompressFile(item.file, {
+                                maxWidthOrHeight: 1600,
+                                quality: 0.82
+                            });
+                        } catch (compErr) {
+                            console.warn("Client compression fallback for", item.file.name, compErr);
+                            readyFile = item.file;
+                        }
+                    }
+                    const safeFileName = readyFile.name || (item.file && item.file.name) || 'upload.webp';
+                    finalFormData.append(item.key, readyFile, safeFileName);
                 }
 
                 btnText.textContent = "TRANSMITTING REGISTRATION...";
 
-                const targetUrl = window.location.pathname || 'event_registration.php';
+                const targetUrl = window.location.href;
                 const res = await fetch(targetUrl, {
                     method: 'POST',
-                    body: finalFormData
+                    body: finalFormData,
+                    credentials: 'same-origin'
                 });
 
                 // Safely read response text and parse JSON
@@ -1120,7 +1290,6 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                     data = JSON.parse(rawText);
                 } catch (parseErr) {
                     console.error("Failed to parse server response as JSON. Raw response:", rawText);
-                    // Do not pass raw HTML into Error message to prevent DOM contamination
                     throw new Error("SERVER_ERROR_NON_JSON");
                 }
 
@@ -1147,14 +1316,15 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                 console.error("Registration submission error:", err);
 
                 let friendlyMessage = "A network error occurred. Please check your connection and try again.";
-                if (err && (err.message === "SERVER_ERROR_NON_JSON" || (typeof err.message === "string" && err.message.startsWith("SERVER_STATUS_")))) {
+                const errStr = (err && (err.message || String(err))) || '';
+                if (errStr.includes("Failed to fetch") || errStr.includes("NetworkError") || errStr.includes("Load failed") || errStr.includes("Network request failed")) {
+                    friendlyMessage = "Upload connection was interrupted or timed out. Please check your mobile data / Wi-Fi connection and tap Submit Registration again.";
+                } else if (err && (err.message === "SERVER_ERROR_NON_JSON" || (typeof err.message === "string" && err.message.startsWith("SERVER_STATUS_")))) {
                     friendlyMessage = "Server error occurred while processing registration. Please try again.";
-                    alert("Server error occurred");
                 } else if (err && err.message && !err.message.includes("<") && err.message.length < 200) {
                     friendlyMessage = err.message;
                 } else {
                     friendlyMessage = "Server error occurred. Please try again.";
-                    alert("Server error occurred");
                 }
 
                 alertDiv.style.display = 'block';
@@ -1168,8 +1338,12 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                 btnText.textContent = "SUBMIT REGISTRATION";
             }
         });
-    });
 
+        // Session Keep-Alive Heartbeat: Pings server every 4 minutes while user is filling registration
+        setInterval(function() {
+            fetch('session_ping.php', { credentials: 'same-origin' }).catch(function() {});
+        }, 4 * 60 * 1000);
+    });
 
 </script>
 

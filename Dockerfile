@@ -26,7 +26,7 @@ RUN a2enmod rewrite remoteip headers
 RUN echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf && \
     echo "UseCanonicalPhysicalPort Off" >> /etc/apache2/apache2.conf && \
     echo "SetEnvIf X-Forwarded-Proto https HTTPS=on" >> /etc/apache2/apache2.conf && \
-    echo "PassEnv RESEND_API_KEY FROM_EMAIL FROM_NAME APP_URL" >> /etc/apache2/apache2.conf
+    echo "PassEnv RESEND_API_KEY FROM_EMAIL FROM_NAME APP_URL CLOUDINARY_URL CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET" >> /etc/apache2/apache2.conf
 
 # Allow .htaccess overrides
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf

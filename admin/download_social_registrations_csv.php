@@ -34,6 +34,10 @@ $assetUrl = function ($path) use ($baseUrl) {
     if (empty($path)) {
         return '';
     }
+    $path = trim($path);
+    if (strpos($path, 'http://') === 0 || strpos($path, 'https://') === 0) {
+        return $path;
+    }
     return $baseUrl . ltrim($path, '/');
 };
 

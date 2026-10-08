@@ -87,8 +87,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['payment_proof'])) {
         'images/uploads/payments/'
     );
 
+    $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+              || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
     if (!$uploadResult['success']) {
-        $msg = "<div class='alert alert-danger'>" . htmlspecialchars($uploadResult['error'] ?? 'Upload Error. Please choose a valid image file.') . "</div>";
+        $errorMsg = $uploadResult['error'] ?? 'Upload Error. Please choose a valid image or PDF file.';
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => $errorMsg]);
+            exit;
+        }
+        $msg = "<div class='alert alert-danger'>" . htmlspecialchars($errorMsg) . "</div>";
     } else {
         $dbPath = $uploadResult['path'];
         if ($isSocial) {
@@ -105,6 +114,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['payment_proof'])) {
         
         // Refresh
         $redirectUrl = 'payment_upload' . ($reg_id > 0 ? '?id=' . $reg_id : '');
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'message' => 'Payment proof uploaded successfully!', 'redirect' => $redirectUrl]);
+            exit;
+        }
         echo "<script>alert('Payment proof uploaded successfully!'); window.location.href='{$redirectUrl}';</script>";
         exit;
     }
@@ -275,21 +289,102 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['payment_proof'])) {
             </div>
         <?php endif; ?>
 
-        <form method="POST" enctype="multipart/form-data">
+        <form id="paymentUploadForm" method="POST" enctype="multipart/form-data">
             <div class="mb-4 text-start">
                 <label style="font-family:'IBM Plex Mono', monospace; font-size:0.75rem; color:var(--paper); text-transform:uppercase; letter-spacing:0.08em; display:block; margin-bottom:6px;">
-                    Select Receipt / Screenshot (JPG, PNG, WEBP)
+                    Select Receipt / Screenshot (JPG, PNG, WEBP, PDF)
                 </label>
-                <input type="file" name="payment_proof" class="form-control" required accept="image/*" 
+                <input type="file" id="payProofInput" name="payment_proof" class="form-control" required accept="image/*,application/pdf" 
                        style="background:var(--ink-2); border:1px solid var(--border); color:var(--paper); font-size:0.85rem; border-radius:0; padding:10px;">
             </div>
             
-            <button type="submit" class="btn-submit-pay">
-                SUBMIT TRANSACTION PROOF &rarr;
+            <button type="submit" id="paySubmitBtn" class="btn-submit-pay">
+                <span id="paySubmitText">SUBMIT TRANSACTION PROOF &rarr;</span>
             </button>
         </form>
     </div>
 </div>
+
+<script src="js/sentec-compressor.js"></script>
+<script>
+document.getElementById('paymentUploadForm').addEventListener('submit', async function(e) {
+    const btn = document.getElementById('paySubmitBtn');
+    const btnText = document.getElementById('paySubmitText');
+    const fileInput = document.getElementById('payProofInput');
+
+    if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+        return; // Let standard HTML5 validation handle empty file
+    }
+
+    const file = fileInput.files[0];
+    const isPdf = (file.type && file.type.toLowerCase().includes('pdf')) || (file.name && file.name.toLowerCase().endsWith('.pdf'));
+
+    // 1. Direct PDF submission (PDFs cannot and should not be compressed with canvas)
+    if (isPdf) {
+        btn.disabled = true;
+        btnText.textContent = "UPLOADING DOCUMENT...";
+        return; // Allow native form submit to proceed unimpeded
+    }
+
+    // 2. Image Optimization & Robust Submission
+    e.preventDefault();
+    btn.disabled = true;
+    btnText.textContent = "OPTIMIZING RECEIPT...";
+
+    try {
+        let readyFile = file;
+        if (window.sentecCompressFile) {
+            try {
+                readyFile = await window.sentecCompressFile(file, {
+                    maxWidthOrHeight: 1600,
+                    quality: 0.82
+                });
+            } catch (compErr) {
+                console.warn('Client-side compression fallback:', compErr);
+                readyFile = file;
+            }
+        }
+
+        btnText.textContent = "UPLOADING PROOF...";
+
+        const formData = new FormData();
+        const baseName = (file.name || 'receipt').replace(/\.[^/.]+$/, '');
+        const ext = (readyFile.type === 'image/webp') ? '.webp' : (file.name.substring(file.name.lastIndexOf('.')) || '.jpg');
+        const uploadFileName = baseName + ext;
+
+        formData.append('payment_proof', readyFile, uploadFileName);
+
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+        let data = null;
+        try {
+            data = await response.json();
+        } catch (jsonErr) {}
+
+        if (data && data.success) {
+            alert(data.message || 'Payment proof uploaded successfully!');
+            window.location.href = data.redirect || window.location.href;
+        } else {
+            const errMsg = (data && data.error) ? data.error : 'Upload error occurred. Please try again.';
+            alert(errMsg);
+            btn.disabled = false;
+            btnText.innerHTML = "SUBMIT TRANSACTION PROOF &rarr;";
+        }
+    } catch (err) {
+        console.error('Submission failed, trying native submit:', err);
+        // Fallback to normal form submission if fetch failed
+        this.submit();
+    }
+});
+</script>
 
 <?php include 'footer.php'; ?>
 

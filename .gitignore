@@ -38,3 +38,6 @@ node_modules/
 # Upload directories (if you have user uploads)
 uploads/
 images/uploads/
+
+# Composer dependencies
+vendor/

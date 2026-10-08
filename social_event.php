@@ -1,4 +1,9 @@
-<?php include 'header.php'; ?>
+<?php 
+include 'header.php'; 
+require_once __DIR__ . '/db_connection.php';
+require_once __DIR__ . '/social_registration_settings.php';
+$socialSettings = social_registrations_get_settings($conn);
+?>
 
 <style>
     /* PAGE SPECIFIC STYLES (Cyberpunk/Neon Theme) */
@@ -172,9 +177,9 @@
     <p class="hero-subtitle">A Magical Journey of Melody & Rhythm. Join us for the Social Event.</p>
     
     <div class="d-flex flex-wrap justify-content-center gap-3">
-        <div class="info-pill"><i class="fas fa-calendar-alt"></i> 28th December, 2025</div>
+        <div class="info-pill"><i class="fas fa-calendar-alt"></i> 15th October, 2026</div>
         <div class="info-pill"><i class="fas fa-clock"></i> 04:00 PM Onwards</div>
-        <div class="info-pill"><i class="fas fa-map-marker-alt"></i> NED University Main Campus</div>
+        <div class="info-pill"><i class="fas fa-map-marker-alt"></i> Syed Mahmood Alam Auditorium (Main Auditorium), NED University</div>
     </div>
 
     <div class="mt-5">
@@ -220,47 +225,62 @@
 
         <div class="row align-items-center justify-content-center g-4">
             
+            <?php if (!empty($socialSettings['enable_participant'])): ?>
             <div class="col-lg-4 col-md-6">
                 <div class="pricing-card">
                     <h3 style="color:#fff;">Participant</h3>
                     <p style="color:#aaa; font-size:0.9rem;">For registered competition teams</p>
-                    <div class="price-amount">0 <span>PKR</span></div>
+                    <div class="price-amount"><?php echo (int)$socialSettings['participant_price']; ?> <span>PKR</span></div>
                     
                     <ul class="pricing-features">
-                        <li><i class="fas fa-check"></i> Free Social</li>
+                        <li><i class="fas fa-check"></i> Subsidized Access</li>
                         <li><i class="fas fa-check"></i> Full Event Access</li>
                     </ul>
-                    <a href="<?php echo isset($_SESSION['user_id']) ? 'social_register.php' : 'login.php'; ?>" class="btn btn-outline-light rounded-pill px-4">Register</a>
+                    <a href="<?php echo isset($_SESSION['user_id']) ? 'social_register' : 'login'; ?>" class="btn btn-outline-light rounded-pill px-4">Register</a>
                 </div>
             </div>
+            <?php endif; ?>
 
+            <?php if (!empty($socialSettings['enable_group'])): ?>
             <div class="col-lg-4 col-md-6">
                 <div class="pricing-card featured">
                     <span class="pricing-badge">BEST VALUE</span>
                     <h3 style="color:#fff;">Group of 3</h3>
                     <p style="color:#aaa; font-size:0.9rem;">Bring your friends along</p>
-                    <div class="price-amount">400 <span>PKR/person</span></div>
+                    <div class="price-amount"><?php echo round((int)$socialSettings['group_price'] / 3); ?> <span>PKR/person</span></div>
                     
                     <ul class="pricing-features">
-                        <li><i class="fas fa-check"></i> <strong>Total: 1200 PKR</strong></li>
-                        <li><i class="fas fa-check"></i> Save 300 PKR</li>
+                        <li><i class="fas fa-check"></i> <strong>Total: <?php echo (int)$socialSettings['group_price']; ?> PKR</strong></li>
+                        <li><i class="fas fa-check"></i> Package for 3 Guests</li>
                     </ul>
-                    <a href="<?php echo isset($_SESSION['user_id']) ? 'social_register.php' : 'login.php'; ?>" class="btn-neon w-100">Get Group Pass</a>
+                    <a href="<?php echo isset($_SESSION['user_id']) ? 'social_register' : 'login'; ?>" class="btn-neon w-100">Get Group Pass</a>
                 </div>
             </div>
+            <?php endif; ?>
 
+            <?php if (!empty($socialSettings['enable_individual']) || (empty($socialSettings['enable_participant']) && empty($socialSettings['enable_group']))): ?>
             <div class="col-lg-4 col-md-6">
-                <div class="pricing-card">
+                <div class="pricing-card <?php echo (empty($socialSettings['enable_participant']) && empty($socialSettings['enable_group'])) ? 'featured' : ''; ?>">
+                    <?php if (!empty($socialSettings['early_bird_active'])): ?>
+                        <span class="pricing-badge" style="background: var(--accent); color: #000; font-weight: 700;">EARLY BIRD</span>
+                    <?php endif; ?>
                     <h3 style="color:#fff;">Individual</h3>
                     <p style="color:#aaa; font-size:0.9rem;">Standard entry pass</p>
-                    <div class="price-amount">500 <span>PKR</span></div>
+                    <div class="price-amount">
+                        <?php if (!empty($socialSettings['early_bird_active']) && $socialSettings['individual_original_price'] > $socialSettings['individual_price']): ?>
+                            <span style="text-decoration:line-through; color:#ff6a6a; font-size:0.55em; opacity:0.65; margin-right:6px;"><?php echo (int)$socialSettings['individual_original_price']; ?></span>
+                        <?php endif; ?>
+                        <?php echo (int)$socialSettings['individual_price']; ?> <span>PKR</span>
+                    </div>
                     
                     <ul class="pricing-features">
                         <li><i class="fas fa-check"></i> Single Entry</li>
+                        <li><i class="fas fa-check"></i> Full Access pass</li>
                     </ul>
-                    <a href="<?php echo isset($_SESSION['user_id']) ? 'social_register.php' : 'login.php'; ?>" class="btn btn-outline-light rounded-pill px-4">Register</a>
+                    <a href="<?php echo isset($_SESSION['user_id']) ? 'social_register' : 'login'; ?>" class="btn-neon w-100">Register</a>
                 </div>
             </div>
+            <?php endif; ?>
 
         </div>
     </div>

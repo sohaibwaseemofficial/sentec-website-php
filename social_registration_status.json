@@ -1,0 +1,14 @@
+{
+    "open": true,
+    "limit": null,
+    "visible": false,
+    "enable_individual": true,
+    "enable_participant": false,
+    "enable_group": false,
+    "individual_price": 500,
+    "individual_original_price": 700,
+    "early_bird_active": true,
+    "participant_price": 0,
+    "group_price": 1200,
+    "updated_at": "2026-10-08T08:41:32+05:00"
+}

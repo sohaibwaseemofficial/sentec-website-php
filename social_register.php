@@ -6,17 +6,25 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // 2. SECURITY CHECK
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header("Location: login");
     exit;
 }
 
 include 'header.php';
 include 'db_connection.php';
+require_once __DIR__ . '/image_utils.php';
 require_once __DIR__ . '/social_attendees_helper.php';
 require_once __DIR__ . '/social_registration_settings.php';
 
 $socialOpen = social_registrations_open($conn);
-$user_id = $_SESSION['user_id'];
+$user_id = (int)$_SESSION['user_id'];
+
+// Fetch active event label
+$activeEventLabel = 'proxion_2026'; // fallback
+$eventRes = $conn->query("SELECT title FROM events WHERE status = 'upcoming' ORDER BY event_date DESC LIMIT 1");
+if ($eventRes && $eventRes->num_rows > 0) {
+    $activeEventLabel = $eventRes->fetch_assoc()['title'];
+}
 
 // 2b. REGISTRATION WINDOW CHECK
 if (!$socialOpen) {
@@ -36,74 +44,94 @@ if (!$socialOpen) {
     exit;
 }
 
-// 3. CHECK EXISTING REGISTRATION
-$check = $conn->query("SELECT id FROM social_registrations WHERE user_id = $user_id");
-if ($check->num_rows > 0) {
+// 3. CHECK EXISTING REGISTRATION FOR ACTIVE EVENT
+$checkStmt = $conn->prepare("SELECT id FROM social_registrations WHERE user_id = ? AND event_label = ? LIMIT 1");
+$checkStmt->bind_param("is", $user_id, $activeEventLabel);
+$checkStmt->execute();
+$checkRes = $checkStmt->get_result();
+if ($checkRes && $checkRes->num_rows > 0) {
+    $checkStmt->close();
     echo "<script>alert('You have already registered for Social Night!'); window.location.href='dashboard';</script>";
     exit;
 }
+$checkStmt->close();
 
 // 4. HANDLE FORM SUBMISSION
 $msg = "";
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        // Fetch active event label
-        $activeEventLabel = '';
-        $eventRes = $conn->query("SELECT title FROM events WHERE status = 'upcoming' ORDER BY event_date DESC LIMIT 1");
-        if ($eventRes && $eventRes->num_rows > 0) {
-            $activeEventLabel = $eventRes->fetch_assoc()['title'];
-        } else {
-            $activeEventLabel = 'proxion_2026'; // fallback
-        }
-    
-    $reg_type = $_POST['reg_type'];
-    $amb_code = !empty($_POST['ambassador_code']) ? $_POST['ambassador_code'] : NULL;
-    
-    // Calculate Amount
-    $amount = 500;
-    if ($reg_type === 'participant') $amount = 0;
-    if ($reg_type === 'group') $amount = 1200;
+if (($_SERVER['REQUEST_METHOD'] ?? '') == 'POST') {
+    $settings = social_registrations_get_settings($conn);
+    $allowedTypes = [];
+    if (!empty($settings['enable_individual'])) $allowedTypes[] = 'standard';
+    if (!empty($settings['enable_participant'])) $allowedTypes[] = 'participant';
+    if (!empty($settings['enable_group'])) $allowedTypes[] = 'group';
+    if (empty($allowedTypes)) $allowedTypes = ['standard'];
 
-    // Create Directory
-    $targetDir = "images/uploads/social/";
-    if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+    $requestedType = in_array($_POST['reg_type'] ?? '', ['standard', 'participant', 'group'], true) ? $_POST['reg_type'] : 'standard';
+    $reg_type = in_array($requestedType, $allowedTypes, true) ? $requestedType : $allowedTypes[0];
+    $amb_code = !empty($_POST['ambassador_code']) ? trim($_POST['ambassador_code']) : NULL;
+    
+    // Dynamic Price from Admin Settings
+    $amount = (int)$settings['individual_price'];
+    if ($reg_type === 'participant') $amount = (int)$settings['participant_price'];
+    if ($reg_type === 'group') $amount = (int)$settings['group_price'];
 
-    // --- OPTIMIZATION: Helper Function for Uploads ---
-    function uploadFile($file, $prefix, $uid, $dir) {
-        if (!isset($file['name']) || empty($file['name'])) return null;
-        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'heic'];
-        if (!in_array($ext, $allowed)) return false;
-        
-        $name = $prefix . "_" . $uid . "_" . uniqid() . "." . $ext;
-        if (move_uploaded_file($file['tmp_name'], $dir . $name)) {
-            return $dir . $name;
+    // --- Cloudinary / WebP Upload Helper ---
+    if (!function_exists('uploadSocialFile')) {
+        function uploadSocialFile($file, $prefix = 'social', $uid = 0) {
+            if (!isset($file['name']) || empty($file['name']) || !isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+                return null;
+            }
+
+            $targetDir = __DIR__ . '/images/uploads/social_registrations/';
+            $publicPrefix = 'images/uploads/social_registrations/';
+
+            $res = save_image_as_webp($file, $targetDir, $publicPrefix);
+            if (!empty($res['success']) && !empty($res['path'])) {
+                return $res['path'];
+            }
+            return false;
         }
-        return false;
     }
 
-    // Capture Basic Info
-    $p1_name = $_POST['name'];
-    $p1_cnic = $_POST['cnic'];
-    $p1_email = $_POST['email'];
-    $p1_phone = $_POST['phone'];
+    // Capture & Sanitize Basic Info
+    $p1_name = mb_substr(trim($_POST['name'] ?? ''), 0, 100);
+    $p1_cnic = mb_substr(trim($_POST['cnic'] ?? ''), 0, 50);
+    $p1_email = mb_substr(trim($_POST['email'] ?? ''), 0, 100);
+    $p1_phone = mb_substr(trim($_POST['phone'] ?? ''), 0, 50);
     
-    // Upload Images (Using the helper function)
-    $p1_face = uploadFile($_FILES['face_image'], "face1", $user_id, $targetDir);
-    $p1_card = uploadFile($_FILES['id_card'], "card1", $user_id, $targetDir);
-    $pay_proof = uploadFile($_FILES['payment_proof'], "pay", $user_id, $targetDir);
+    // Upload Images via Cloudinary
+    $p1_face = uploadSocialFile($_FILES['face_image'] ?? [], "face1", $user_id);
+    $p1_card = uploadSocialFile($_FILES['id_card'] ?? [], "card1", $user_id);
+    $pay_proof = isset($_FILES['payment_proof']) ? uploadSocialFile($_FILES['payment_proof'], "pay", $user_id) : null;
 
-    // Group Member Variables (Nullable)
-    $p2_name = $_POST['p2_name'] ?? null; $p2_cnic = $_POST['p2_cnic'] ?? null;
-    $p2_email = $_POST['p2_email'] ?? null; $p2_phone = $_POST['p2_phone'] ?? null;
-    $p2_face = isset($_FILES['p2_face']) ? uploadFile($_FILES['p2_face'], "face2", $user_id, $targetDir) : null;
-    $p2_card = isset($_FILES['p2_card']) ? uploadFile($_FILES['p2_card'], "card2", $user_id, $targetDir) : null;
+    // Group Member Variables
+    $groupValid = true;
+    if ($reg_type === 'group') {
+        $p2_name = !empty($_POST['p2_name']) ? mb_substr(trim($_POST['p2_name']), 0, 100) : null;
+        $p2_cnic = !empty($_POST['p2_cnic']) ? mb_substr(trim($_POST['p2_cnic']), 0, 50) : null;
+        $p2_email = !empty($_POST['p2_email']) ? mb_substr(trim($_POST['p2_email']), 0, 100) : null;
+        $p2_phone = !empty($_POST['p2_phone']) ? mb_substr(trim($_POST['p2_phone']), 0, 50) : null;
+        $p2_face = isset($_FILES['p2_face']) ? uploadSocialFile($_FILES['p2_face'], "face2", $user_id) : null;
+        $p2_card = isset($_FILES['p2_card']) ? uploadSocialFile($_FILES['p2_card'], "card2", $user_id) : null;
 
-    $p3_name = $_POST['p3_name'] ?? null; $p3_cnic = $_POST['p3_cnic'] ?? null;
-    $p3_email = $_POST['p3_email'] ?? null; $p3_phone = $_POST['p3_phone'] ?? null;
-    $p3_face = isset($_FILES['p3_face']) ? uploadFile($_FILES['p3_face'], "face3", $user_id, $targetDir) : null;
-    $p3_card = isset($_FILES['p3_card']) ? uploadFile($_FILES['p3_card'], "card3", $user_id, $targetDir) : null;
+        $p3_name = !empty($_POST['p3_name']) ? mb_substr(trim($_POST['p3_name']), 0, 100) : null;
+        $p3_cnic = !empty($_POST['p3_cnic']) ? mb_substr(trim($_POST['p3_cnic']), 0, 50) : null;
+        $p3_email = !empty($_POST['p3_email']) ? mb_substr(trim($_POST['p3_email']), 0, 100) : null;
+        $p3_phone = !empty($_POST['p3_phone']) ? mb_substr(trim($_POST['p3_phone']), 0, 50) : null;
+        $p3_face = isset($_FILES['p3_face']) ? uploadSocialFile($_FILES['p3_face'], "face3", $user_id) : null;
+        $p3_card = isset($_FILES['p3_card']) ? uploadSocialFile($_FILES['p3_card'], "card3", $user_id) : null;
 
-    // Build participant payload (will also feed attendee table if available)
+        if (empty($p2_name) || empty($p2_cnic) || empty($p2_email) || empty($p2_phone) || !$p2_face || !$p2_card ||
+            empty($p3_name) || empty($p3_cnic) || empty($p3_email) || empty($p3_phone) || !$p3_face || !$p3_card) {
+            $groupValid = false;
+            $msg = "<div class='alert alert-danger'>Group passes require complete information and photo uploads (face portrait & student ID/CNIC) for all 3 members.</div>";
+        }
+    } else {
+        $p2_name = $p2_cnic = $p2_email = $p2_phone = $p2_face = $p2_card = null;
+        $p3_name = $p3_cnic = $p3_email = $p3_phone = $p3_face = $p3_card = null;
+    }
+
+    // Build participant payload
     $memberPayload = [[
         'label' => 'Primary',
         'name' => $p1_name,
@@ -113,31 +141,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'face' => $p1_face,
         'card' => $p1_card
     ]];
-    if (!empty($p2_name)) {
-        $memberPayload[] = [
-            'label' => 'Person 2',
-            'name' => $p2_name,
-            'email' => $p2_email,
-            'phone' => $p2_phone,
-            'cnic' => $p2_cnic,
-            'face' => $p2_face,
-            'card' => $p2_card
-        ];
-    }
-    if (!empty($p3_name)) {
-        $memberPayload[] = [
-            'label' => 'Person 3',
-            'name' => $p3_name,
-            'email' => $p3_email,
-            'phone' => $p3_phone,
-            'cnic' => $p3_cnic,
-            'face' => $p3_face,
-            'card' => $p3_card
-        ];
+    if ($reg_type === 'group' && $groupValid) {
+        if (!empty($p2_name)) {
+            $memberPayload[] = [
+                'label' => 'Person 2',
+                'name' => $p2_name,
+                'email' => $p2_email,
+                'phone' => $p2_phone,
+                'cnic' => $p2_cnic,
+                'face' => $p2_face,
+                'card' => $p2_card
+            ];
+        }
+        if (!empty($p3_name)) {
+            $memberPayload[] = [
+                'label' => 'Person 3',
+                'name' => $p3_name,
+                'email' => $p3_email,
+                'phone' => $p3_phone,
+                'cnic' => $p3_cnic,
+                'face' => $p3_face,
+                'card' => $p3_card
+            ];
+        }
     }
 
-    // Validate Required Files
-    if ($p1_face && $p1_card && $pay_proof) {
+    // Validate Required Files (Payment proof only mandatory if amount > 0)
+    $requiresPayment = ($amount > 0);
+    $payProofOk = $requiresPayment ? (!empty($pay_proof) && $pay_proof !== false) : true;
+    if (!$requiresPayment && empty($pay_proof)) {
+        $pay_proof = 'free_participant_pass';
+    }
+
+    if ($p1_face && $p1_card && $payProofOk && $groupValid && empty($msg)) {
         // Insert into DB
         $sql = "INSERT INTO social_registrations 
         (user_id, full_name, email, phone, cnic, face_image, id_card_image, payment_proof, payment_status, 
@@ -163,11 +199,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 social_attendees_sync($conn, $registrationId, $memberPayload, $pay_proof, 'submitted');
             }
             echo "<script>alert('Registration Submitted Successfully!'); window.location.href='dashboard';</script>";
+            exit;
         } else {
             $msg = "<div class='alert alert-danger'>DB Error: " . $conn->error . "</div>";
         }
-    } else {
-        $msg = "<div class='alert alert-danger'>Upload failed. Please ensure images are valid (JPG/PNG).</div>";
+    } else if (empty($msg)) {
+        $msg = "<div class='alert alert-danger'>Upload failed. Please ensure face photo, ID card, and " . ($requiresPayment ? "payment receipt (JPG, PNG, or PDF)" : "required photos") . " are provided in valid formats.</div>";
     }
 }
 ?>
@@ -205,7 +242,7 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
     }
     .tier-card-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
         gap: 16px;
         margin-bottom: 32px;
     }
@@ -244,6 +281,10 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
         text-transform: uppercase;
         color: var(--paper);
         margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
     }
     .tier-track-card.selected .tier-title {
         color: var(--orange);
@@ -253,9 +294,36 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
         font-size: 18px;
         font-weight: 700;
         color: var(--paper);
+        display: flex;
+        align-items: center;
     }
     .tier-track-card.selected .tier-price {
         color: var(--orange);
+    }
+    .tier-price-strike {
+        text-decoration: line-through;
+        opacity: 0.55;
+        font-size: 0.8em;
+        margin-right: 8px;
+        color: #ff5555;
+        font-weight: 500;
+    }
+    .tier-price-current {
+        font-weight: 700;
+    }
+    .early-bird-tag {
+        display: inline-block;
+        background: rgba(241, 90, 36, 0.18);
+        border: 1px solid var(--orange);
+        color: var(--orange);
+        font-size: 9px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        padding: 2px 6px;
+        border-radius: 3px;
+        text-transform: uppercase;
+        vertical-align: middle;
     }
     .tier-track-card .tier-badge {
         font-size: 11px;
@@ -443,25 +511,66 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
                 Choose your entrance pass
             </h2>
 
+            <?php
+            $settings = social_registrations_get_settings($conn);
+            $enableInd = !empty($settings['enable_individual']);
+            $enablePart = !empty($settings['enable_participant']);
+            $enableGrp = !empty($settings['enable_group']);
+
+            // Fallback so at least individual is available if all disabled
+            if (!$enableInd && !$enablePart && !$enableGrp) {
+                $enableInd = true;
+            }
+
+            $defaultType = $enableInd ? 'standard' : ($enablePart ? 'participant' : 'group');
+            $defaultAmount = ($defaultType === 'standard') ? (int)$settings['individual_price'] : (($defaultType === 'participant') ? (int)$settings['participant_price'] : (int)$settings['group_price']);
+            ?>
+
             <div class="tier-card-grid">
-                <div class="tier-track-card selected" onclick="selectType('standard', this)" id="btn-standard">
-                    <div class="tier-title">Individual</div>
-                    <div class="tier-price">PKR 500</div>
-                    <div class="tier-badge">Single attendee entry pass</div>
-                </div>
-                <div class="tier-track-card" onclick="selectType('participant', this)" id="btn-participant">
-                    <div class="tier-title">Event Participant</div>
-                    <div class="tier-price">PKR 0</div>
-                    <div class="tier-badge">Subsidized / arena attendees</div>
-                </div>
-                <div class="tier-track-card" onclick="selectType('group', this)" id="btn-group">
-                    <div class="tier-title">Group (3 People)</div>
-                    <div class="tier-price">PKR 1200</div>
-                    <div class="tier-badge">Package bundle for 3 guests</div>
-                </div>
+                <?php if ($enableInd): ?>
+                    <div class="tier-track-card <?php echo $defaultType === 'standard' ? 'selected' : ''; ?>" onclick="selectType('standard', this)" id="btn-standard">
+                        <div class="tier-title">
+                            Individual
+                            <?php if (!empty($settings['early_bird_active'])): ?>
+                                <span class="early-bird-tag"><i class="fas fa-bolt"></i> EARLY BIRD</span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="tier-price">
+                            <?php if (!empty($settings['early_bird_active']) && $settings['individual_original_price'] > $settings['individual_price']): ?>
+                                <span class="tier-price-strike">PKR <?php echo number_format($settings['individual_original_price']); ?></span>
+                                <span class="tier-price-current">PKR <?php echo number_format($settings['individual_price']); ?></span>
+                            <?php else: ?>
+                                <span class="tier-price-current">PKR <?php echo number_format($settings['individual_price']); ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="tier-badge">
+                            <?php echo !empty($settings['early_bird_active']) ? 'Early bird entry pass' : 'Single attendee entry pass'; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($enablePart): ?>
+                    <div class="tier-track-card <?php echo $defaultType === 'participant' ? 'selected' : ''; ?>" onclick="selectType('participant', this)" id="btn-participant">
+                        <div class="tier-title">Event Participant</div>
+                        <div class="tier-price">
+                            <span class="tier-price-current">PKR <?php echo number_format($settings['participant_price']); ?></span>
+                        </div>
+                        <div class="tier-badge">Subsidized / arena attendees</div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($enableGrp): ?>
+                    <div class="tier-track-card <?php echo $defaultType === 'group' ? 'selected' : ''; ?>" onclick="selectType('group', this)" id="btn-group">
+                        <div class="tier-title">Group (3 People)</div>
+                        <div class="tier-price">
+                            <span class="tier-price-current">PKR <?php echo number_format($settings['group_price']); ?></span>
+                        </div>
+                        <div class="tier-badge">Package bundle for 3 guests</div>
+                    </div>
+                <?php endif; ?>
             </div>
 
-            <input type="hidden" name="reg_type" id="reg_type" value="standard">
+            <input type="hidden" name="reg_type" id="reg_type" value="<?php echo htmlspecialchars($defaultType); ?>">
 
             <div style="margin-bottom: 28px;">
                 <label class="signal-label" for="ambCodeInput">BRAND AMBASSADOR CODE (OPTIONAL)</label>
@@ -607,29 +716,45 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
                     <div><span style="color: var(--muted);">IBAN:</span> <strong style="color: #ccc;">PK98NAYA1234503132017551</strong></div>
                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;">
                         <span style="color: var(--muted); font-size: 11px;">TOTAL PAYABLE:</span>
-                        <strong id="display-amount" style="color: var(--orange); font-size: 20px;">PKR 500</strong>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="display-amount-strike" class="tier-price-strike" style="font-size: 14px; <?php echo ($defaultType === 'standard' && !empty($settings['early_bird_active']) && $settings['individual_original_price'] > $settings['individual_price']) ? '' : 'display: none;'; ?>">PKR <?php echo number_format($settings['individual_original_price']); ?></span>
+                            <strong id="display-amount" style="color: var(--orange); font-size: 20px;">PKR <?php echo number_format($defaultAmount); ?></strong>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Upload Payment Proof -->
-            <div style="margin-bottom: 30px;">
-                <label class="signal-label">UPLOAD PAYMENT PROOF *</label>
+            <div id="payment-proof-group" style="margin-bottom: 30px;">
+                <label class="signal-label" id="payment-label">UPLOAD PAYMENT PROOF *</label>
                 <div class="file-upload-block">
-                    <input type="file" name="payment_proof" accept="image/*" required>
+                    <input type="file" id="payment-input" name="payment_proof" accept="image/*,application/pdf" required>
                 </div>
-                <small style="color: var(--muted); font-size: 11px; font-family: 'IBM Plex Mono', monospace; display: block; margin-top: 6px;">SUPPORTED FORMATS: JPG, PNG, WEBP</small>
+                <small style="color: var(--muted); font-size: 11px; font-family: 'IBM Plex Mono', monospace; display: block; margin-top: 6px;">SUPPORTED FORMATS: JPG, PNG, WEBP, PDF</small>
             </div>
 
-            <button type="submit" class="btn-submit-pass">
-                <span>SUBMIT REGISTRATION // CONFIRM PASS</span>
+            <button type="submit" id="socialSubmitBtn" class="btn-submit-pass">
+                <span id="socialSubmitText">SUBMIT REGISTRATION // CONFIRM PASS</span>
                 <span>&rarr;</span>
             </button>
         </form>
     </div>
 </div>
 
+<script src="js/sentec-compressor.js"></script>
 <script>
+    const tierPrices = {
+        standard: <?php echo (int)$settings['individual_price']; ?>,
+        participant: <?php echo (int)$settings['participant_price']; ?>,
+        group: <?php echo (int)$settings['group_price']; ?>
+    };
+    const tierOriginalPrices = {
+        standard: <?php echo (int)$settings['individual_original_price']; ?>,
+        participant: <?php echo (int)$settings['participant_price']; ?>,
+        group: <?php echo (int)$settings['group_price']; ?>
+    };
+    const earlyBirdActive = <?php echo !empty($settings['early_bird_active']) ? 'true' : 'false'; ?>;
+
     function selectType(type, element) {
         document.querySelectorAll('.tier-track-card').forEach(b => b.classList.remove('selected'));
         if (element) {
@@ -640,21 +765,97 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
         }
         document.getElementById('reg_type').value = type;
 
-        let amount = 500;
-        if (type === 'participant') amount = 0;
-        if (type === 'group') amount = 1200;
+        let amount = tierPrices[type] !== undefined ? tierPrices[type] : 500;
         document.getElementById('display-amount').innerHTML = 'PKR ' + amount;
+
+        const strikeEl = document.getElementById('display-amount-strike');
+        if (strikeEl) {
+            if (type === 'standard' && earlyBirdActive && tierOriginalPrices.standard > amount) {
+                strikeEl.textContent = 'PKR ' + tierOriginalPrices.standard;
+                strikeEl.style.display = 'inline';
+            } else {
+                strikeEl.style.display = 'none';
+            }
+        }
 
         const groupDiv = document.getElementById('group-fields');
         const groupInputs = document.querySelectorAll('.group-req');
         if (type === 'group') {
-            groupDiv.style.display = 'block';
+            if (groupDiv) groupDiv.style.display = 'block';
             groupInputs.forEach(i => i.setAttribute('required', 'true'));
         } else {
-            groupDiv.style.display = 'none';
+            if (groupDiv) groupDiv.style.display = 'none';
             groupInputs.forEach(i => i.removeAttribute('required'));
         }
+
+        // Toggle payment proof requirement for free participant pass
+        const payGroup = document.getElementById('payment-proof-group');
+        const payInput = document.getElementById('payment-input');
+        if (type === 'participant' && amount === 0) {
+            if (payInput) payInput.removeAttribute('required');
+            if (payGroup) payGroup.style.display = 'none';
+        } else {
+            if (payInput) payInput.setAttribute('required', 'true');
+            if (payGroup) payGroup.style.display = 'block';
+        }
     }
+
+    // Initialize for active tier
+    selectType('<?php echo $defaultType; ?>', document.getElementById('btn-<?php echo $defaultType; ?>'));
+
+    document.getElementById('socialForm').addEventListener('submit', async function(e) {
+        const btn = document.getElementById('socialSubmitBtn');
+        const btnText = document.getElementById('socialSubmitText');
+        if (btn.dataset.ready === 'true') return;
+
+        e.preventDefault();
+        btn.disabled = true;
+        btnText.textContent = "OPTIMIZING IMAGES...";
+
+        try {
+            const fileInputs = this.querySelectorAll('input[type="file"]');
+            for (let i = 0; i < fileInputs.length; i++) {
+                const inp = fileInputs[i];
+                if (inp.files && inp.files[0] && window.sentecCompressFile) {
+                    const origFile = inp.files[0];
+                    const isPdf = (origFile.type && origFile.type.toLowerCase().includes('pdf')) || (origFile.name && origFile.name.toLowerCase().endsWith('.pdf'));
+                    if (isPdf) continue;
+
+                    try {
+                        const optimized = await window.sentecCompressFile(origFile, {
+                            maxWidthOrHeight: 1600,
+                            quality: 0.82
+                        });
+                        try {
+                            const dt = new DataTransfer();
+                            dt.items.add(optimized);
+                            inp.files = dt.files;
+                        } catch (dtErr) {
+                            // DataTransfer fallback for older browsers
+                        }
+                    } catch (err) {
+                        console.warn('Compress fallback for', inp.name, err);
+                    }
+                }
+            }
+
+            btnText.textContent = "TRANSMITTING REGISTRATION...";
+            btn.dataset.ready = 'true';
+            btn.disabled = false;
+            this.submit();
+        } catch (submitErr) {
+            console.error('Submission pre-process error:', submitErr);
+            btn.dataset.ready = 'true';
+            btn.disabled = false;
+            btnText.textContent = "TRANSMITTING REGISTRATION...";
+            this.submit();
+        }
+    });
+
+    // Session keep-alive heartbeat every 4 minutes
+    setInterval(function() {
+        fetch('session_ping.php', { credentials: 'same-origin' }).catch(function() {});
+    }, 4 * 60 * 1000);
 </script>
 
 <?php include 'footer.php'; ?>
