@@ -92,11 +92,13 @@ if (!empty($search)) {
     </div>
 
     <div class="card">
-        <div class="scan-box" onclick="alert('Open your phone camera to scan!');">
-            <i class="fas fa-qrcode"></i>
-            <h3>Scan QR Code</h3>
-            <p style="color:#ccc; font-size:0.9rem; margin:0;">Use your phone camera.</p>
-        </div>
+        <a href="../scanner" style="text-decoration: none; color: inherit;">
+            <div class="scan-box" style="border-style: solid; background: rgba(0,255,148,0.06);">
+                <i class="fas fa-camera"></i>
+                <h3 style="color:#00FF94; margin: 8px 0 4px;">Launch High-Speed Terminal Scanner</h3>
+                <p style="color:#fff; font-size:0.9rem; margin:0; font-weight: 600;">Continuous Camera & Offline Mode &rarr;</p>
+            </div>
+        </a>
     </div>
 
     <div class="card">

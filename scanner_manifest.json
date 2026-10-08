@@ -1,0 +1,23 @@
+{
+  "name": "SENTEC Gate Scanner",
+  "short_name": "SENTEC Gate",
+  "start_url": "scanner",
+  "display": "standalone",
+  "background_color": "#06090c",
+  "theme_color": "#00FF94",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "images/favicon2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/favicon2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
