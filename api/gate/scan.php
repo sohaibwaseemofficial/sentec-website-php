@@ -39,7 +39,7 @@ if ($action === 'lookup') {
         'role' => $lookup['role'] ?? $auth['role'],
         'attendee' => $lookup['attendee'],
         'message' => $lookup['message'] ?? ($lookup['error'] ?? 'Pass Loaded')
-    ], ($lookup['valid'] && !empty($lookup['attendee'])) ? 200 : 404);
+    ], 200);
 }
 
 // Mode 2: Atomic Check-In & Admission

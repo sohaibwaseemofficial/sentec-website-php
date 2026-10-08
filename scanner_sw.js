@@ -1,6 +1,5 @@
-const CACHE_NAME = 'sentec-gate-v1';
+const CACHE_NAME = 'sentec-gate-v3';
 const ASSETS_TO_CACHE = [
-  'scanner',
   'scanner_manifest.json',
   'images/favicon2.png',
   'images/SENTECNEWWHITELOGO.webp',
@@ -37,6 +36,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Network-First for HTML navigation / scanner pages (so updates are immediately live)
+  const isScannerPage = event.request.mode === 'navigate' || url.pathname.endsWith('scanner.php') || url.pathname.endsWith('/scanner');
+
+  if (isScannerPage) {
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      }).catch(() => {
+        // Offline fallback to cached scanner page
+        return caches.match(event.request).then((cached) => cached || caches.match('scanner') || caches.match('scanner.php'));
+      })
+    );
+    return;
+  }
+
+  // Cache-First for static CDN and fonts
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -51,11 +72,6 @@ self.addEventListener('fetch', (event) => {
           cache.put(event.request, responseToCache);
         });
         return networkResponse;
-      }).catch(() => {
-        // Fallback to cached scanner page if navigating offline
-        if (event.request.mode === 'navigate') {
-          return caches.match('scanner');
-        }
       });
     })
   );

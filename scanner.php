@@ -1,4 +1,7 @@
 <?php
+header("Cache-Control: no-cache, no-store, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+header("Expires: 0");
 /**
  * SENTEC Universal Gate Scanner PWA
  * Fast, offline-first mobile QR scanner supporting:
@@ -547,6 +550,27 @@
         .inspect-placeholder {
             color: #4A5568;
             font-size: 2.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .mode-indicator-pill {
+            background: rgba(0, 255, 148, 0.12);
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.05em;
         }
 
         .inspect-media-label {
@@ -794,9 +818,9 @@
             </div>
 
             <div class="topbar-actions">
-                <button class="icon-btn active" id="btn-inspect-toggle" onclick="toggleInspectMode()" title="Mode: Inspect Photo & ID Card">
-                    <i class="fas fa-id-badge"></i>
-                </button>
+                <div class="mode-indicator-pill" title="Physical ID Inspection Active">
+                    <i class="fas fa-shield-alt"></i> ID INSPECT
+                </div>
                 <button class="icon-btn" id="btn-torch" onclick="toggleTorch()" title="Flashlight">
                     <i class="fas fa-bolt"></i>
                 </button>
@@ -940,7 +964,6 @@
         let stationScanCount = 0;
         let wakeLock = null;
         let audioCtx = null;
-        let isInspectMode = true; // Default: Inspect Photo & ID Card before admitting
         let currentScannedCode = null;
         let currentLookupData = null;
 
@@ -954,7 +977,9 @@
            ========================================================= */
         window.addEventListener('DOMContentLoaded', async () => {
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('scanner_sw.js').catch(err => console.log('SW registration:', err));
+                navigator.serviceWorker.register('scanner_sw.js?v=3').then(reg => {
+                    reg.update();
+                }).catch(err => console.log('SW registration:', err));
             }
 
             initIndexedDB();
@@ -1130,27 +1155,72 @@
         /* =========================================================
            4. CORE SCAN VERIFICATION & INSPECTION ENGINE
            ========================================================= */
-        function toggleInspectMode() {
-            isInspectMode = !isInspectMode;
-            const btn = document.getElementById('btn-inspect-toggle');
-            if (isInspectMode) {
-                btn.classList.add('active');
-                btn.title = "Mode: Inspection & ID Verification (Active)";
-            } else {
-                btn.classList.remove('active');
-                btn.title = "Mode: Fast Auto-Admit (Active)";
-            }
+
+        /* Immediate visual popup showing high-tech loading state */
+        function showInspectionLoading(rawCode) {
+            const overlay = document.getElementById('result-overlay');
+            const card = document.getElementById('result-card');
+            const badge = document.getElementById('inspect-status-badge');
+            const badgeIcon = document.getElementById('inspect-status-icon');
+            const badgeText = document.getElementById('inspect-status-text');
+            const nameEl = document.getElementById('inspect-name');
+            const ticketEl = document.getElementById('inspect-ticket');
+            const cnicEl = document.getElementById('inspect-cnic');
+            const eventEl = document.getElementById('inspect-event');
+            const modWrap = document.getElementById('inspect-module-container');
+            const alertBox = document.getElementById('inspect-alert-box');
+            const btnGrant = document.getElementById('btn-admit-grant');
+            const btnCancel = document.getElementById('btn-admit-cancel');
+            const faceImg = document.getElementById('inspect-face-img');
+            const facePlaceholder = document.getElementById('inspect-face-placeholder');
+            const cardImg = document.getElementById('inspect-card-img');
+            const cardPlaceholder = document.getElementById('inspect-card-placeholder');
+
+            // Reset Card Style
+            card.className = "result-card";
+            alertBox.style.display = 'none';
+            modWrap.style.display = 'none';
+
+            // Loading Status Badge
+            badge.className = "inspect-status-badge";
+            badgeIcon.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            badgeText.innerText = "FETCHING PARTICIPANT...";
+
+            // Placeholders
+            nameEl.innerText = "Retrieving Details...";
+            ticketEl.innerText = rawCode;
+            cnicEl.innerText = "Loading...";
+            eventEl.innerText = "Verifying Gate...";
+
+            // Media Loading Spinners
+            faceImg.style.display = 'none';
+            facePlaceholder.style.display = 'flex';
+            facePlaceholder.innerHTML = '<i class="fas fa-spinner fa-spin" style="color:var(--neon-green); font-size:1.6rem;"></i>';
+
+            cardImg.style.display = 'none';
+            cardPlaceholder.style.display = 'flex';
+            cardPlaceholder.innerHTML = '<i class="fas fa-spinner fa-spin" style="color:var(--neon-green); font-size:1.6rem;"></i>';
+
+            // Controls: Hide Grant button until volunteer has verified info, allow Cancel
+            btnGrant.style.display = 'none';
+            btnCancel.style.display = 'block';
+            btnCancel.innerText = "CANCEL";
+
+            overlay.style.display = 'flex';
         }
 
         async function onQrCodeScanned(decodedText) {
             if (!isScanningActive) return;
-            isScanningActive = false; // Pause camera while reviewing
+            isScanningActive = false; // Pause camera immediately so no duplicate captures occur
             clearTimeout(autoResumeTimer);
 
             currentScannedCode = decodedText;
             playFeedbackSound(true); // Haptic click feedback
 
-            // Always perform attendee verification lookup so the volunteer can physically review pass and ID
+            // 1. Instantly pop up the inspection dialog modal
+            showInspectionLoading(decodedText);
+
+            // 2. Perform attendee lookup without marking attendance (volunteer will decide)
             try {
                 const response = await fetchWithTimeout('api/gate/scan.php', {
                     method: 'POST',
@@ -1163,14 +1233,14 @@
                         action: 'lookup',
                         day: currentDay
                     })
-                }, 7000);
+                }, 8000);
 
                 const data = await response.json();
                 currentLookupData = data;
                 displayInspectionSheet(data, decodedText);
 
             } catch (networkError) {
-                console.log("Network timeout. Looking up attendee in local IndexedDB...");
+                console.log("Network timeout / offline. Looking up attendee in local IndexedDB...", networkError);
                 handleOfflineInspection(decodedText);
             }
         }
@@ -1212,35 +1282,57 @@
                 modWrap.style.display = 'none';
             }
 
-            // Setup Face Photo
+            // Setup Face Photo with Asynchronous Loading Indicator & Error Fallback
             const faceImg = document.getElementById('inspect-face-img');
             const facePlaceholder = document.getElementById('inspect-face-placeholder');
             if (attendee.face_image) {
+                facePlaceholder.style.display = 'flex';
+                facePlaceholder.innerHTML = '<i class="fas fa-spinner fa-spin" style="color:var(--neon-green); font-size:1.6rem;"></i>';
+                faceImg.style.display = 'none';
+                faceImg.onload = () => {
+                    facePlaceholder.style.display = 'none';
+                    faceImg.style.display = 'block';
+                };
+                faceImg.onerror = () => {
+                    facePlaceholder.innerHTML = '<i class="fas fa-user-slash" style="color:#64748b; font-size:1.8rem;"></i><span style="font-size:0.6rem; color:#64748b; margin-top:4px;">No Photo</span>';
+                    facePlaceholder.style.display = 'flex';
+                    faceImg.style.display = 'none';
+                };
                 faceImg.src = attendee.face_image;
-                faceImg.style.display = 'block';
-                facePlaceholder.style.display = 'none';
             } else {
                 faceImg.src = '';
                 faceImg.style.display = 'none';
-                facePlaceholder.style.display = 'block';
+                facePlaceholder.innerHTML = '<i class="fas fa-user" style="color:#64748b; font-size:2rem;"></i>';
+                facePlaceholder.style.display = 'flex';
             }
 
-            // Setup ID Card Image
+            // Setup ID Card Image with Asynchronous Loading Indicator & Error Fallback
             const cardImg = document.getElementById('inspect-card-img');
             const cardPlaceholder = document.getElementById('inspect-card-placeholder');
             if (attendee.id_card_image) {
+                cardPlaceholder.style.display = 'flex';
+                cardPlaceholder.innerHTML = '<i class="fas fa-spinner fa-spin" style="color:var(--neon-green); font-size:1.6rem;"></i>';
+                cardImg.style.display = 'none';
+                cardImg.onload = () => {
+                    cardPlaceholder.style.display = 'none';
+                    cardImg.style.display = 'block';
+                };
+                cardImg.onerror = () => {
+                    cardPlaceholder.innerHTML = '<i class="fas fa-id-card" style="color:#64748b; font-size:1.8rem;"></i><span style="font-size:0.6rem; color:#64748b; margin-top:4px;">No Card</span>';
+                    cardPlaceholder.style.display = 'flex';
+                    cardImg.style.display = 'none';
+                };
                 cardImg.src = attendee.id_card_image;
-                cardImg.style.display = 'block';
-                cardPlaceholder.style.display = 'none';
             } else {
                 cardImg.src = '';
                 cardImg.style.display = 'none';
-                cardPlaceholder.style.display = 'block';
+                cardPlaceholder.innerHTML = '<i class="fas fa-id-card" style="color:#64748b; font-size:2rem;"></i>';
+                cardPlaceholder.style.display = 'flex';
             }
 
-            // Handle Verification States
+            // Handle Verification States (Volunteer Decides)
             if (data.can_admit === true && (data.status === 'READY_TO_ADMIT' || data.status === 'APPROVED')) {
-                // READY TO ADMIT
+                // VALID PASS: READY TO ADMIT
                 badge.className = "inspect-status-badge";
                 badgeIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
                 badgeText.innerText = "READY TO ADMIT // VERIFY ID";
@@ -1250,6 +1342,7 @@
                 btnGrant.style.background = 'var(--neon-green)';
                 btnGrant.style.color = '#000';
                 btnCancel.innerText = "REJECT / SCAN NEXT";
+                btnCancel.style.display = 'block';
                 playFeedbackSound('success');
                 vibrate([40]);
             } else if (data.status === 'DUPLICATE' || data.status === 'DUPLICATE_REJECTED' || attendee.attendance_status === 'present') {
@@ -1263,6 +1356,7 @@
                 alertText.innerHTML = `<strong>⚠️ RESTRICTION HIT:</strong> Pass has already been checked in earlier today${timeNote}! Double entry is strictly DENIED.`;
                 btnGrant.style.display = 'none';
                 btnCancel.innerText = "DISMISS / SCAN NEXT PASS";
+                btnCancel.style.display = 'block';
                 playFeedbackSound('error');
                 vibrate([200, 100, 200]);
             } else if (data.status === 'INVALID_ROLE') {
@@ -1275,6 +1369,7 @@
                 alertText.innerHTML = `<strong>⚠️ RESTRICTION HIT:</strong> ${data.message || 'Pass belongs to a different gate checkpoint.'} Entry denied at this gate!`;
                 btnGrant.style.display = 'none';
                 btnCancel.innerText = "DISMISS / SCAN NEXT PASS";
+                btnCancel.style.display = 'block';
                 playFeedbackSound('error');
                 vibrate([150, 80, 150]);
             } else {
@@ -1287,6 +1382,7 @@
                 alertText.innerHTML = `<strong>⚠️ RESTRICTION HIT:</strong> ${data.message || "Entry restricted. Attendee must visit Help Desk."}`;
                 btnGrant.style.display = 'none';
                 btnCancel.innerText = "DISMISS / SCAN NEXT PASS";
+                btnCancel.style.display = 'block';
                 playFeedbackSound('error');
                 vibrate([150, 80, 150]);
             }
@@ -1294,6 +1390,7 @@
             overlay.style.display = 'flex';
         }
 
+        /* Volunteer Explicitly Confirms Entry */
         async function confirmAdmission() {
             if (!currentScannedCode) return;
             const btnGrant = document.getElementById('btn-admit-grant');
@@ -1314,7 +1411,7 @@
                         device_timestamp: Date.now(),
                         log_id: 'live_' + Math.random().toString(36).substr(2, 9)
                     })
-                }, 2500);
+                }, 9000);
 
                 const res = await response.json();
                 if (res.success && res.status === 'APPROVED') {
@@ -1329,7 +1426,7 @@
 
                     setTimeout(() => {
                         resumeScanning();
-                    }, 1100);
+                    }, 1200);
                 } else {
                     alert(res.message || "Could not complete check-in.");
                     btnGrant.disabled = false;
@@ -1338,38 +1435,6 @@
             } catch (err) {
                 // Fallback to offline IndexedDB admission
                 confirmOfflineAdmission(currentScannedCode);
-            }
-        }
-
-        async function executeDirectAdmission(decodedText) {
-            try {
-                const response = await fetchWithTimeout('api/gate/scan.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${currentAuth.token}`
-                    },
-                    body: JSON.stringify({
-                        qr_code: decodedText,
-                        action: 'admit',
-                        day: currentDay,
-                        device_timestamp: Date.now(),
-                        log_id: 'live_' + Math.random().toString(36).substr(2, 9)
-                    })
-                }, 1500);
-
-                const data = await response.json();
-                displayInspectionSheet(data, decodedText);
-
-                if (data.status === 'APPROVED') {
-                    stationScanCount++;
-                    document.getElementById('scan-count').innerText = stationScanCount;
-                    autoResumeTimer = setTimeout(() => {
-                        resumeScanning();
-                    }, 1600);
-                }
-            } catch (networkError) {
-                handleOfflineInspection(decodedText);
             }
         }
 
@@ -1743,7 +1808,7 @@
         }
 
         /* Helper: Fetch with timeout */
-        function fetchWithTimeout(url, options, timeout = 1200) {
+        function fetchWithTimeout(url, options, timeout = 8000) {
             return Promise.race([
                 fetch(url, options),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
