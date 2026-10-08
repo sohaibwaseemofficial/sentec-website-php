@@ -70,10 +70,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') == 'POST') {
     $reg_type = in_array($requestedType, $allowedTypes, true) ? $requestedType : $allowedTypes[0];
     $amb_code = !empty($_POST['ambassador_code']) ? trim($_POST['ambassador_code']) : NULL;
     
-    // Dynamic Price from Admin Settings
-    $amount = (int)$settings['individual_price'];
-    if ($reg_type === 'participant') $amount = (int)$settings['participant_price'];
-    if ($reg_type === 'group') $amount = (int)$settings['group_price'];
+    // Dynamic Effective Price from Admin Settings (honors discount active state)
+    $amount = social_tier_effective_price($reg_type, $settings);
 
     // --- Cloudinary / WebP Upload Helper ---
     if (!function_exists('uploadSocialFile')) {
@@ -523,7 +521,19 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
             }
 
             $defaultType = $enableInd ? 'standard' : ($enablePart ? 'participant' : 'group');
-            $defaultAmount = ($defaultType === 'standard') ? (int)$settings['individual_price'] : (($defaultType === 'participant') ? (int)$settings['participant_price'] : (int)$settings['group_price']);
+            $defaultAmount = social_tier_effective_price($defaultType, $settings);
+
+            $indOrig = (int)($settings['individual_original_price'] ?? 700);
+            $indDisc = (int)($settings['individual_price'] ?? 500);
+            $indActive = !empty($settings['early_bird_active']);
+
+            $partOrig = (int)($settings['participant_original_price'] ?? 0);
+            $partDisc = (int)($settings['participant_price'] ?? 0);
+            $partActive = !empty($settings['participant_discount_active']);
+
+            $grpOrig = (int)($settings['group_original_price'] ?? 1500);
+            $grpDisc = (int)($settings['group_price'] ?? 1200);
+            $grpActive = !empty($settings['group_discount_active']);
             ?>
 
             <div class="tier-card-grid">
@@ -531,29 +541,39 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
                     <div class="tier-track-card <?php echo $defaultType === 'standard' ? 'selected' : ''; ?>" onclick="selectType('standard', this)" id="btn-standard">
                         <div class="tier-title">
                             Individual
-                            <?php if (!empty($settings['early_bird_active'])): ?>
+                            <?php if ($indActive && $indOrig > $indDisc): ?>
                                 <span class="early-bird-tag"><i class="fas fa-bolt"></i> EARLY BIRD</span>
                             <?php endif; ?>
                         </div>
                         <div class="tier-price">
-                            <?php if (!empty($settings['early_bird_active']) && $settings['individual_original_price'] > $settings['individual_price']): ?>
-                                <span class="tier-price-strike">PKR <?php echo number_format($settings['individual_original_price']); ?></span>
-                                <span class="tier-price-current">PKR <?php echo number_format($settings['individual_price']); ?></span>
+                            <?php if ($indActive && $indOrig > $indDisc): ?>
+                                <span class="tier-price-strike">PKR <?php echo number_format($indOrig); ?></span>
+                                <span class="tier-price-current">PKR <?php echo number_format($indDisc); ?></span>
                             <?php else: ?>
-                                <span class="tier-price-current">PKR <?php echo number_format($settings['individual_price']); ?></span>
+                                <span class="tier-price-current">PKR <?php echo number_format($indOrig > 0 ? $indOrig : $indDisc); ?></span>
                             <?php endif; ?>
                         </div>
                         <div class="tier-badge">
-                            <?php echo !empty($settings['early_bird_active']) ? 'Early bird entry pass' : 'Single attendee entry pass'; ?>
+                            <?php echo ($indActive && $indOrig > $indDisc) ? 'Early bird discount pass' : 'Single attendee entry pass'; ?>
                         </div>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($enablePart): ?>
                     <div class="tier-track-card <?php echo $defaultType === 'participant' ? 'selected' : ''; ?>" onclick="selectType('participant', this)" id="btn-participant">
-                        <div class="tier-title">Event Participant</div>
+                        <div class="tier-title">
+                            Event Participant
+                            <?php if ($partActive && $partOrig > $partDisc): ?>
+                                <span class="early-bird-tag"><i class="fas fa-tag"></i> DISCOUNT</span>
+                            <?php endif; ?>
+                        </div>
                         <div class="tier-price">
-                            <span class="tier-price-current">PKR <?php echo number_format($settings['participant_price']); ?></span>
+                            <?php if ($partActive && $partOrig > $partDisc): ?>
+                                <span class="tier-price-strike">PKR <?php echo number_format($partOrig); ?></span>
+                                <span class="tier-price-current">PKR <?php echo number_format($partDisc); ?></span>
+                            <?php else: ?>
+                                <span class="tier-price-current">PKR <?php echo number_format($partOrig > 0 ? $partOrig : $partDisc); ?></span>
+                            <?php endif; ?>
                         </div>
                         <div class="tier-badge">Subsidized / arena attendees</div>
                     </div>
@@ -561,9 +581,19 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
 
                 <?php if ($enableGrp): ?>
                     <div class="tier-track-card <?php echo $defaultType === 'group' ? 'selected' : ''; ?>" onclick="selectType('group', this)" id="btn-group">
-                        <div class="tier-title">Group (3 People)</div>
+                        <div class="tier-title">
+                            Group (3 People)
+                            <?php if ($grpActive && $grpOrig > $grpDisc): ?>
+                                <span class="early-bird-tag"><i class="fas fa-tag"></i> DISCOUNT</span>
+                            <?php endif; ?>
+                        </div>
                         <div class="tier-price">
-                            <span class="tier-price-current">PKR <?php echo number_format($settings['group_price']); ?></span>
+                            <?php if ($grpActive && $grpOrig > $grpDisc): ?>
+                                <span class="tier-price-strike">PKR <?php echo number_format($grpOrig); ?></span>
+                                <span class="tier-price-current">PKR <?php echo number_format($grpDisc); ?></span>
+                            <?php else: ?>
+                                <span class="tier-price-current">PKR <?php echo number_format($grpOrig); ?></span>
+                            <?php endif; ?>
                         </div>
                         <div class="tier-badge">Package bundle for 3 guests</div>
                     </div>
@@ -717,7 +747,12 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;">
                         <span style="color: var(--muted); font-size: 11px;">TOTAL PAYABLE:</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span id="display-amount-strike" class="tier-price-strike" style="font-size: 14px; <?php echo ($defaultType === 'standard' && !empty($settings['early_bird_active']) && $settings['individual_original_price'] > $settings['individual_price']) ? '' : 'display: none;'; ?>">PKR <?php echo number_format($settings['individual_original_price']); ?></span>
+                            <?php
+                            $defaultOrig = ($defaultType === 'standard') ? $indOrig : (($defaultType === 'participant') ? $partOrig : $grpOrig);
+                            $defaultDiscActive = ($defaultType === 'standard') ? $indActive : (($defaultType === 'participant') ? $partActive : $grpActive);
+                            $showDefaultStrike = ($defaultDiscActive && $defaultOrig > $defaultAmount);
+                            ?>
+                            <span id="display-amount-strike" class="tier-price-strike" style="font-size: 14px; <?php echo $showDefaultStrike ? '' : 'display: none;'; ?>">PKR <?php echo number_format($defaultOrig); ?></span>
                             <strong id="display-amount" style="color: var(--orange); font-size: 20px;">PKR <?php echo number_format($defaultAmount); ?></strong>
                         </div>
                     </div>
@@ -743,17 +778,31 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
 
 <script src="js/sentec-compressor.js"></script>
 <script>
-    const tierPrices = {
-        standard: <?php echo (int)$settings['individual_price']; ?>,
-        participant: <?php echo (int)$settings['participant_price']; ?>,
-        group: <?php echo (int)$settings['group_price']; ?>
+    const tierDiscountActive = {
+        standard: <?php echo !empty($settings['early_bird_active']) ? 'true' : 'false'; ?>,
+        participant: <?php echo !empty($settings['participant_discount_active']) ? 'true' : 'false'; ?>,
+        group: <?php echo !empty($settings['group_discount_active']) ? 'true' : 'false'; ?>
     };
     const tierOriginalPrices = {
-        standard: <?php echo (int)$settings['individual_original_price']; ?>,
-        participant: <?php echo (int)$settings['participant_price']; ?>,
-        group: <?php echo (int)$settings['group_price']; ?>
+        standard: <?php echo (int)($settings['individual_original_price'] ?? 700); ?>,
+        participant: <?php echo (int)($settings['participant_original_price'] ?? 0); ?>,
+        group: <?php echo (int)($settings['group_original_price'] ?? 1500); ?>
     };
-    const earlyBirdActive = <?php echo !empty($settings['early_bird_active']) ? 'true' : 'false'; ?>;
+    const tierDiscountPrices = {
+        standard: <?php echo (int)($settings['individual_price'] ?? 500); ?>,
+        participant: <?php echo (int)($settings['participant_price'] ?? 0); ?>,
+        group: <?php echo (int)($settings['group_price'] ?? 1200); ?>
+    };
+
+    function getTierEffectivePrice(type) {
+        const isDisc = tierDiscountActive[type];
+        const orig = tierOriginalPrices[type];
+        const disc = tierDiscountPrices[type];
+        if (isDisc && orig > disc) {
+            return disc;
+        }
+        return (orig > 0) ? orig : disc;
+    }
 
     function selectType(type, element) {
         document.querySelectorAll('.tier-track-card').forEach(b => b.classList.remove('selected'));
@@ -765,13 +814,15 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
         }
         document.getElementById('reg_type').value = type;
 
-        let amount = tierPrices[type] !== undefined ? tierPrices[type] : 500;
+        const amount = getTierEffectivePrice(type);
         document.getElementById('display-amount').innerHTML = 'PKR ' + amount;
 
         const strikeEl = document.getElementById('display-amount-strike');
         if (strikeEl) {
-            if (type === 'standard' && earlyBirdActive && tierOriginalPrices.standard > amount) {
-                strikeEl.textContent = 'PKR ' + tierOriginalPrices.standard;
+            const isDisc = tierDiscountActive[type];
+            const orig = tierOriginalPrices[type];
+            if (isDisc && orig > amount) {
+                strikeEl.textContent = 'PKR ' + orig;
                 strikeEl.style.display = 'inline';
             } else {
                 strikeEl.style.display = 'none';

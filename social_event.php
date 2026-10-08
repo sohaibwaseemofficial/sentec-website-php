@@ -225,12 +225,25 @@ $socialSettings = social_registrations_get_settings($conn);
 
         <div class="row align-items-center justify-content-center g-4">
             
-            <?php if (!empty($socialSettings['enable_participant'])): ?>
+            <?php if (!empty($socialSettings['enable_participant'])): 
+                $evPartOrig = (int)($socialSettings['participant_original_price'] ?? 0);
+                $evPartDisc = (int)($socialSettings['participant_price'] ?? 0);
+                $evPartActive = !empty($socialSettings['participant_discount_active']);
+                $evPartEff = social_tier_effective_price('participant', $socialSettings);
+            ?>
             <div class="col-lg-4 col-md-6">
                 <div class="pricing-card">
+                    <?php if ($evPartActive && $evPartOrig > $evPartDisc): ?>
+                        <span class="pricing-badge" style="background: var(--accent); color: #000; font-weight: 700;">DISCOUNT</span>
+                    <?php endif; ?>
                     <h3 style="color:#fff;">Participant</h3>
                     <p style="color:#aaa; font-size:0.9rem;">For registered competition teams</p>
-                    <div class="price-amount"><?php echo (int)$socialSettings['participant_price']; ?> <span>PKR</span></div>
+                    <div class="price-amount">
+                        <?php if ($evPartActive && $evPartOrig > $evPartDisc): ?>
+                            <span style="text-decoration:line-through; color:#ff6a6a; font-size:0.55em; opacity:0.65; margin-right:6px;"><?php echo $evPartOrig; ?></span>
+                        <?php endif; ?>
+                        <?php echo $evPartEff; ?> <span>PKR</span>
+                    </div>
                     
                     <ul class="pricing-features">
                         <li><i class="fas fa-check"></i> Subsidized Access</li>
@@ -241,16 +254,30 @@ $socialSettings = social_registrations_get_settings($conn);
             </div>
             <?php endif; ?>
 
-            <?php if (!empty($socialSettings['enable_group'])): ?>
+            <?php if (!empty($socialSettings['enable_group'])): 
+                $evGrpOrig = (int)($socialSettings['group_original_price'] ?? 1500);
+                $evGrpDisc = (int)($socialSettings['group_price'] ?? 1200);
+                $evGrpActive = !empty($socialSettings['group_discount_active']);
+                $evGrpEff = social_tier_effective_price('group', $socialSettings);
+            ?>
             <div class="col-lg-4 col-md-6">
                 <div class="pricing-card featured">
-                    <span class="pricing-badge">BEST VALUE</span>
+                    <?php if ($evGrpActive && $evGrpOrig > $evGrpDisc): ?>
+                        <span class="pricing-badge" style="background: var(--accent); color: #000; font-weight: 700;">BEST VALUE</span>
+                    <?php else: ?>
+                        <span class="pricing-badge">BUNDLE PASS</span>
+                    <?php endif; ?>
                     <h3 style="color:#fff;">Group of 3</h3>
                     <p style="color:#aaa; font-size:0.9rem;">Bring your friends along</p>
-                    <div class="price-amount"><?php echo round((int)$socialSettings['group_price'] / 3); ?> <span>PKR/person</span></div>
+                    <div class="price-amount">
+                        <?php if ($evGrpActive && $evGrpOrig > $evGrpDisc): ?>
+                            <span style="text-decoration:line-through; color:#ff6a6a; font-size:0.55em; opacity:0.65; margin-right:6px;"><?php echo $evGrpOrig; ?></span>
+                        <?php endif; ?>
+                        <?php echo $evGrpEff; ?> <span>PKR</span>
+                    </div>
                     
                     <ul class="pricing-features">
-                        <li><i class="fas fa-check"></i> <strong>Total: <?php echo (int)$socialSettings['group_price']; ?> PKR</strong></li>
+                        <li><i class="fas fa-check"></i> <strong>Total: <?php echo $evGrpEff; ?> PKR</strong></li>
                         <li><i class="fas fa-check"></i> Package for 3 Guests</li>
                     </ul>
                     <a href="<?php echo isset($_SESSION['user_id']) ? 'social_register' : 'login'; ?>" class="btn-neon w-100">Get Group Pass</a>
@@ -258,19 +285,24 @@ $socialSettings = social_registrations_get_settings($conn);
             </div>
             <?php endif; ?>
 
-            <?php if (!empty($socialSettings['enable_individual']) || (empty($socialSettings['enable_participant']) && empty($socialSettings['enable_group']))): ?>
+            <?php if (!empty($socialSettings['enable_individual']) || (empty($socialSettings['enable_participant']) && empty($socialSettings['enable_group']))): 
+                $evIndOrig = (int)($socialSettings['individual_original_price'] ?? 700);
+                $evIndDisc = (int)($socialSettings['individual_price'] ?? 500);
+                $evIndActive = !empty($socialSettings['early_bird_active']);
+                $evIndEff = social_tier_effective_price('standard', $socialSettings);
+            ?>
             <div class="col-lg-4 col-md-6">
                 <div class="pricing-card <?php echo (empty($socialSettings['enable_participant']) && empty($socialSettings['enable_group'])) ? 'featured' : ''; ?>">
-                    <?php if (!empty($socialSettings['early_bird_active'])): ?>
+                    <?php if ($evIndActive && $evIndOrig > $evIndDisc): ?>
                         <span class="pricing-badge" style="background: var(--accent); color: #000; font-weight: 700;">EARLY BIRD</span>
                     <?php endif; ?>
                     <h3 style="color:#fff;">Individual</h3>
                     <p style="color:#aaa; font-size:0.9rem;">Standard entry pass</p>
                     <div class="price-amount">
-                        <?php if (!empty($socialSettings['early_bird_active']) && $socialSettings['individual_original_price'] > $socialSettings['individual_price']): ?>
-                            <span style="text-decoration:line-through; color:#ff6a6a; font-size:0.55em; opacity:0.65; margin-right:6px;"><?php echo (int)$socialSettings['individual_original_price']; ?></span>
+                        <?php if ($evIndActive && $evIndOrig > $evIndDisc): ?>
+                            <span style="text-decoration:line-through; color:#ff6a6a; font-size:0.55em; opacity:0.65; margin-right:6px;"><?php echo $evIndOrig; ?></span>
                         <?php endif; ?>
-                        <?php echo (int)$socialSettings['individual_price']; ?> <span>PKR</span>
+                        <?php echo $evIndEff; ?> <span>PKR</span>
                     </div>
                     
                     <ul class="pricing-features">

@@ -324,20 +324,35 @@ $tierSettings = social_registrations_get_settings($conn);
                     <p class="small text-muted mb-3">Subsidized / arena attendees pass for registered competition participants.</p>
                     
                     <div class="p-3 rounded bg-dark border border-secondary mb-3">
-                        <label class="small text-muted mb-1" for="input_participant_price">Participant Fee (PKR)</label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-black text-muted border-secondary">PKR</span>
-                            <input type="number" min="0" step="50" class="form-control bg-black text-white border-secondary" id="input_participant_price" name="participant_price" value="<?php echo (int)$tierSettings['participant_price']; ?>">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="switch_participant_discount_active" name="participant_discount_active" value="1" <?php echo !empty($tierSettings['participant_discount_active']) ? 'checked' : ''; ?>>
+                            <label class="form-check-label text-warning fw-bold small ms-1" for="switch_participant_discount_active">
+                                <i class="fas fa-tag text-warning me-1"></i> Discount / Subsidized Active
+                            </label>
                         </div>
-                        <small class="text-muted mt-1 d-block">Set to 0 for 100% free passes (skips payment proof requirement).</small>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="small text-muted mb-1" for="input_participant_orig">Regular Fee</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-black text-muted border-secondary">PKR</span>
+                                    <input type="number" min="0" step="50" class="form-control bg-black text-white border-secondary" id="input_participant_orig" name="participant_original_price" value="<?php echo (int)($tierSettings['participant_original_price'] ?? 0); ?>">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-warning fw-bold mb-1" for="input_participant_price">Subsidized / Active</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-black text-warning border-secondary">PKR</span>
+                                    <input type="number" min="0" step="50" class="form-control bg-black text-warning fw-bold border-secondary" id="input_participant_price" name="participant_price" value="<?php echo (int)$tierSettings['participant_price']; ?>">
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted mt-2 d-block">If discount is OFF, regular fee is charged. If price is 0, skips payment proof requirement.</small>
                     </div>
 
                     <div class="tier-live-preview">
-                        <small class="text-muted d-block mb-1">Live Status:</small>
-                        <div class="p-2 rounded bg-black text-center border border-secondary">
-                            <span class="badge <?php echo !empty($tierSettings['enable_participant']) ? 'bg-success' : 'bg-secondary'; ?>" id="badge-participant-status">
-                                <?php echo !empty($tierSettings['enable_participant']) ? 'Visible on Form (PKR ' . (int)$tierSettings['participant_price'] . ')' : 'Hidden (Single Entry Mode)'; ?>
-                            </span>
+                        <small class="text-muted d-block mb-1">Live Registration Preview:</small>
+                        <div class="p-2 rounded bg-black text-center border border-secondary" id="preview-participant-price">
+                            <!-- Populated dynamically via JS -->
                         </div>
                     </div>
                 </div>
@@ -358,20 +373,35 @@ $tierSettings = social_registrations_get_settings($conn);
                     <p class="small text-muted mb-3">Bundle pass requiring attendee 1, 2, and 3 names, CNICs, portraits & ID cards.</p>
                     
                     <div class="p-3 rounded bg-dark border border-secondary mb-3">
-                        <label class="small text-muted mb-1" for="input_group_price">Group Package Price (PKR)</label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-black text-muted border-secondary">PKR</span>
-                            <input type="number" min="0" step="100" class="form-control bg-black text-white border-secondary" id="input_group_price" name="group_price" value="<?php echo (int)$tierSettings['group_price']; ?>">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="switch_group_discount_active" name="group_discount_active" value="1" <?php echo !empty($tierSettings['group_discount_active']) ? 'checked' : ''; ?>>
+                            <label class="form-check-label text-warning fw-bold small ms-1" for="switch_group_discount_active">
+                                <i class="fas fa-tag text-warning me-1"></i> Bundle Discount Active
+                            </label>
                         </div>
-                        <small class="text-muted mt-1 d-block">Total bundle price for all 3 members.</small>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="small text-muted mb-1" for="input_group_orig">Regular Bundle (Cut)</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-black text-muted border-secondary">PKR</span>
+                                    <input type="number" min="0" step="100" class="form-control bg-black text-white border-secondary" id="input_group_orig" name="group_original_price" value="<?php echo (int)($tierSettings['group_original_price'] ?? 1500); ?>">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-warning fw-bold mb-1" for="input_group_price">Discounted / Active</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-black text-warning border-secondary">PKR</span>
+                                    <input type="number" min="0" step="100" class="form-control bg-black text-warning fw-bold border-secondary" id="input_group_price" name="group_price" value="<?php echo (int)$tierSettings['group_price']; ?>">
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted mt-2 d-block">If discount is OFF, regular bundle price is charged.</small>
                     </div>
 
                     <div class="tier-live-preview">
-                        <small class="text-muted d-block mb-1">Live Status:</small>
-                        <div class="p-2 rounded bg-black text-center border border-secondary">
-                            <span class="badge <?php echo !empty($tierSettings['enable_group']) ? 'bg-success' : 'bg-secondary'; ?>" id="badge-group-status">
-                                <?php echo !empty($tierSettings['enable_group']) ? 'Visible on Form (PKR ' . (int)$tierSettings['group_price'] . ')' : 'Hidden (Single Entry Mode)'; ?>
-                            </span>
+                        <small class="text-muted d-block mb-1">Live Registration Preview:</small>
+                        <div class="p-2 rounded bg-black text-center border border-secondary" id="preview-group-price">
+                            <!-- Populated dynamically via JS -->
                         </div>
                     </div>
                 </div>
@@ -779,8 +809,48 @@ $(document).ready(function() {
                 '<span class="badge bg-warning text-dark ms-2 fw-bold"><i class="fas fa-bolt me-1"></i>EARLY BIRD</span>'
             );
         } else {
-            var finalPrice = ebOn ? active : orig;
+            var finalPrice = (orig > 0) ? orig : active;
             $('#preview-ind-price').html(
+                '<strong style="color: #00FF94; font-size: 1.15rem;">PKR ' + finalPrice.toLocaleString() + '</strong> ' +
+                '<span class="badge bg-secondary ms-2">STANDARD</span>'
+            );
+        }
+    }
+
+    function updateParticipantPreview() {
+        var discOn = $('#switch_participant_discount_active').is(':checked');
+        var orig = parseInt($('#input_participant_orig').val()) || 0;
+        var active = parseInt($('#input_participant_price').val()) || 0;
+
+        if (discOn && orig > active) {
+            $('#preview-participant-price').html(
+                '<span style="text-decoration: line-through; opacity: 0.6; color: #ff6a6a; margin-right: 8px; font-weight: 600;">PKR ' + orig.toLocaleString() + '</span>' +
+                '<strong style="color: #00FF94; font-size: 1.15rem;">PKR ' + active.toLocaleString() + '</strong> ' +
+                '<span class="badge bg-warning text-dark ms-2 fw-bold"><i class="fas fa-tag me-1"></i>DISCOUNT</span>'
+            );
+        } else {
+            var finalPrice = (orig > 0) ? orig : active;
+            $('#preview-participant-price').html(
+                '<strong style="color: #00FF94; font-size: 1.15rem;">PKR ' + finalPrice.toLocaleString() + '</strong> ' +
+                '<span class="badge bg-secondary ms-2">STANDARD</span>'
+            );
+        }
+    }
+
+    function updateGroupPreview() {
+        var discOn = $('#switch_group_discount_active').is(':checked');
+        var orig = parseInt($('#input_group_orig').val()) || 0;
+        var active = parseInt($('#input_group_price').val()) || 0;
+
+        if (discOn && orig > active) {
+            $('#preview-group-price').html(
+                '<span style="text-decoration: line-through; opacity: 0.6; color: #ff6a6a; margin-right: 8px; font-weight: 600;">PKR ' + orig.toLocaleString() + '</span>' +
+                '<strong style="color: #00FF94; font-size: 1.15rem;">PKR ' + active.toLocaleString() + '</strong> ' +
+                '<span class="badge bg-warning text-dark ms-2 fw-bold"><i class="fas fa-tag me-1"></i>DISCOUNT</span>'
+            );
+        } else {
+            var finalPrice = (orig > 0) ? orig : active;
+            $('#preview-group-price').html(
                 '<strong style="color: #00FF94; font-size: 1.15rem;">PKR ' + finalPrice.toLocaleString() + '</strong> ' +
                 '<span class="badge bg-secondary ms-2">STANDARD</span>'
             );
@@ -793,21 +863,20 @@ $(document).ready(function() {
     });
 
     $('#switch_enable_participant').change(function() {
-        var price = parseInt($('#input_participant_price').val()) || 0;
         $('#card-tier-participant').toggleClass('active', this.checked).toggleClass('disabled-tier', !this.checked);
-        $('#badge-participant-status').text(this.checked ? ('Visible on Form (PKR ' + price.toLocaleString() + ')') : 'Hidden (Single Entry Mode)')
-            .toggleClass('bg-success', this.checked).toggleClass('bg-secondary', !this.checked);
     });
 
     $('#switch_enable_group').change(function() {
-        var price = parseInt($('#input_group_price').val()) || 0;
         $('#card-tier-group').toggleClass('active', this.checked).toggleClass('disabled-tier', !this.checked);
-        $('#badge-group-status').text(this.checked ? ('Visible on Form (PKR ' + price.toLocaleString() + ')') : 'Hidden (Single Entry Mode)')
-            .toggleClass('bg-success', this.checked).toggleClass('bg-secondary', !this.checked);
     });
 
     $('#switch_early_bird_active, #input_ind_orig, #input_ind_price').on('input change', updateIndPreview);
+    $('#switch_participant_discount_active, #input_participant_orig, #input_participant_price').on('input change', updateParticipantPreview);
+    $('#switch_group_discount_active, #input_group_orig, #input_group_price').on('input change', updateGroupPreview);
+    
     updateIndPreview();
+    updateParticipantPreview();
+    updateGroupPreview();
 
     // Save All Tier & Pricing Settings
     $('#btn-save-tier-settings').click(function() {
@@ -820,9 +889,13 @@ $(document).ready(function() {
             enable_participant: $('#switch_enable_participant').is(':checked') ? 1 : 0,
             enable_group: $('#switch_enable_group').is(':checked') ? 1 : 0,
             early_bird_active: $('#switch_early_bird_active').is(':checked') ? 1 : 0,
+            participant_discount_active: $('#switch_participant_discount_active').is(':checked') ? 1 : 0,
+            group_discount_active: $('#switch_group_discount_active').is(':checked') ? 1 : 0,
             individual_original_price: $('#input_ind_orig').val(),
             individual_price: $('#input_ind_price').val(),
+            participant_original_price: $('#input_participant_orig').val(),
             participant_price: $('#input_participant_price').val(),
+            group_original_price: $('#input_group_orig').val(),
             group_price: $('#input_group_price').val()
         };
 

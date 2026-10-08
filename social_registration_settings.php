@@ -17,7 +17,11 @@ function social_registrations_read_state(): array {
         'individual_original_price' => 700,
         'early_bird_active' => true,
         'participant_price' => 0,
-        'group_price' => 1200
+        'participant_original_price' => 0,
+        'participant_discount_active' => false,
+        'group_price' => 1200,
+        'group_original_price' => 1500,
+        'group_discount_active' => false
     ];
 
     $file = social_registrations_status_file();
@@ -47,7 +51,11 @@ function social_registrations_write_state(array $state): bool {
         'individual_original_price' => (int) ($state['individual_original_price'] ?? 700),
         'early_bird_active' => (bool) ($state['early_bird_active'] ?? true),
         'participant_price' => (int) ($state['participant_price'] ?? 0),
+        'participant_original_price' => (int) ($state['participant_original_price'] ?? 0),
+        'participant_discount_active' => (bool) ($state['participant_discount_active'] ?? false),
         'group_price' => (int) ($state['group_price'] ?? 1200),
+        'group_original_price' => (int) ($state['group_original_price'] ?? 1500),
+        'group_discount_active' => (bool) ($state['group_discount_active'] ?? false),
         'updated_at' => date('c')
     ];
     return (bool) file_put_contents(social_registrations_status_file(), json_encode($payload, JSON_PRETTY_PRINT));
@@ -69,11 +77,40 @@ function social_registrations_get_settings(mysqli $conn = null): array {
                 'individual_original_price' => isset($row['individual_original_price']) ? (int)$row['individual_original_price'] : 700,
                 'early_bird_active' => isset($row['early_bird_active']) ? (bool)$row['early_bird_active'] : true,
                 'participant_price' => isset($row['participant_price']) ? (int)$row['participant_price'] : 0,
+                'participant_original_price' => isset($row['participant_original_price']) ? (int)$row['participant_original_price'] : 0,
+                'participant_discount_active' => isset($row['participant_discount_active']) ? (bool)$row['participant_discount_active'] : false,
                 'group_price' => isset($row['group_price']) ? (int)$row['group_price'] : 1200,
+                'group_original_price' => isset($row['group_original_price']) ? (int)$row['group_original_price'] : 1500,
+                'group_discount_active' => isset($row['group_discount_active']) ? (bool)$row['group_discount_active'] : false,
             ];
         }
     }
     return $state;
+}
+
+function social_tier_effective_price(string $tier, array $settings): int {
+    if ($tier === 'standard') {
+        $ebActive = !empty($settings['early_bird_active']);
+        $orig = (int)($settings['individual_original_price'] ?? 700);
+        $disc = (int)($settings['individual_price'] ?? 500);
+        return ($ebActive && $orig > $disc) ? $disc : $orig;
+    }
+    if ($tier === 'participant') {
+        $discActive = !empty($settings['participant_discount_active']);
+        $orig = (int)($settings['participant_original_price'] ?? 0);
+        $disc = (int)($settings['participant_price'] ?? 0);
+        if ($discActive && $orig > $disc) {
+            return $disc;
+        }
+        return ($orig > 0) ? $orig : $disc;
+    }
+    if ($tier === 'group') {
+        $discActive = !empty($settings['group_discount_active']);
+        $orig = (int)($settings['group_original_price'] ?? 1500);
+        $disc = (int)($settings['group_price'] ?? 1200);
+        return ($discActive && $orig > $disc) ? $disc : $orig;
+    }
+    return 0;
 }
 
 function social_registrations_update_settings(array $fields, mysqli $conn = null): bool {
@@ -92,7 +129,11 @@ function social_registrations_update_settings(array $fields, mysqli $conn = null
             individual_original_price = ?,
             early_bird_active = ?,
             participant_price = ?,
-            group_price = ?
+            participant_original_price = ?,
+            participant_discount_active = ?,
+            group_price = ?,
+            group_original_price = ?,
+            group_discount_active = ?
             WHERE id = 1");
         if ($stmt) {
             $isOpen = $merged['open'] ? 1 : 0;
@@ -105,13 +146,18 @@ function social_registrations_update_settings(array $fields, mysqli $conn = null
             $indOrig = (int)$merged['individual_original_price'];
             $ebActive = $merged['early_bird_active'] ? 1 : 0;
             $partPrice = (int)$merged['participant_price'];
+            $partOrig = (int)$merged['participant_original_price'];
+            $partDiscActive = $merged['participant_discount_active'] ? 1 : 0;
             $grpPrice = (int)$merged['group_price'];
+            $grpOrig = (int)$merged['group_original_price'];
+            $grpDiscActive = $merged['group_discount_active'] ? 1 : 0;
 
-            $stmt->bind_param("iiiiiiiiiii", 
+            $stmt->bind_param("iiiiiiiiiiiiiii", 
                 $isOpen, $limitVal, $isVisible,
                 $enInd, $enPart, $enGrp,
                 $indPrice, $indOrig, $ebActive,
-                $partPrice, $grpPrice
+                $partPrice, $partOrig, $partDiscActive,
+                $grpPrice, $grpOrig, $grpDiscActive
             );
             $stmt->execute();
             $stmt->close();

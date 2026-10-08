@@ -62,7 +62,17 @@ try {
 
     if (isset($_POST['early_bird_active'])) {
         $tierUpdates['early_bird_active'] = (int)$_POST['early_bird_active'] ? 1 : 0;
-        $messages[] = $tierUpdates['early_bird_active'] ? 'Early Bird Pricing ACTIVATED.' : 'Early Bird Pricing DEACTIVATED.';
+        $messages[] = $tierUpdates['early_bird_active'] ? 'Individual Early Bird ACTIVATED.' : 'Individual Early Bird DEACTIVATED.';
+    }
+
+    if (isset($_POST['participant_discount_active'])) {
+        $tierUpdates['participant_discount_active'] = (int)$_POST['participant_discount_active'] ? 1 : 0;
+        $messages[] = $tierUpdates['participant_discount_active'] ? 'Participant Discount ACTIVATED.' : 'Participant Discount DEACTIVATED.';
+    }
+
+    if (isset($_POST['group_discount_active'])) {
+        $tierUpdates['group_discount_active'] = (int)$_POST['group_discount_active'] ? 1 : 0;
+        $messages[] = $tierUpdates['group_discount_active'] ? 'Group Discount ACTIVATED.' : 'Group Discount DEACTIVATED.';
     }
 
     if (isset($_POST['individual_price']) && is_numeric($_POST['individual_price'])) {
@@ -77,8 +87,16 @@ try {
         $tierUpdates['participant_price'] = max(0, (int)$_POST['participant_price']);
     }
 
+    if (isset($_POST['participant_original_price']) && is_numeric($_POST['participant_original_price'])) {
+        $tierUpdates['participant_original_price'] = max(0, (int)$_POST['participant_original_price']);
+    }
+
     if (isset($_POST['group_price']) && is_numeric($_POST['group_price'])) {
         $tierUpdates['group_price'] = max(0, (int)$_POST['group_price']);
+    }
+
+    if (isset($_POST['group_original_price']) && is_numeric($_POST['group_original_price'])) {
+        $tierUpdates['group_original_price'] = max(0, (int)$_POST['group_original_price']);
     }
 
     if (!empty($tierUpdates)) {
