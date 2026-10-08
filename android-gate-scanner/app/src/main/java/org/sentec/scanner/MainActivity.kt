@@ -54,7 +54,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var apiClient: GateApiClient
     private lateinit var soundHelper: SoundHelper
     private lateinit var cameraExecutor: ExecutorService
-    private val imageHttpClient = OkHttpClient()
+    private val imageHttpClient = OkHttpClient.Builder()
+        .connectTimeout(12, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+        .followRedirects(true)
+        .followSslRedirects(true)
+        .build()
 
     private var camera: Camera? = null
     private var isTorchOn = false
@@ -453,34 +458,39 @@ class MainActivity : AppCompatActivity() {
 
         // Load & Show Photos Row (Clear color tint masks so preview images display clearly)
         binding.layoutInspectionPhotos.visibility = View.VISIBLE
-        binding.ivFacePhoto.imageTintList = null
-        binding.ivFacePhoto.clearColorFilter()
-        binding.ivFacePhoto.setImageResource(android.R.drawable.ic_menu_myplaces)
-
-        binding.ivIdCardPhoto.imageTintList = null
-        binding.ivIdCardPhoto.clearColorFilter()
-        binding.ivIdCardPhoto.setImageResource(android.R.drawable.ic_menu_gallery)
+        binding.ivFacePhoto.setImageDrawable(null)
+        binding.ivIdCardPhoto.setImageDrawable(null)
 
         if (faceUrl.isNotEmpty()) {
+            binding.pbFacePhoto.visibility = View.VISIBLE
             fetchImageBitmap(faceUrl) { bmp ->
+                binding.pbFacePhoto.visibility = View.GONE
                 if (bmp != null) {
                     activeFaceBitmap = bmp
-                    binding.ivFacePhoto.imageTintList = null
-                    binding.ivFacePhoto.clearColorFilter()
                     binding.ivFacePhoto.setImageBitmap(bmp)
+                } else {
+                    binding.ivFacePhoto.setImageResource(android.R.drawable.ic_menu_myplaces)
                 }
             }
+        } else {
+            binding.pbFacePhoto.visibility = View.GONE
+            binding.ivFacePhoto.setImageResource(android.R.drawable.ic_menu_myplaces)
         }
 
         if (idCardUrl.isNotEmpty()) {
+            binding.pbIdCardPhoto.visibility = View.VISIBLE
             fetchImageBitmap(idCardUrl) { bmp ->
+                binding.pbIdCardPhoto.visibility = View.GONE
                 if (bmp != null) {
                     activeIdCardBitmap = bmp
-                    binding.ivIdCardPhoto.imageTintList = null
-                    binding.ivIdCardPhoto.clearColorFilter()
                     binding.ivIdCardPhoto.setImageBitmap(bmp)
+                } else {
+                    binding.ivIdCardPhoto.setImageResource(android.R.drawable.ic_menu_gallery)
                 }
             }
+        } else {
+            binding.pbIdCardPhoto.visibility = View.GONE
+            binding.ivIdCardPhoto.setImageResource(android.R.drawable.ic_menu_gallery)
         }
 
         // Status Evaluation & UI Styling
@@ -705,21 +715,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fetchImageBitmap(url: String, onLoaded: (Bitmap?) -> Unit) {
-        if (url.isBlank()) return
+        if (url.isBlank()) {
+            onLoaded(null)
+            return
+        }
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val req = Request.Builder().url(url).build()
+                val secureUrl = if (url.startsWith("http://")) url.replaceFirst("http://", "https://") else url
+                val req = Request.Builder()
+                    .url(secureUrl)
+                    .header("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36")
+                    .build()
                 val resp = imageHttpClient.newCall(req).execute()
                 if (resp.isSuccessful) {
                     val bytes = resp.body?.bytes()
-                    if (bytes != null) {
-                        val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    if (bytes != null && bytes.isNotEmpty()) {
+                        val opts = BitmapFactory.Options().apply {
+                            inPreferredConfig = Bitmap.Config.ARGB_8888
+                        }
+                        val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
                         withContext(Dispatchers.Main) {
                             onLoaded(bmp)
                         }
+                        return@launch
                     }
                 }
-            } catch (_: Exception) {}
+                withContext(Dispatchers.Main) {
+                    onLoaded(null)
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    onLoaded(null)
+                }
+            }
         }
     }
 
