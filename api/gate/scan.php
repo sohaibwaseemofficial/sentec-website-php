@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $auth = gate_require_auth();
 
 $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
-$qrCode = trim($input['qr_code'] ?? $input['code'] ?? '');
+$qrCode = trim($input['qr_payload'] ?? $input['qr_code'] ?? $input['code'] ?? '');
 $action = strtolower(trim($input['action'] ?? 'admit')); // 'lookup' or 'admit'
 $day = (int)($input['day'] ?? 1);
 $deviceTs = (int)($input['device_timestamp'] ?? (time() * 1000));
