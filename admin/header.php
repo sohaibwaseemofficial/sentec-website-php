@@ -63,6 +63,7 @@ $navItems = [
     ['label' => 'Dashboard', 'href' => 'index.php', 'icon' => 'fas fa-th-large'],
     ['label' => 'Registrations', 'href' => 'manage_registrations.php', 'icon' => 'fas fa-users'],
     ['label' => 'Social Passes', 'href' => 'manage_social.php', 'icon' => 'fas fa-ticket-alt'],
+    ['label' => 'Gate Operations', 'href' => 'gate_monitor.php', 'icon' => 'fas fa-qrcode'],
     ['label' => 'Events Manager', 'href' => 'add_event.php', 'icon' => 'fas fa-calendar-alt'],
     ['label' => 'Team', 'href' => 'manage_team.php', 'icon' => 'fas fa-user-friends'],
     ['label' => 'Gallery', 'href' => 'manage_gallery.php', 'icon' => 'fas fa-images'],
