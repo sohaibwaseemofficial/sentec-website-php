@@ -241,8 +241,8 @@ class MainActivity : AppCompatActivity() {
             binding.btnUnlockPin.text = "Unlock Terminal"
 
             result.onSuccess { json ->
-                if (json.has("token") && json.get("token").asString.isNotEmpty()) {
-                    val token = json.get("token").asString
+                val token = json.optString("token", "")
+                if (token.isNotEmpty()) {
                     val stId = json.optString("station_id", "GATE_$pin")
                     val stName = json.optString("station_name", "Gate $pin")
                     val role = json.optString("role", "all")
@@ -768,21 +768,24 @@ class MainActivity : AppCompatActivity() {
                         val face = item.optString("face_image", "").ifEmpty { item.optString("p", "") }
                         val idCard = item.optString("id_card_image", "").ifEmpty { item.optString("card", "") }
                         val cnicVal = item.optString("cnic", "")
+                        val rollVal = item.optString("roll_number", "")
+                        val deptVal = item.optString("dept", "")
+                        val usedAtVal = item.optString("used_at", "")
 
                         list.add(
                             AttendeeEntity(
                                 ticket_id = item.getString("ticket_id"),
                                 attendee_id = item.optInt("attendee_id", 0),
                                 name = item.getString("name"),
-                                cnic = if (cnicVal.isNotEmpty()) cnicVal else null,
-                                roll_number = item.optString("roll_number", null),
-                                department = item.optString("dept", null),
+                                cnic = cnicVal.ifEmpty { null },
+                                roll_number = rollVal.ifEmpty { null },
+                                department = deptVal.ifEmpty { null },
                                 event_name = item.optString("event_name", "SENTEC Event"),
                                 gate_type = item.optString("gate_type", "social"),
-                                face_image = if (face.isNotEmpty()) face else null,
-                                id_card_image = if (idCard.isNotEmpty()) idCard else null,
+                                face_image = face.ifEmpty { null },
+                                id_card_image = idCard.ifEmpty { null },
                                 is_used = item.optInt("is_used", 0) == 1,
-                                used_at = item.optString("used_at", null)
+                                used_at = usedAtVal.ifEmpty { null }
                             )
                         )
                     }
@@ -856,9 +859,4 @@ class MainActivity : AppCompatActivity() {
         soundHelper.release()
         cameraExecutor.shutdown()
     }
-}
-
-// Extension to safely read nullable JSON values
-private fun com.google.gson.JsonObject.optString(key: String, fallback: String): String {
-    return if (this.has(key) && !this.get(key).isJsonNull) this.get(key).asString else fallback
 }

@@ -1,12 +1,12 @@
 package org.sentec.scanner.network
 
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -14,7 +14,6 @@ class GateApiClient(
     var masterHubUrl: String = "http://192.168.43.1:8080",
     var cloudBaseUrl: String = "https://sentecneduet.live/api/gate"
 ) {
-    private val gson = Gson()
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
     // Fast client for local hotspot master hub (500ms timeout)
@@ -32,11 +31,11 @@ class GateApiClient(
     /**
      * Authenticate station with 4-digit PIN
      */
-    suspend fun authenticatePin(pin: String, volunteerName: String, deviceId: String): Result<JsonObject> = withContext(Dispatchers.IO) {
-        val payload = JsonObject().apply {
-            addProperty("pin", pin)
-            addProperty("volunteer_name", volunteerName)
-            addProperty("device_id", deviceId)
+    suspend fun authenticatePin(pin: String, volunteerName: String, deviceId: String): Result<JSONObject> = withContext(Dispatchers.IO) {
+        val payload = JSONObject().apply {
+            put("pin", pin)
+            put("volunteer_name", volunteerName)
+            put("device_id", deviceId)
         }
         val body = payload.toString().toRequestBody(jsonMediaType)
 
@@ -45,8 +44,8 @@ class GateApiClient(
             val req = Request.Builder().url("$masterHubUrl/auth/pin").post(body).build()
             val resp = localClient.newCall(req).execute()
             if (resp.isSuccessful) {
-                val json = gson.fromJson(resp.body?.string(), JsonObject::class.java)
-                return@withContext Result.success(json)
+                val str = resp.body?.string() ?: "{}"
+                return@withContext Result.success(JSONObject(str))
             }
         } catch (_: Exception) {}
 
@@ -54,9 +53,9 @@ class GateApiClient(
         try {
             val req = Request.Builder().url("$cloudBaseUrl/auth_pin.php").post(body).build()
             val resp = cloudClient.newCall(req).execute()
+            val str = resp.body?.string() ?: "{}"
             if (resp.isSuccessful) {
-                val json = gson.fromJson(resp.body?.string(), JsonObject::class.java)
-                return@withContext Result.success(json)
+                return@withContext Result.success(JSONObject(str))
             }
             Result.failure(IOException("Cloud auth failed: ${resp.code}"))
         } catch (e: Exception) {
@@ -74,14 +73,14 @@ class GateApiClient(
         action: String = "admit",
         lat: Double? = null,
         lng: Double? = null
-    ): Result<JsonObject> = withContext(Dispatchers.IO) {
-        val payload = JsonObject().apply {
-            addProperty("qr_payload", qrPayload)
-            addProperty("device_id", deviceId)
-            addProperty("action", action)
+    ): Result<JSONObject> = withContext(Dispatchers.IO) {
+        val payload = JSONObject().apply {
+            put("qr_payload", qrPayload)
+            put("device_id", deviceId)
+            put("action", action)
             if (lat != null && lng != null) {
-                addProperty("lat", lat)
-                addProperty("lng", lng)
+                put("lat", lat)
+                put("lng", lng)
             }
         }
         val body = payload.toString().toRequestBody(jsonMediaType)
@@ -95,8 +94,8 @@ class GateApiClient(
                 .build()
             val resp = localClient.newCall(req).execute()
             if (resp.isSuccessful) {
-                val json = gson.fromJson(resp.body?.string(), JsonObject::class.java)
-                return@withContext Result.success(json)
+                val str = resp.body?.string() ?: "{}"
+                return@withContext Result.success(JSONObject(str))
             }
         } catch (_: Exception) {}
 
@@ -109,23 +108,22 @@ class GateApiClient(
                 .build()
             val resp = cloudClient.newCall(req).execute()
             val respString = resp.body?.string() ?: "{}"
-            val json = gson.fromJson(respString, JsonObject::class.java)
-            Result.success(json)
+            Result.success(JSONObject(respString))
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun lookupAttendee(token: String, qrPayload: String, deviceId: String): Result<JsonObject> =
+    suspend fun lookupAttendee(token: String, qrPayload: String, deviceId: String): Result<JSONObject> =
         performScan(token, qrPayload, deviceId, action = "lookup")
 
-    suspend fun admitAttendee(token: String, qrPayload: String, deviceId: String): Result<JsonObject> =
+    suspend fun admitAttendee(token: String, qrPayload: String, deviceId: String): Result<JSONObject> =
         performScan(token, qrPayload, deviceId, action = "admit")
 
     /**
      * Fetch complete whitelist from Cloud for offline caching
      */
-    suspend fun fetchCloudWhitelist(token: String): Result<JsonObject> = withContext(Dispatchers.IO) {
+    suspend fun fetchCloudWhitelist(token: String): Result<JSONObject> = withContext(Dispatchers.IO) {
         try {
             val req = Request.Builder()
                 .url("$cloudBaseUrl/seed.php")
@@ -134,8 +132,8 @@ class GateApiClient(
                 .build()
             val resp = cloudClient.newCall(req).execute()
             if (resp.isSuccessful) {
-                val json = gson.fromJson(resp.body?.string(), JsonObject::class.java)
-                Result.success(json)
+                val str = resp.body?.string() ?: "{}"
+                Result.success(JSONObject(str))
             } else {
                 Result.failure(IOException("Seed request returned ${resp.code}"))
             }
@@ -147,10 +145,10 @@ class GateApiClient(
     /**
      * Batch push unsynced outbox logs to cloud
      */
-    suspend fun pushBatchLogs(token: String, logsJsonArray: String): Result<JsonObject> = withContext(Dispatchers.IO) {
+    suspend fun pushBatchLogs(token: String, logsJsonArray: String): Result<JSONObject> = withContext(Dispatchers.IO) {
         try {
-            val payload = JsonObject().apply {
-                add("logs", Gson().fromJson(logsJsonArray, com.google.gson.JsonArray::class.java))
+            val payload = JSONObject().apply {
+                put("logs", JSONArray(logsJsonArray))
             }
             val body = payload.toString().toRequestBody(jsonMediaType)
             val req = Request.Builder()
@@ -159,8 +157,8 @@ class GateApiClient(
                 .post(body)
                 .build()
             val resp = cloudClient.newCall(req).execute()
-            val json = gson.fromJson(resp.body?.string(), JsonObject::class.java)
-            Result.success(json)
+            val str = resp.body?.string() ?: "{}"
+            Result.success(JSONObject(str))
         } catch (e: Exception) {
             Result.failure(e)
         }
