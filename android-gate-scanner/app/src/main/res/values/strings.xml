@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">SENTEC Gate Scanner</string>
+    <string name="mode_scanner">Scanner Mode</string>
+    <string name="mode_master">Master Hub Mode</string>
+    <string name="enter_pin">Enter 4-Digit Station PIN</string>
+    <string name="point_qr">Or scan Admin Station Setup QR</string>
+    <string name="unlock_terminal">Unlock Terminal</string>
+    <string name="station_locked">Station Locked</string>
+    <string name="offline_cache_ready">Offline Whitelist Loaded</string>
+    <string name="duplicate_warning">DUPLICATE ENTRY DETECTED</string>
+    <string name="approved">APPROVED - ENTRY GRANTED</string>
+    <string name="invalid_ticket">INVALID QR PASS</string>
+</resources>

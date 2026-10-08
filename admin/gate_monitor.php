@@ -146,6 +146,9 @@ if ($cntRes) {
             <a href="../scanner" target="_blank" class="btn btn-sm text-dark fw-bold rounded-pill px-3 py-2" style="background: #00FF94; box-shadow: 0 0 15px rgba(0,255,148,0.3);">
                 <i class="fas fa-camera me-1"></i> Launch Scanner Terminal <i class="fas fa-external-link-alt ms-1" style="font-size:10px;"></i>
             </a>
+            <button class="btn btn-sm btn-outline-info rounded-pill px-3 py-2 text-white" data-bs-toggle="modal" data-bs-target="#apkModal">
+                <i class="fab fa-android text-success me-1"></i> Native Android APK
+            </button>
             <button class="btn btn-sm btn-outline-light rounded-pill px-3 py-2" data-bs-toggle="modal" data-bs-target="#newStationModal">
                 <i class="fas fa-plus me-1"></i> New Gate Station
             </button>
@@ -418,6 +421,37 @@ if ($cntRes) {
                 <div class="fw-bold fs-5 text-white mb-1" id="modal-qr-name">Gate 1</div>
                 <div class="font-mono text-warning" id="modal-qr-pin">PIN: 1011</div>
                 <p class="text-muted small mt-2 mb-0">Point volunteer mobile scanner at this QR code to unlock immediately.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: ANDROID APK INFO & DOWNLOAD -->
+<div class="modal fade" id="apkModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title font-outfit fw-bold text-white"><i class="fab fa-android text-success me-2"></i>Dedicated Native Android APK</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="small text-muted mb-3">
+                    The native Android APK includes CameraX hardware autofocus, offline SQLite database caching, and embedded NanoHTTPD Master Hub hotspot hosting (<code class="text-warning">192.168.43.1:8080</code>).
+                </p>
+                <div class="p-3 bg-black rounded-3 border border-secondary mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-white fw-bold">Automated Cloud Build (CI/CD)</span>
+                        <span class="badge bg-success font-mono">Ready</span>
+                    </div>
+                    <p class="small text-muted mb-2 font-mono">Compiled on push by GitHub Actions</p>
+                    <a href="https://github.com/sohaibwaseemofficial/sentec-website-php/actions" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-3">
+                        <i class="fas fa-download me-1"></i> Download SENTEC-Gate-Scanner.apk <i class="fas fa-external-link-alt ms-1" style="font-size:10px;"></i>
+                    </a>
+                </div>
+                <div class="p-3 bg-black rounded-3 border border-secondary">
+                    <span class="text-white fw-bold d-block mb-1">Local Android Studio Build</span>
+                    <p class="small text-muted mb-0">Open the <code>android-gate-scanner/</code> directory in Android Studio and press <strong>Run (Shift+F10)</strong> or <strong>Build APK</strong>.</p>
+                </div>
             </div>
         </div>
     </div>

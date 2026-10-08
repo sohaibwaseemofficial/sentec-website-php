@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_dark">#080B0D</color>
+    <color name="bg_card">#11161A</color>
+    <color name="neon_green">#00FF94</color>
+    <color name="neon_green_alpha">#2600FF94</color>
+    <color name="danger_red">#FF334B</color>
+    <color name="danger_red_alpha">#33FF334B</color>
+    <color name="warning_orange">#FFAA00</color>
+    <color name="accent_blue">#00C3FF</color>
+    <color name="text_white">#F4F1EB</color>
+    <color name="text_muted">#8A99A8</color>
+    <color name="border_glass">#22FFFFFF</color>
+</resources>
