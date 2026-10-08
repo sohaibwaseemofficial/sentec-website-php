@@ -867,6 +867,10 @@
                                 <span class="detail-label">PASS TYPE</span>
                                 <span class="detail-val" id="inspect-event">Ruh-e-Raqs</span>
                             </div>
+                            <div class="inspect-detail-item" id="inspect-module-container" style="grid-column: span 2; display: none; background: rgba(0, 255, 148, 0.08); border: 1px solid rgba(0, 255, 148, 0.25); border-radius: 8px; padding: 6px 10px; margin-top: 4px;">
+                                <span class="detail-label" style="color: var(--neon-green); font-weight: 700;">🎯 COMPETITION MODULE</span>
+                                <span class="detail-val" id="inspect-module" style="color: #fff; font-size: 0.95rem; font-weight: 800;">PitchFest (Team: cxf)</span>
+                            </div>
                         </div>
 
                         <!-- Warning / Duplicate Detail Alert Box -->
@@ -1146,13 +1150,7 @@
             currentScannedCode = decodedText;
             playFeedbackSound(true); // Haptic click feedback
 
-            // If Fast Lane Mode active, admit immediately
-            if (!isInspectMode) {
-                executeDirectAdmission(decodedText);
-                return;
-            }
-
-            // INSPECTION MODE: Look up attendee record first
+            // Always perform attendee verification lookup so the volunteer can physically review pass and ID
             try {
                 const response = await fetchWithTimeout('api/gate/scan.php', {
                     method: 'POST',
@@ -1165,7 +1163,7 @@
                         action: 'lookup',
                         day: currentDay
                     })
-                }, 2000);
+                }, 7000);
 
                 const data = await response.json();
                 currentLookupData = data;
@@ -1200,7 +1198,19 @@
             nameEl.innerText = attendee.name || "Unknown Attendee";
             ticketEl.innerText = data.ticket_id || rawCode;
             cnicEl.innerText = attendee.cnic || attendee.roll_number || 'N/A';
-            eventEl.innerText = attendee.event_name || (data.role === 'engineer' ? "Engineer's Code" : "Ruh-e-Raqs");
+            eventEl.innerText = attendee.event_name || (data.role === 'engineer' ? "Engineer's Code" : "RUH-E-RAQS Social Night");
+
+            // Competition Module & Team Name Display
+            const modWrap = document.getElementById('inspect-module-container');
+            const modVal = document.getElementById('inspect-module');
+            const moduleName = attendee.module || '';
+            const teamName = attendee.team || '';
+            if (moduleName) {
+                modWrap.style.display = 'block';
+                modVal.innerText = moduleName + (teamName ? ` (Team: ${teamName})` : '');
+            } else {
+                modWrap.style.display = 'none';
+            }
 
             // Setup Face Photo
             const faceImg = document.getElementById('inspect-face-img');
@@ -1229,53 +1239,54 @@
             }
 
             // Handle Verification States
-            if (data.can_admit === true) {
+            if (data.can_admit === true && (data.status === 'READY_TO_ADMIT' || data.status === 'APPROVED')) {
                 // READY TO ADMIT
                 badge.className = "inspect-status-badge";
                 badgeIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
-                badgeText.innerText = "READY TO ADMIT";
+                badgeText.innerText = "READY TO ADMIT // VERIFY ID";
                 btnGrant.style.display = 'flex';
                 btnGrant.disabled = false;
                 btnGrant.innerHTML = '<i class="fas fa-check-circle"></i> GRANT ENTRY (CONFIRM)';
                 btnGrant.style.background = 'var(--neon-green)';
                 btnGrant.style.color = '#000';
-                btnCancel.innerText = "CANCEL / SCAN NEXT";
+                btnCancel.innerText = "REJECT / SCAN NEXT";
                 playFeedbackSound('success');
                 vibrate([40]);
-            } else if (data.status === 'DUPLICATE') {
-                // DUPLICATE ENTRY
+            } else if (data.status === 'DUPLICATE' || data.status === 'DUPLICATE_REJECTED' || attendee.attendance_status === 'present') {
+                // DUPLICATE ENTRY DETECTED
                 card.classList.add('rejected');
                 badge.className = "inspect-status-badge";
                 badgeIcon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-                badgeText.innerText = "DUPLICATE ENTRY DETECTED";
+                badgeText.innerText = "RESTRICTION HIT // DUPLICATE DETECTED";
                 alertBox.style.display = 'block';
-                alertText.innerHTML = `<strong>REJECT ENTRY:</strong> ${data.message || 'Pass has already entered the venue.'}`;
+                const timeNote = attendee.entry_time ? ` at ${attendee.entry_time}` : '';
+                alertText.innerHTML = `<strong>⚠️ RESTRICTION HIT:</strong> Pass has already been checked in earlier today${timeNote}! Double entry is strictly DENIED.`;
                 btnGrant.style.display = 'none';
-                btnCancel.innerText = "REJECT & SCAN NEXT";
+                btnCancel.innerText = "DISMISS / SCAN NEXT PASS";
                 playFeedbackSound('error');
                 vibrate([200, 100, 200]);
             } else if (data.status === 'INVALID_ROLE') {
-                // WRONG GATE
-                card.classList.add('warning');
+                // WRONG GATE CHECKPOINT
+                card.classList.add('rejected');
                 badge.className = "inspect-status-badge";
-                badgeIcon.innerHTML = '<i class="fas fa-random"></i>';
-                badgeText.innerText = "WRONG GATE CHECKPOINT";
+                badgeIcon.innerHTML = '<i class="fas fa-hand-paper"></i>';
+                badgeText.innerText = "RESTRICTION HIT // WRONG GATE";
                 alertBox.style.display = 'block';
-                alertText.innerHTML = data.message || "This pass belongs to a different gate checkpoint.";
+                alertText.innerHTML = `<strong>⚠️ RESTRICTION HIT:</strong> ${data.message || 'Pass belongs to a different gate checkpoint.'} Entry denied at this gate!`;
                 btnGrant.style.display = 'none';
-                btnCancel.innerText = "DIRECT ATTENDEE & SCAN NEXT";
+                btnCancel.innerText = "DISMISS / SCAN NEXT PASS";
                 playFeedbackSound('error');
                 vibrate([150, 80, 150]);
             } else {
-                // NOT APPROVED / NOT FOUND
-                card.classList.add('warning');
+                // NOT APPROVED / NOT FOUND / RESTRICTED
+                card.classList.add('rejected');
                 badge.className = "inspect-status-badge";
                 badgeIcon.innerHTML = '<i class="fas fa-times-circle"></i>';
-                badgeText.innerText = data.status || "RESTRICTED";
+                badgeText.innerText = "RESTRICTION HIT // ACCESS DENIED";
                 alertBox.style.display = 'block';
-                alertText.innerHTML = data.message || "Entry restricted. Attendee must visit Help Desk.";
+                alertText.innerHTML = `<strong>⚠️ RESTRICTION HIT:</strong> ${data.message || "Entry restricted. Attendee must visit Help Desk."}`;
                 btnGrant.style.display = 'none';
-                btnCancel.innerText = "SCAN NEXT PASS";
+                btnCancel.innerText = "DISMISS / SCAN NEXT PASS";
                 playFeedbackSound('error');
                 vibrate([150, 80, 150]);
             }
@@ -1383,18 +1394,27 @@
                 const item = req.result;
                 if (item) {
                     const isUsed = (item.u === 1);
+                    const isWrongRole = (currentAuth.station.role !== 'all' && item.r !== 'all' && item.r !== currentAuth.station.role);
+                    const canAdmit = !isUsed && !isWrongRole;
+                    const status = isWrongRole ? 'INVALID_ROLE' : (isUsed ? 'DUPLICATE' : 'READY_TO_ADMIT');
+                    const msg = isWrongRole 
+                        ? `Pass belongs to ${item.r === 'social' ? 'RUH-E-RAQS Social Night' : "Engineer's Code Registration"}. Entry denied at this checkpoint.` 
+                        : (isUsed ? 'Pass already marked as present in offline cache' : 'Verified in offline whitelist');
+
                     displayInspectionSheet({
-                        can_admit: !isUsed,
-                        status: isUsed ? 'DUPLICATE' : 'READY_TO_ADMIT',
+                        can_admit: canAdmit,
+                        status: status,
                         ticket_id: item.t,
                         role: item.r,
-                        message: isUsed ? 'Pass already marked as present in offline cache' : 'Verified in offline whitelist',
+                        message: msg,
                         attendee: {
                             name: item.n,
                             cnic: item.c,
                             face_image: item.p,
                             id_card_image: item.card,
-                            event_name: item.m
+                            event_name: item.r === 'engineer' ? "Engineer's Code" : "RUH-E-RAQS Social Night",
+                            module: item.r === 'engineer' ? item.m : '',
+                            team: ''
                         }
                     }, rawCode);
                 } else {

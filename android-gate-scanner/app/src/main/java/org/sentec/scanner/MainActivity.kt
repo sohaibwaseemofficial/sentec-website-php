@@ -243,9 +243,10 @@ class MainActivity : AppCompatActivity() {
             result.onSuccess { json ->
                 val token = json.optString("token", "")
                 if (token.isNotEmpty()) {
-                    val stId = json.optString("station_id", "GATE_$pin")
-                    val stName = json.optString("station_name", "Gate $pin")
-                    val role = json.optString("role", "all")
+                    val stationObj = json.optJSONObject("station")
+                    val stId = stationObj?.optString("station_id") ?: json.optString("station_id", "GATE_$pin")
+                    val stName = stationObj?.optString("station_name") ?: json.optString("station_name", "Gate $pin")
+                    val role = stationObj?.optString("role") ?: json.optString("role", "all")
 
                     prefs.edit()
                         .putString(KEY_STATION_TOKEN, token)
@@ -255,7 +256,7 @@ class MainActivity : AppCompatActivity() {
                         .putString(KEY_VOLUNTEER, volunteer)
                         .apply()
 
-                    Toast.makeText(this@MainActivity, "Station Paired: $stName", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Station Paired: $stName ($role)", Toast.LENGTH_SHORT).show()
                     checkStationAuth()
                 } else {
                     val msg = json.optString("message", "Invalid Station PIN")
@@ -430,26 +431,41 @@ class MainActivity : AppCompatActivity() {
         val roll = attendee.optString("roll_number", "")
         val event = attendee.optString("event_name", "SENTEC Event Entry")
         val gateType = attendee.optString("gate_type", "social")
+        val module = attendee.optString("module", "")
+        val team = attendee.optString("team", "")
         val faceUrl = attendee.optString("face_image", "")
         val idCardUrl = attendee.optString("id_card_image", "")
-        val usedAt = attendee.optString("used_at", "")
+        val usedAt = attendee.optString("entry_time", attendee.optString("used_at", ""))
 
         binding.tvResultAttendee.text = name
         binding.tvResultTicket.text = ticket
         binding.tvResultCnic.text = if (cnic.isNotEmpty()) " • CNIC: $cnic" else if (roll.isNotEmpty()) " • Roll: $roll" else ""
         binding.tvResultDetail.text = event
 
-        // Load & Show Photos Row
+        // Display Competition Module & Team Name (for Engineer's Code)
+        if (module.isNotEmpty()) {
+            binding.tvResultModule.visibility = View.VISIBLE
+            val teamStr = if (team.isNotEmpty()) " | TEAM: $team" else ""
+            binding.tvResultModule.text = "🎯 MODULE: $module$teamStr"
+        } else {
+            binding.tvResultModule.visibility = View.GONE
+        }
+
+        // Load & Show Photos Row (Clear color tint masks so preview images display clearly)
         binding.layoutInspectionPhotos.visibility = View.VISIBLE
+        binding.ivFacePhoto.imageTintList = null
+        binding.ivFacePhoto.clearColorFilter()
         binding.ivFacePhoto.setImageResource(android.R.drawable.ic_menu_myplaces)
-        binding.ivFacePhoto.setColorFilter(Color.parseColor("#55FFFFFF"))
+
+        binding.ivIdCardPhoto.imageTintList = null
+        binding.ivIdCardPhoto.clearColorFilter()
         binding.ivIdCardPhoto.setImageResource(android.R.drawable.ic_menu_gallery)
-        binding.ivIdCardPhoto.setColorFilter(Color.parseColor("#55FFFFFF"))
 
         if (faceUrl.isNotEmpty()) {
             fetchImageBitmap(faceUrl) { bmp ->
                 if (bmp != null) {
                     activeFaceBitmap = bmp
+                    binding.ivFacePhoto.imageTintList = null
                     binding.ivFacePhoto.clearColorFilter()
                     binding.ivFacePhoto.setImageBitmap(bmp)
                 }
@@ -460,6 +476,7 @@ class MainActivity : AppCompatActivity() {
             fetchImageBitmap(idCardUrl) { bmp ->
                 if (bmp != null) {
                     activeIdCardBitmap = bmp
+                    binding.ivIdCardPhoto.imageTintList = null
                     binding.ivIdCardPhoto.clearColorFilter()
                     binding.ivIdCardPhoto.setImageBitmap(bmp)
                 }
@@ -472,44 +489,46 @@ class MainActivity : AppCompatActivity() {
             binding.tvResultStatus.text = "READY TO ADMIT // VERIFY ID"
             binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.neon_green))
             binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.neon_green)
-            binding.tvInspectionAlert.text = "Inspect participant face photo & physical ID card. If matched, tap GRANT ENTRY below."
+            binding.tvInspectionAlert.text = "VERIFY ATTENDEE: Inspect face photo & physical ID card. If matched, tap GRANT ENTRY below to admit."
             binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#162A1F"))
             binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this, R.color.neon_green))
             binding.btnGrantEntry.visibility = View.VISIBLE
             binding.btnGrantEntry.isEnabled = true
             binding.btnGrantEntry.text = "GRANT ENTRY (CONFIRM)"
-            binding.btnRejectEntry.text = "Dismiss / Close"
-        } else if (status == "DUPLICATE_REJECTED" || attendee.optBoolean("is_used", false)) {
+            binding.btnRejectEntry.text = "Reject / Close"
+        } else if (status == "DUPLICATE" || status == "DUPLICATE_REJECTED" || attendee.optBoolean("is_used", false) || attendee.optString("attendance_status") == "present") {
             soundHelper.playDuplicateOrError()
-            binding.tvResultStatus.text = "DUPLICATE PASS DETECTED"
+            binding.tvResultStatus.text = "RESTRICTION HIT // DUPLICATE DETECTED"
             binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.danger_red))
             binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.danger_red)
-            val note = if (usedAt.isNotEmpty()) "Originally scanned at $usedAt" else "Pass has already been marked present"
-            binding.tvInspectionAlert.text = "DUPLICATE ENTRY BLOCKED: $note. Entry denied."
+            val note = if (usedAt.isNotEmpty()) "Already marked present at $usedAt" else (if (message.isNotEmpty()) message else "Pass already checked in earlier today")
+            binding.tvInspectionAlert.text = "⚠️ DUPLICATE ENTRY BLOCKED: $note. Entry is strictly DENIED."
             binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#331515"))
             binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this, R.color.danger_red))
             binding.btnGrantEntry.visibility = View.GONE
-            binding.btnRejectEntry.text = "Scan Next"
+            binding.btnRejectEntry.text = "Dismiss / Scan Next"
         } else if (status == "INVALID_ROLE") {
             soundHelper.playDuplicateOrError()
-            binding.tvResultStatus.text = "WRONG GATE // INVALID ROLE"
+            binding.tvResultStatus.text = "RESTRICTION HIT // WRONG GATE"
             binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.warning_orange))
             binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.warning_orange)
-            binding.tvInspectionAlert.text = "Ticket belongs to $gateType gate. Please direct participant to the assigned terminal."
+            val gateName = if (gateType.equals("social", ignoreCase = true)) "RUH-E-RAQS Social Night" else "Engineer's Code"
+            val correctGate = if (gateType.equals("social", ignoreCase = true)) "RUH-E-RAQS Social Gate" else "Engineer's Code Registration Gate"
+            binding.tvInspectionAlert.text = "⚠️ RESTRICTION HIT: This pass belongs to $gateName! Entry denied at this checkpoint. Direct attendee to $correctGate."
             binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#332A15"))
             binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this, R.color.warning_orange))
             binding.btnGrantEntry.visibility = View.GONE
-            binding.btnRejectEntry.text = "Scan Next"
+            binding.btnRejectEntry.text = "Dismiss / Scan Next"
         } else {
             soundHelper.playDuplicateOrError()
-            binding.tvResultStatus.text = "ENTRY BLOCKED"
+            binding.tvResultStatus.text = "RESTRICTION HIT // ACCESS DENIED"
             binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.danger_red))
             binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.danger_red)
-            binding.tvInspectionAlert.text = if (message.isNotEmpty()) message else "Cannot admit participant with this pass."
+            binding.tvInspectionAlert.text = if (message.isNotEmpty()) message else "Entry restricted. Attendee must report to the Admin Desk."
             binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#331515"))
             binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this, R.color.danger_red))
             binding.btnGrantEntry.visibility = View.GONE
-            binding.btnRejectEntry.text = "Scan Next"
+            binding.btnRejectEntry.text = "Dismiss / Scan Next"
         }
     }
 

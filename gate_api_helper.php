@@ -388,8 +388,8 @@ function gate_lookup_attendee(mysqli $conn, string $rawInput, string $stationRol
                     'roll_number' => $er['leader_roll'] ?? '',
                     'team' => $er['team_name'] ?? 'Team',
                     'category' => 'Team Leader',
-                    'module' => $er['module_name'] ?? 'Olympiad',
-                    'event_name' => "Engineer's Code: " . ($er['module_name'] ?? 'Olympiad'),
+                    'module' => $er['module_selection'] ?? $er['module_name'] ?? 'Olympiad',
+                    'event_name' => "Engineer's Code: " . ($er['module_selection'] ?? $er['module_name'] ?? 'Olympiad'),
                     'face_image' => gate_normalize_image_url($er['leader_face'] ?? null),
                     'id_card_image' => gate_normalize_image_url($er['leader_card'] ?? null),
                     'payment_proof' => null,
@@ -417,16 +417,17 @@ function gate_lookup_attendee(mysqli $conn, string $rawInput, string $stationRol
     $attendeeData['ticket_id'] = $ticketId;
     $attendeeData['gate_type'] = $ticketRole;
 
-    // Check Role Mismatch
+    // Check Role Mismatch (Strict Gate Restriction)
     if ($stationRole !== 'all' && $stationRole !== $ticketRole) {
         $targetGate = ($ticketRole === 'social') ? "RUH-E-RAQS Social Night Gate" : "Engineer's Code Gate";
+        $passRoleName = ($ticketRole === 'social') ? "RUH-E-RAQS (Social Night)" : "Engineer's Code Registration";
         return [
             'valid' => true,
             'can_admit' => false,
             'status' => 'INVALID_ROLE',
             'ticket_id' => $ticketId,
             'role' => $ticketRole,
-            'error' => "Wrong Gate! This pass belongs to " . strtoupper($ticketRole) . ". Please direct attendee to {$targetGate}.",
+            'error' => "RESTRICTION HIT! This pass belongs to {$passRoleName}. Entry is NOT permitted at this gate! Please direct attendee to {$targetGate}.",
             'attendee' => $attendeeData
         ];
     }
@@ -439,7 +440,7 @@ function gate_lookup_attendee(mysqli $conn, string $rawInput, string $stationRol
             'status' => 'NOT_APPROVED',
             'ticket_id' => $ticketId,
             'role' => $ticketRole,
-            'error' => "Registration status is '" . strtoupper($attendeeData['registration_status']) . "'. Must be approved at Admin Desk.",
+            'error' => "RESTRICTION HIT! Registration status is '" . strtoupper($attendeeData['registration_status']) . "'. Must be approved at Admin Desk.",
             'attendee' => $attendeeData
         ];
     }
@@ -454,7 +455,7 @@ function gate_lookup_attendee(mysqli $conn, string $rawInput, string $stationRol
             'status' => 'DUPLICATE',
             'ticket_id' => $ticketId,
             'role' => $ticketRole,
-            'error' => "DUPLICATE ENTRY! Already marked present at {$entryTimeStr}.",
+            'error' => "RESTRICTION HIT // DUPLICATE ENTRY! Pass already scanned and admitted at {$entryTimeStr}.",
             'attendee' => $attendeeData
         ];
     }

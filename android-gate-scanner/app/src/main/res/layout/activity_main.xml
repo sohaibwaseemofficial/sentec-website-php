@@ -110,12 +110,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
-            <!-- Scanner Reticle Box Overlay -->
+            <!-- Scanner Reticle Box Overlay (Transparent Center + Neon Green Corners) -->
             <View
                 android:id="@+id/reticleBox"
                 android:layout_width="260dp"
                 android:layout_height="260dp"
-                android:background="@drawable/ic_launcher_background"
+                android:background="@drawable/reticle_frame"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -255,6 +255,22 @@
                         android:textSize="12sp"
                         android:layout_marginTop="2dp" />
 
+                    <!-- Module / Competition Badge for Engineer's Code -->
+                    <TextView
+                        android:id="@+id/tvResultModule"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="MODULE: PitchFest | TEAM: cxf"
+                        android:textColor="#00FF94"
+                        android:background="#1B2F24"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="5dp"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold"
+                        android:layout_marginTop="6dp"
+                        android:visibility="gone" />
+
                     <!-- Photos Verification Row (Face Photo + ID Card) -->
                     <LinearLayout
                         android:id="@+id/layoutInspectionPhotos"
@@ -280,8 +296,8 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="110dp"
                                 android:scaleType="centerCrop"
-                                android:src="@android:drawable/ic_menu_myplaces"
-                                app:tint="#55FFFFFF" />
+                                android:background="#0A0E13"
+                                android:src="@android:drawable/ic_menu_myplaces" />
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -311,8 +327,8 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="110dp"
                                 android:scaleType="centerCrop"
-                                android:src="@android:drawable/ic_menu_gallery"
-                                app:tint="#55FFFFFF" />
+                                android:background="#0A0E13"
+                                android:src="@android:drawable/ic_menu_gallery" />
 
                             <TextView
                                 android:layout_width="wrap_content"
