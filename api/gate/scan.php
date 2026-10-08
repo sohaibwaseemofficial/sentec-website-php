@@ -18,6 +18,7 @@ $auth = gate_require_auth();
 
 $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
 $qrCode = trim($input['qr_code'] ?? $input['code'] ?? '');
+$action = strtolower(trim($input['action'] ?? 'admit')); // 'lookup' or 'admit'
 $day = (int)($input['day'] ?? 1);
 $deviceTs = (int)($input['device_timestamp'] ?? (time() * 1000));
 $logId = trim($input['log_id'] ?? ('live_' . bin2hex(random_bytes(8))));
@@ -26,6 +27,22 @@ if (empty($qrCode)) {
     gate_json_response(['success' => false, 'message' => 'Missing QR code data.'], 400);
 }
 
+// Mode 1: Pre-Admission Lookup (Inspection Mode: loads photo, ID card, status without marking attendance)
+if ($action === 'lookup') {
+    $lookup = gate_lookup_attendee($conn, $qrCode, $auth['role'], $day);
+    gate_json_response([
+        'success' => $lookup['valid'] && !empty($lookup['attendee']),
+        'action' => 'lookup',
+        'can_admit' => $lookup['can_admit'] ?? false,
+        'status' => $lookup['status'],
+        'ticket_id' => $lookup['ticket_id'],
+        'role' => $lookup['role'] ?? $auth['role'],
+        'attendee' => $lookup['attendee'],
+        'message' => $lookup['message'] ?? ($lookup['error'] ?? 'Pass Loaded')
+    ], ($lookup['valid'] && !empty($lookup['attendee'])) ? 200 : 404);
+}
+
+// Mode 2: Atomic Check-In & Admission
 $result = gate_verify_and_checkin($conn, [
     'raw_code' => $qrCode,
     'station_role' => $auth['role'],

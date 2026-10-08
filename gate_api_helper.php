@@ -91,6 +91,23 @@ function gate_require_auth(): array {
  * 3. Compact IDs: "SOC-42", "ENG-108", "social:42", "engineer:108"
  * 4. Numeric string: assumes current station role
  */
+function gate_normalize_image_url(?string $path): ?string {
+    if (empty($path)) return null;
+    $path = trim($path);
+    if (strpos($path, 'http://') === 0 || strpos($path, 'https://') === 0) {
+        return $path;
+    }
+    return 'https://sentecneduet.live/' . ltrim($path, '/');
+}
+
+/**
+ * Universal Intelligent QR Parser
+ * Handles:
+ * 1. Station Setup JSON: {"station_id":"...", "pin":"..."}
+ * 2. Full URLs: https://sentecneduet.live/gate/verify_social.php?id=3&member=1 or attendee=42
+ * 3. Compact IDs: "SOC-42", "ENG-108", "SOC-REG-3-1", "ENG-REG-5"
+ * 4. Numeric string: assumes current station role
+ */
 function gate_parse_qr(string $rawInput, string $defaultRole = 'all'): array {
     $rawInput = trim($rawInput);
     if (empty($rawInput)) {
@@ -98,7 +115,7 @@ function gate_parse_qr(string $rawInput, string $defaultRole = 'all'): array {
     }
 
     // 1. Check if it is a URL
-    if (filter_var($rawInput, FILTER_VALIDATE_URL) || strpos($rawInput, 'verify_social') !== false || strpos($rawInput, 'verify_event') !== false) {
+    if (filter_var($rawInput, FILTER_VALIDATE_URL) || strpos($rawInput, 'verify_social') !== false || strpos($rawInput, 'verify_event') !== false || strpos($rawInput, '/gate/') !== false || strpos($rawInput, '/gate_event/') !== false) {
         $parts = parse_url($rawInput);
         parse_str($parts['query'] ?? '', $queryParams);
 
@@ -129,7 +146,31 @@ function gate_parse_qr(string $rawInput, string $defaultRole = 'all'): array {
         }
     }
 
-    // 2. Check compact prefixes
+    // 2. Check compact registration prefixes: SOC-REG-3-1 or ENG-REG-5
+    if (preg_match('/^(SOC|SOCIAL)[-_:]REG[-_:](\d+)(?:[-_:](\d+))?/i', $rawInput, $m)) {
+        $regId = (int)$m[2];
+        $memberIdx = isset($m[3]) ? (int)$m[3] : 1;
+        return [
+            'valid' => true,
+            'role' => 'social',
+            'attendee_id' => 0,
+            'registration_id' => $regId,
+            'member_index' => $memberIdx,
+            'ticket_id' => "SOC-REG-{$regId}-{$memberIdx}"
+        ];
+    }
+    if (preg_match('/^(ENG|ENGINEER|EVENT)[-_:]REG[-_:](\d+)/i', $rawInput, $m)) {
+        $regId = (int)$m[2];
+        return [
+            'valid' => true,
+            'role' => 'engineer',
+            'attendee_id' => 0,
+            'registration_id' => $regId,
+            'ticket_id' => "ENG-REG-{$regId}"
+        ];
+    }
+
+    // 3. Check compact ID prefixes: SOC-42, ENG-108
     if (preg_match('/^(SOC|SOCIAL)[-_:](\d+)/i', $rawInput, $m)) {
         return [
             'valid' => true,
@@ -147,7 +188,7 @@ function gate_parse_qr(string $rawInput, string $defaultRole = 'all'): array {
         ];
     }
 
-    // 3. Fallback: Pure numeric ID
+    // 4. Fallback: Pure numeric ID
     if (ctype_digit($rawInput)) {
         $numId = (int)$rawInput;
         $role = in_array($defaultRole, ['engineer', 'social']) ? $defaultRole : 'social';
@@ -164,8 +205,275 @@ function gate_parse_qr(string $rawInput, string $defaultRole = 'all'): array {
 }
 
 /**
+ * Look up attendee record, photos, ID cards, and admission eligibility
+ * Does NOT mark attendance yet — used for pre-admission verification.
+ */
+function gate_lookup_attendee(mysqli $conn, string $rawInput, string $stationRole = 'all', int $eventDay = 1): array {
+    $parsed = gate_parse_qr($rawInput, $stationRole);
+    if (!$parsed['valid']) {
+        return [
+            'valid' => false,
+            'can_admit' => false,
+            'status' => 'INVALID_FORMAT',
+            'error' => $parsed['error'] ?? 'Unrecognized pass format',
+            'ticket_id' => substr($rawInput, 0, 64) ?: 'UNKNOWN',
+            'attendee' => null
+        ];
+    }
+
+    $ticketRole = $parsed['role'];
+    $attendeeId = $parsed['attendee_id'] ?? 0;
+    $regId = $parsed['registration_id'] ?? 0;
+    $memberIdx = $parsed['member_index'] ?? 1;
+    $ticketId = $parsed['ticket_id'] ?? 'UNKNOWN';
+
+    $attendeeData = null;
+
+    // --- CASE A: SOCIAL ATTENDEE LOOKUP ---
+    if ($ticketRole === 'social') {
+        if ($attendeeId > 0 && social_attendees_table_exists($conn)) {
+            $row = social_attendee_fetch_with_registration($conn, $attendeeId);
+            if ($row) {
+                $attendeeData = [
+                    'id' => (int)$row['id'],
+                    'registration_id' => (int)$row['registration_id'],
+                    'name' => $row['full_name'],
+                    'cnic' => $row['cnic'] ?? '',
+                    'phone' => $row['phone'] ?? '',
+                    'email' => $row['email'] ?? '',
+                    'roll_number' => '',
+                    'team' => '',
+                    'category' => $row['label'] ?? 'Guest Pass',
+                    'event_name' => 'RUH-E-RAQS (Sufi Musical Evening)',
+                    'face_image' => gate_normalize_image_url($row['face_image']),
+                    'id_card_image' => gate_normalize_image_url($row['id_card_image']),
+                    'payment_proof' => gate_normalize_image_url($row['payment_proof'] ?? $row['group_payment_proof'] ?? null),
+                    'payment_status' => $row['payment_status'] ?? $row['group_payment_status'] ?? 'confirmed',
+                    'registration_status' => strtolower($row['group_status'] ?? $row['status'] ?? 'pending'),
+                    'attendance_status' => strtolower($row['attendance_status'] ?? 'pending'),
+                    'entry_time' => $row['entry_time'] ?? null
+                ];
+            }
+        }
+
+        if (!$attendeeData && $regId > 0) {
+            if (social_attendees_table_exists($conn)) {
+                $group = social_attendees_fetch_group($conn, $regId);
+                if (!empty($group)) {
+                    $targetIdx = max(0, min(count($group) - 1, $memberIdx - 1));
+                    $row = $group[$targetIdx];
+                    $attendeeId = (int)$row['id'];
+                    $attendeeData = [
+                        'id' => $attendeeId,
+                        'registration_id' => $regId,
+                        'name' => $row['full_name'],
+                        'cnic' => $row['cnic'] ?? '',
+                        'phone' => $row['phone'] ?? '',
+                        'email' => $row['email'] ?? '',
+                        'roll_number' => '',
+                        'team' => '',
+                        'category' => $row['label'] ?? 'Guest Pass',
+                        'event_name' => 'RUH-E-RAQS (Sufi Musical Evening)',
+                        'face_image' => gate_normalize_image_url($row['face_image']),
+                        'id_card_image' => gate_normalize_image_url($row['id_card_image']),
+                        'payment_proof' => gate_normalize_image_url($row['payment_proof'] ?? null),
+                        'payment_status' => $row['payment_status'] ?? 'confirmed',
+                        'registration_status' => strtolower($row['status'] ?? 'pending'),
+                        'attendance_status' => strtolower($row['attendance_status'] ?? 'pending'),
+                        'entry_time' => $row['entry_time'] ?? null
+                    ];
+                }
+            }
+
+            if (!$attendeeData) {
+                $stmt = $conn->prepare("SELECT * FROM social_registrations WHERE id = ? LIMIT 1");
+                $stmt->bind_param("i", $regId);
+                $stmt->execute();
+                $sr = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+
+                if ($sr) {
+                    $name = $sr['full_name'];
+                    $cnic = $sr['cnic'] ?? '';
+                    $phone = $sr['phone'] ?? '';
+                    $email = $sr['email'] ?? '';
+                    $face = $sr['face_image'] ?? null;
+                    $card = $sr['id_card_image'] ?? null;
+
+                    if ($memberIdx === 2 && !empty($sr['participant2_name'])) {
+                        $name = $sr['participant2_name'];
+                        $cnic = $sr['participant2_cnic'] ?? '';
+                        $phone = $sr['participant2_phone'] ?? '';
+                        $email = $sr['participant2_email'] ?? '';
+                        $face = $sr['participant2_face'] ?? null;
+                        $card = $sr['participant2_card'] ?? null;
+                    } elseif ($memberIdx === 3 && !empty($sr['participant3_name'])) {
+                        $name = $sr['participant3_name'];
+                        $cnic = $sr['participant3_cnic'] ?? '';
+                        $phone = $sr['participant3_phone'] ?? '';
+                        $email = $sr['participant3_email'] ?? '';
+                        $face = $sr['participant3_face'] ?? null;
+                        $card = $sr['participant3_card'] ?? null;
+                    }
+
+                    $attendeeData = [
+                        'id' => 0,
+                        'registration_id' => $regId,
+                        'member_index' => $memberIdx,
+                        'name' => $name,
+                        'cnic' => $cnic,
+                        'phone' => $phone,
+                        'email' => $email,
+                        'roll_number' => '',
+                        'team' => '',
+                        'category' => "Pass #{$memberIdx}",
+                        'event_name' => 'RUH-E-RAQS (Sufi Musical Evening)',
+                        'face_image' => gate_normalize_image_url($face),
+                        'id_card_image' => gate_normalize_image_url($card),
+                        'payment_proof' => gate_normalize_image_url($sr['payment_proof'] ?? null),
+                        'payment_status' => $sr['payment_status'] ?? 'confirmed',
+                        'registration_status' => strtolower($sr['status'] ?? 'pending'),
+                        'attendance_status' => strtolower($sr['attendance_status'] ?? 'pending'),
+                        'entry_time' => $sr['entry_time'] ?? null
+                    ];
+                }
+            }
+        }
+    }
+
+    // --- CASE B: ENGINEER ATTENDEE LOOKUP ---
+    if ($ticketRole === 'engineer') {
+        if ($attendeeId > 0 && event_attendees_table_exists($conn)) {
+            $row = event_attendee_fetch_with_registration($conn, $attendeeId);
+            if ($row) {
+                $dayCol = ($eventDay === 2) ? 'day2_status' : 'day1_status';
+                $attendeeData = [
+                    'id' => (int)$row['id'],
+                    'registration_id' => (int)($row['registration_id'] ?? 0),
+                    'name' => $row['full_name'],
+                    'cnic' => $row['cnic'] ?? '',
+                    'phone' => $row['phone'] ?? '',
+                    'email' => $row['email'] ?? '',
+                    'roll_number' => $row['roll_number'] ?? '',
+                    'team' => $row['team_name'] ?? 'Team',
+                    'category' => $row['label'] ?? 'Participant',
+                    'module' => $row['module_selection'] ?? 'Olympiad',
+                    'event_name' => "Engineer's Code: " . ($row['module_selection'] ?? 'Olympiad'),
+                    'face_image' => gate_normalize_image_url($row['face_image'] ?? null),
+                    'id_card_image' => gate_normalize_image_url($row['id_card_image'] ?? null),
+                    'payment_proof' => null,
+                    'payment_status' => 'confirmed',
+                    'registration_status' => strtolower($row['registration_status'] ?? $row['status'] ?? 'pending'),
+                    'attendance_status' => strtolower($row[$dayCol] ?? 'pending'),
+                    'day1_status' => strtolower($row['day1_status'] ?? 'pending'),
+                    'day2_status' => strtolower($row['day2_status'] ?? 'pending'),
+                    'entry_time' => $row['entry_time'] ?? null
+                ];
+            }
+        }
+        if (!$attendeeData && $regId > 0) {
+            $stmt = $conn->prepare("SELECT * FROM event_registrations WHERE id = ? LIMIT 1");
+            $stmt->bind_param("i", $regId);
+            $stmt->execute();
+            $er = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if ($er) {
+                $attendeeData = [
+                    'id' => 0,
+                    'registration_id' => $regId,
+                    'name' => $er['leader_name'] ?? $er['team_name'] ?? 'Participant',
+                    'cnic' => $er['leader_cnic'] ?? '',
+                    'phone' => $er['leader_phone'] ?? '',
+                    'email' => $er['leader_email'] ?? '',
+                    'roll_number' => $er['leader_roll'] ?? '',
+                    'team' => $er['team_name'] ?? 'Team',
+                    'category' => 'Team Leader',
+                    'module' => $er['module_name'] ?? 'Olympiad',
+                    'event_name' => "Engineer's Code: " . ($er['module_name'] ?? 'Olympiad'),
+                    'face_image' => gate_normalize_image_url($er['leader_face'] ?? null),
+                    'id_card_image' => gate_normalize_image_url($er['leader_card'] ?? null),
+                    'payment_proof' => null,
+                    'payment_status' => 'confirmed',
+                    'registration_status' => strtolower($er['status'] ?? 'pending'),
+                    'attendance_status' => 'pending',
+                    'entry_time' => null
+                ];
+            }
+        }
+    }
+
+    if (!$attendeeData) {
+        return [
+            'valid' => true,
+            'can_admit' => false,
+            'status' => 'NOT_FOUND',
+            'ticket_id' => $ticketId,
+            'role' => $ticketRole,
+            'error' => "Pass #{$ticketId} not found in database.",
+            'attendee' => null
+        ];
+    }
+
+    $attendeeData['ticket_id'] = $ticketId;
+    $attendeeData['gate_type'] = $ticketRole;
+
+    // Check Role Mismatch
+    if ($stationRole !== 'all' && $stationRole !== $ticketRole) {
+        $targetGate = ($ticketRole === 'social') ? "RUH-E-RAQS Social Night Gate" : "Engineer's Code Gate";
+        return [
+            'valid' => true,
+            'can_admit' => false,
+            'status' => 'INVALID_ROLE',
+            'ticket_id' => $ticketId,
+            'role' => $ticketRole,
+            'error' => "Wrong Gate! This pass belongs to " . strtoupper($ticketRole) . ". Please direct attendee to {$targetGate}.",
+            'attendee' => $attendeeData
+        ];
+    }
+
+    // Check Registration Approval Status
+    if ($attendeeData['registration_status'] !== 'approved') {
+        return [
+            'valid' => true,
+            'can_admit' => false,
+            'status' => 'NOT_APPROVED',
+            'ticket_id' => $ticketId,
+            'role' => $ticketRole,
+            'error' => "Registration status is '" . strtoupper($attendeeData['registration_status']) . "'. Must be approved at Admin Desk.",
+            'attendee' => $attendeeData
+        ];
+    }
+
+    // Check Duplicate Attendance
+    $isAttended = ($attendeeData['attendance_status'] === 'present' || $attendeeData['attendance_status'] === 'attended');
+    if ($isAttended) {
+        $entryTimeStr = $attendeeData['entry_time'] ? date('h:i A', strtotime($attendeeData['entry_time'])) : 'earlier today';
+        return [
+            'valid' => true,
+            'can_admit' => false,
+            'status' => 'DUPLICATE',
+            'ticket_id' => $ticketId,
+            'role' => $ticketRole,
+            'error' => "DUPLICATE ENTRY! Already marked present at {$entryTimeStr}.",
+            'attendee' => $attendeeData
+        ];
+    }
+
+    // All clear -> Ready to admit
+    return [
+        'valid' => true,
+        'can_admit' => true,
+        'status' => 'READY_TO_ADMIT',
+        'ticket_id' => $ticketId,
+        'role' => $ticketRole,
+        'message' => "Pass Verified. Verify attendee photo & ID card before admitting.",
+        'attendee' => $attendeeData
+    ];
+}
+
+/**
  * Atomic Check-In Processor
- * Validates, checks duplicates, updates status, and logs into scan_audit_logs.
+ * Validates, checks duplicates, updates status in database, and logs into scan_audit_logs.
  */
 function gate_verify_and_checkin(mysqli $conn, array $params): array {
     $rawInput = trim($params['raw_code'] ?? '');
@@ -174,309 +482,113 @@ function gate_verify_and_checkin(mysqli $conn, array $params): array {
     $volunteerId = $params['volunteer_id'] ?? 'Volunteer';
     $deviceId = $params['device_id'] ?? 'UnknownDevice';
     $deviceTs = (int)($params['device_timestamp'] ?? (time() * 1000));
-    $eventDay = (int)($params['day'] ?? 1); // For Engineer's code (Day 1 vs Day 2)
+    $eventDay = (int)($params['day'] ?? 1);
     $logId = !empty($params['log_id']) ? $params['log_id'] : ('log_' . bin2hex(random_bytes(10)));
     $syncedTs = time() * 1000;
 
-    $parsed = gate_parse_qr($rawInput, $stationRole);
-    if (!$parsed['valid']) {
+    $lookup = gate_lookup_attendee($conn, $rawInput, $stationRole, $eventDay);
+
+    $ticketId = $lookup['ticket_id'] ?? substr($rawInput, 0, 64) ?: 'UNKNOWN';
+    $attendee = $lookup['attendee'];
+    $attendeeName = $attendee['name'] ?? 'Unknown';
+    $ticketRole = $lookup['role'] ?? $stationRole;
+
+    if (!$lookup['valid']) {
         gate_insert_audit_log($conn, [
             'log_id' => $logId,
-            'ticket_id' => substr($rawInput, 0, 64) ?: 'UNKNOWN',
-            'attendee_name' => 'Unknown',
+            'ticket_id' => $ticketId,
+            'attendee_name' => $attendeeName,
             'volunteer_id' => $volunteerId,
             'station_id' => $stationId,
             'device_id' => $deviceId,
-            'gate_type' => $stationRole,
-            'status' => 'INVALID_FORMAT',
-            'notes' => $parsed['error'] ?? 'Unrecognized code',
-            'device_ts' => $deviceTs,
-            'synced_ts' => $syncedTs
-        ]);
-        return [
-            'success' => false,
-            'status' => 'INVALID_FORMAT',
-            'message' => 'Unrecognized QR Code format'
-        ];
-    }
-
-    $ticketRole = $parsed['role'];
-    $attendeeId = $parsed['attendee_id'] ?? 0;
-    $regId = $parsed['registration_id'] ?? 0;
-    $ticketId = $parsed['ticket_id'] ?? ('TCK-' . $attendeeId);
-
-    // Role Enforcement: If this station is locked to engineer or social
-    if ($stationRole !== 'all' && $stationRole !== $ticketRole) {
-        $expected = ($stationRole === 'engineer') ? "Engineer's Code" : "RUH-E-RAQS Social Night";
-        gate_insert_audit_log($conn, [
-            'log_id' => $logId,
-            'ticket_id' => $ticketId,
-            'attendee_name' => 'Unknown',
-            'volunteer_id' => $volunteerId,
-            'station_id' => $stationId,
             'gate_type' => $ticketRole,
-            'status' => 'INVALID_ROLE',
-            'notes' => "Scanned at {$stationRole} gate",
+            'status' => 'INVALID_FORMAT',
+            'notes' => $lookup['error'] ?? 'Unrecognized pass format',
             'device_ts' => $deviceTs,
             'synced_ts' => $syncedTs
         ]);
         return [
             'success' => false,
-            'status' => 'INVALID_ROLE',
-            'message' => "Wrong Gate: This pass belongs to {$ticketRole}, but this station only accepts {$expected}."
+            'status' => 'INVALID_FORMAT',
+            'ticket_id' => $ticketId,
+            'attendee' => $attendee,
+            'message' => $lookup['error'] ?? 'Unrecognized QR Code'
         ];
     }
 
-    // =========================================================================
-    // CASE A: RUH-E-RAQS SOCIAL EVENT CHECK-IN
-    // =========================================================================
+    if (!$lookup['can_admit']) {
+        $logStatus = ($lookup['status'] === 'DUPLICATE') ? 'DUPLICATE_REJECTED' : $lookup['status'];
+        gate_insert_audit_log($conn, [
+            'log_id' => $logId,
+            'ticket_id' => $ticketId,
+            'attendee_name' => $attendeeName,
+            'volunteer_id' => $volunteerId,
+            'station_id' => $stationId,
+            'device_id' => $deviceId,
+            'gate_type' => $ticketRole,
+            'status' => $logStatus,
+            'notes' => $lookup['error'] ?? 'Check-in restricted',
+            'device_ts' => $deviceTs,
+            'synced_ts' => $syncedTs
+        ]);
+        return [
+            'success' => false,
+            'status' => $logStatus,
+            'ticket_id' => $ticketId,
+            'attendee' => $attendee,
+            'message' => $lookup['error']
+        ];
+    }
+
+    // PERFORM DATABASE WRITE & ADMIT
+    $now = date('Y-m-d H:i:s');
     if ($ticketRole === 'social') {
-        $attendee = null;
-        if ($attendeeId > 0 && social_attendees_table_exists($conn)) {
-            $attendee = social_attendee_fetch_with_registration($conn, $attendeeId);
-        } elseif ($regId > 0) {
-            $stmt = $conn->prepare("SELECT * FROM social_registrations WHERE id = ? LIMIT 1");
-            $stmt->bind_param("i", $regId);
-            $stmt->execute();
-            $attendee = $stmt->get_result()->fetch_assoc();
-            $stmt->close();
-        }
-
-        if (!$attendee) {
-            gate_insert_audit_log($conn, [
-                'log_id' => $logId,
-                'ticket_id' => $ticketId,
-                'attendee_name' => 'Not Found',
-                'volunteer_id' => $volunteerId,
-                'station_id' => $stationId,
-                'gate_type' => 'social',
-                'status' => 'NOT_FOUND',
-                'notes' => 'Social attendee record not found in database',
-                'device_ts' => $deviceTs,
-                'synced_ts' => $syncedTs
-            ]);
-            return [
-                'success' => false,
-                'status' => 'NOT_FOUND',
-                'message' => 'Pass record not found in system.'
-            ];
-        }
-
-        $attendeeName = $attendee['full_name'] ?? 'Attendee';
-        $attendeeCnic = $attendee['cnic'] ?? '';
-        $parentStatus = strtolower($attendee['group_status'] ?? $attendee['status'] ?? 'pending');
-        $currentAttendance = strtolower($attendee['attendance_status'] ?? 'pending');
-
-        // Check if registration was approved
-        if ($parentStatus !== 'approved') {
-            gate_insert_audit_log($conn, [
-                'log_id' => $logId,
-                'ticket_id' => $ticketId,
-                'attendee_name' => $attendeeName,
-                'volunteer_id' => $volunteerId,
-                'station_id' => $stationId,
-                'gate_type' => 'social',
-                'status' => 'PENDING_APPROVAL',
-                'notes' => "Status is {$parentStatus}",
-                'device_ts' => $deviceTs,
-                'synced_ts' => $syncedTs
-            ]);
-            return [
-                'success' => false,
-                'status' => 'PENDING_APPROVAL',
-                'attendee' => [
-                    'name' => $attendeeName,
-                    'cnic' => $attendeeCnic,
-                    'status' => $parentStatus
-                ],
-                'message' => "Registration is {$parentStatus}. Must be approved by Admin desk before entry."
-            ];
-        }
-
-        // Check for Duplicate Check-In
-        if ($currentAttendance === 'present' || $currentAttendance === 'attended') {
-            $entryTime = $attendee['entry_time'] ?? '';
-            $timeMsg = $entryTime ? ("Already entered at " . date('h:i A', strtotime($entryTime))) : "Already used.";
-            gate_insert_audit_log($conn, [
-                'log_id' => $logId,
-                'ticket_id' => $ticketId,
-                'attendee_name' => $attendeeName,
-                'volunteer_id' => $volunteerId,
-                'station_id' => $stationId,
-                'gate_type' => 'social',
-                'status' => 'DUPLICATE_REJECTED',
-                'notes' => "Duplicate entry attempt. Initial entry: {$entryTime}",
-                'device_ts' => $deviceTs,
-                'synced_ts' => $syncedTs
-            ]);
-            return [
-                'success' => false,
-                'status' => 'DUPLICATE_REJECTED',
-                'attendee' => [
-                    'name' => $attendeeName,
-                    'cnic' => $attendeeCnic,
-                    'entry_time' => $entryTime
-                ],
-                'message' => "DUPLICATE PASS: {$timeMsg}"
-            ];
-        }
-
-        // Mark as Present
-        $now = date('Y-m-d H:i:s');
-        if (social_attendees_table_exists($conn) && !empty($attendee['id'])) {
+        $saId = (int)($attendee['id'] ?? 0);
+        $srId = (int)($attendee['registration_id'] ?? 0);
+        if ($saId > 0 && social_attendees_table_exists($conn)) {
             $upd = $conn->prepare("UPDATE social_attendees SET attendance_status = 'present', entry_time = ? WHERE id = ?");
-            $upd->bind_param("si", $now, $attendee['id']);
+            $upd->bind_param("si", $now, $saId);
             $upd->execute();
             $upd->close();
-        } else {
+        } elseif ($srId > 0) {
             $upd = $conn->prepare("UPDATE social_registrations SET attendance_status = 'present', entry_time = ? WHERE id = ?");
-            $upd->bind_param("si", $now, $attendee['id']);
+            $upd->bind_param("si", $now, $srId);
             $upd->execute();
             $upd->close();
         }
-
-        gate_insert_audit_log($conn, [
-            'log_id' => $logId,
-            'ticket_id' => $ticketId,
-            'attendee_name' => $attendeeName,
-            'volunteer_id' => $volunteerId,
-            'station_id' => $stationId,
-            'gate_type' => 'social',
-            'status' => 'APPROVED',
-            'notes' => 'Successfully admitted',
-            'device_ts' => $deviceTs,
-            'synced_ts' => $syncedTs
-        ]);
-
-        return [
-            'success' => true,
-            'status' => 'APPROVED',
-            'ticket_id' => $ticketId,
-            'event' => 'RUH-E-RAQS (Social Evening)',
-            'attendee' => [
-                'name' => $attendeeName,
-                'cnic' => $attendeeCnic,
-                'phone' => $attendee['phone'] ?? '',
-                'tier' => $attendee['label'] ?? 'Individual Pass',
-                'photo' => !empty($attendee['face_image']) ? ('uploads/social_faces/' . $attendee['face_image']) : null
-            ],
-            'message' => 'Access Approved'
-        ];
+    } elseif ($ticketRole === 'engineer') {
+        $eaId = (int)($attendee['id'] ?? 0);
+        if ($eaId > 0 && function_exists('event_mark_attendance')) {
+            event_mark_attendance($conn, $eaId, $eventDay);
+        }
     }
 
-    // =========================================================================
-    // CASE B: ENGINEER'S CODE (EVENT / OLYMPIAD) CHECK-IN
-    // =========================================================================
-    if ($ticketRole === 'engineer') {
-        $attendee = null;
-        if ($attendeeId > 0 && event_attendees_table_exists($conn)) {
-            $attendee = event_attendee_fetch_with_registration($conn, $attendeeId);
-        }
+    // Insert approved audit record with REAL attendee name!
+    gate_insert_audit_log($conn, [
+        'log_id' => $logId,
+        'ticket_id' => $ticketId,
+        'attendee_name' => $attendeeName,
+        'volunteer_id' => $volunteerId,
+        'station_id' => $stationId,
+        'device_id' => $deviceId,
+        'gate_type' => $ticketRole,
+        'status' => 'APPROVED',
+        'notes' => ($ticketRole === 'engineer') ? "Admitted for Day {$eventDay}" : "Admitted for Ruh-e-Raqs",
+        'device_ts' => $deviceTs,
+        'synced_ts' => $syncedTs
+    ]);
 
-        if (!$attendee) {
-            gate_insert_audit_log($conn, [
-                'log_id' => $logId,
-                'ticket_id' => $ticketId,
-                'attendee_name' => 'Not Found',
-                'volunteer_id' => $volunteerId,
-                'station_id' => $stationId,
-                'gate_type' => 'engineer',
-                'status' => 'NOT_FOUND',
-                'notes' => 'Event attendee record not found',
-                'device_ts' => $deviceTs,
-                'synced_ts' => $syncedTs
-            ]);
-            return [
-                'success' => false,
-                'status' => 'NOT_FOUND',
-                'message' => "Engineer's Code attendee record not found."
-            ];
-        }
+    $attendee['attendance_status'] = 'present';
+    $attendee['entry_time'] = $now;
 
-        $attendeeName = $attendee['full_name'] ?: 'Participant';
-        $teamName = $attendee['team_name'] ?? 'Team';
-        $module = $attendee['module_selection'] ?? 'Module';
-        $dayCol = ($eventDay === 2) ? 'day2_status' : 'day1_status';
-        $currentAttendance = strtolower($attendee[$dayCol] ?? 'pending');
-        $regStatus = strtolower($attendee['registration_status'] ?? $attendee['status'] ?? 'pending');
-
-        if ($regStatus !== 'approved') {
-            gate_insert_audit_log($conn, [
-                'log_id' => $logId,
-                'ticket_id' => $ticketId,
-                'attendee_name' => $attendeeName,
-                'volunteer_id' => $volunteerId,
-                'station_id' => $stationId,
-                'gate_type' => 'engineer',
-                'status' => 'PENDING_APPROVAL',
-                'notes' => "Team status is {$regStatus}",
-                'device_ts' => $deviceTs,
-                'synced_ts' => $syncedTs
-            ]);
-            return [
-                'success' => false,
-                'status' => 'PENDING_APPROVAL',
-                'attendee' => ['name' => $attendeeName, 'team' => $teamName, 'module' => $module],
-                'message' => "Team registration is {$regStatus}. Not yet approved."
-            ];
-        }
-
-        if ($currentAttendance === 'present') {
-            gate_insert_audit_log($conn, [
-                'log_id' => $logId,
-                'ticket_id' => $ticketId,
-                'attendee_name' => $attendeeName,
-                'volunteer_id' => $volunteerId,
-                'station_id' => $stationId,
-                'gate_type' => 'engineer',
-                'status' => 'DUPLICATE_REJECTED',
-                'notes' => "Day {$eventDay} already marked present",
-                'device_ts' => $deviceTs,
-                'synced_ts' => $syncedTs
-            ]);
-            return [
-                'success' => false,
-                'status' => 'DUPLICATE_REJECTED',
-                'attendee' => ['name' => $attendeeName, 'team' => $teamName, 'module' => $module],
-                'message' => "ALREADY ADMITTED: Day {$eventDay} attendance was already marked."
-            ];
-        }
-
-        // Mark Day attendance
-        event_mark_attendance($conn, $attendee['id'], $eventDay);
-
-        gate_insert_audit_log($conn, [
-            'log_id' => $logId,
-            'ticket_id' => $ticketId,
-            'attendee_name' => $attendeeName,
-            'volunteer_id' => $volunteerId,
-            'station_id' => $stationId,
-            'gate_type' => 'engineer',
-            'status' => 'APPROVED',
-            'notes' => "Admitted for Day {$eventDay}",
-            'device_ts' => $deviceTs,
-            'synced_ts' => $syncedTs
-        ]);
-
-        return [
-            'success' => true,
-            'status' => 'APPROVED',
-            'ticket_id' => $ticketId,
-            'event' => "Engineer's Code 2026",
-            'day' => $eventDay,
-            'attendee' => [
-                'name' => $attendeeName,
-                'team' => $teamName,
-                'module' => $module,
-                'role' => $attendee['label'] ?? 'Participant',
-                'roll_number' => $attendee['roll_number'] ?? '',
-                'photo' => !empty($attendee['face_image']) ? ('uploads/faces/' . $attendee['face_image']) : null
-            ],
-            'message' => "Cleared for Day {$eventDay}"
-        ];
-    }
-
-    return ['success' => false, 'status' => 'ERROR', 'message' => 'Invalid event type'];
+    return [
+        'success' => true,
+        'status' => 'APPROVED',
+        'ticket_id' => $ticketId,
+        'event' => $attendee['event_name'] ?? 'SENTEC Admission',
+        'attendee' => $attendee,
+        'message' => 'Attendance Verified & Entry Granted!'
+    ];
 }
 
 // Helper: Insert audit log safely

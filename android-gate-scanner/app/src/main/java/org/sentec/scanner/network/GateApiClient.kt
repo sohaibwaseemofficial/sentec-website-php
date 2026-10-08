@@ -65,18 +65,20 @@ class GateApiClient(
     }
 
     /**
-     * Single check-in scan: Tries Master Hub -> Cloud API -> throws for local fallback
+     * Scan attendee pass: action can be "lookup" (pre-admission inspect) or "admit" (mark checked-in)
      */
     suspend fun performScan(
         token: String,
         qrPayload: String,
         deviceId: String,
+        action: String = "admit",
         lat: Double? = null,
         lng: Double? = null
     ): Result<JsonObject> = withContext(Dispatchers.IO) {
         val payload = JsonObject().apply {
             addProperty("qr_payload", qrPayload)
             addProperty("device_id", deviceId)
+            addProperty("action", action)
             if (lat != null && lng != null) {
                 addProperty("lat", lat)
                 addProperty("lng", lng)
@@ -113,6 +115,12 @@ class GateApiClient(
             Result.failure(e)
         }
     }
+
+    suspend fun lookupAttendee(token: String, qrPayload: String, deviceId: String): Result<JsonObject> =
+        performScan(token, qrPayload, deviceId, action = "lookup")
+
+    suspend fun admitAttendee(token: String, qrPayload: String, deviceId: String): Result<JsonObject> =
+        performScan(token, qrPayload, deviceId, action = "admit")
 
     /**
      * Fetch complete whitelist from Cloud for offline caching

@@ -55,8 +55,19 @@ object QrParser {
             } catch (_: Exception) {}
         }
 
-        // 3. Compact Codes: SOC-42, ENG-108
+        // 3. Compact Codes: SOC-REG-3-1, ENG-REG-3, SOC-42, ENG-108
         val upper = trimmed.uppercase()
+        if (upper.startsWith("SOC-REG-") || upper.startsWith("SOCIAL-REG-")) {
+            val parts = upper.split("-")
+            val reg = parts.getOrNull(2) ?: ""
+            val att = parts.getOrNull(3) ?: "1"
+            return ParsedQrResult(ticketId = "SOC-REG-$reg-$att", gateType = "social", raw = trimmed)
+        }
+        if (upper.startsWith("ENG-REG-") || upper.startsWith("EVT-REG-")) {
+            val parts = upper.split("-")
+            val reg = parts.getOrNull(2) ?: ""
+            return ParsedQrResult(ticketId = "ENG-REG-$reg", gateType = "engineer", raw = trimmed)
+        }
         if (upper.startsWith("SOC-") || upper.startsWith("SOCIAL-")) {
             val num = upper.substringAfter("-")
             return ParsedQrResult(ticketId = "SOC-$num", gateType = "social", raw = trimmed)

@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -28,6 +30,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
 import org.sentec.scanner.database.AppDatabase
 import org.sentec.scanner.database.AttendeeEntity
 import org.sentec.scanner.database.AuditLogEntity
@@ -49,12 +54,20 @@ class MainActivity : AppCompatActivity() {
     private lateinit var apiClient: GateApiClient
     private lateinit var soundHelper: SoundHelper
     private lateinit var cameraExecutor: ExecutorService
+    private val imageHttpClient = OkHttpClient()
 
     private var camera: Camera? = null
     private var isTorchOn = false
     private var isScanCooldown = false
     private var isMasterMode = false
     private var deviceId: String = ""
+
+    // Active Inspected Attendee State
+    private var activeInspectedTicket: String = ""
+    private var activeInspectedRawCode: String = ""
+    private var activeCanAdmit: Boolean = false
+    private var activeFaceBitmap: Bitmap? = null
+    private var activeIdCardBitmap: Bitmap? = null
 
     companion object {
         private const val CAMERA_PERMISSION_CODE = 200
@@ -112,6 +125,26 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             authenticateWithPin(pin, volunteer)
+        }
+
+        // Inspection Sheet Action Listeners
+        binding.btnCloseInspection.setOnClickListener {
+            dismissInspectionCard()
+        }
+        binding.btnRejectEntry.setOnClickListener {
+            dismissInspectionCard()
+        }
+        binding.btnGrantEntry.setOnClickListener {
+            confirmAdmission()
+        }
+        binding.boxFacePhoto.setOnClickListener {
+            openLightbox("PARTICIPANT FACE PHOTO", activeFaceBitmap)
+        }
+        binding.boxIdCardPhoto.setOnClickListener {
+            openLightbox("PARTICIPANT ID CARD / CNIC", activeIdCardBitmap)
+        }
+        binding.btnLightboxClose.setOnClickListener {
+            binding.viewImageLightbox.visibility = View.GONE
         }
 
         // Master Hub Cloud Sync Buttons
@@ -334,57 +367,253 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Attendee QR Check-in
-        triggerCheckIn(parsed.ticketId, rawCode)
+        // Attendee QR Inspection & Pre-Admission Lookup
+        triggerAttendeeLookup(parsed.ticketId, rawCode)
     }
 
-    private fun triggerCheckIn(ticketId: String, rawCode: String) {
+    private fun triggerAttendeeLookup(ticketId: String, rawCode: String) {
         isScanCooldown = true
+        activeInspectedTicket = ticketId
+        activeInspectedRawCode = rawCode
+        activeCanAdmit = false
+        activeFaceBitmap = null
+        activeIdCardBitmap = null
+
+        val token = prefs.getString(KEY_STATION_TOKEN, "") ?: ""
+
+        // Show Inspection Sheet in Loading State
+        binding.resultBannerCard.visibility = View.VISIBLE
+        binding.tvResultStatus.text = "LOOKING UP PARTICIPANT..."
+        binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.accent_blue))
+        binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.accent_blue)
+        binding.tvResultAttendee.text = "Fetching Records..."
+        binding.tvResultTicket.text = ticketId
+        binding.tvResultCnic.text = ""
+        binding.tvResultDetail.text = "Resolving participant info & ID photos..."
+        binding.layoutInspectionPhotos.visibility = View.GONE
+        binding.tvInspectionAlert.text = "Verifying pass against registration database..."
+        binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#17202A"))
+        binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this, R.color.accent_blue))
+        binding.btnGrantEntry.visibility = View.GONE
+        binding.btnRejectEntry.text = "Cancel"
+
+        lifecycleScope.launch {
+            val netResult = apiClient.lookupAttendee(token, rawCode, deviceId)
+
+            netResult.onSuccess { json ->
+                val status = json.optString("status", "NOT_FOUND")
+                val canAdmit = json.optBoolean("can_admit", false)
+                val attendeeJson = json.optJSONObject("attendee")
+
+                if (attendeeJson != null) {
+                    displayInspectedAttendee(attendeeJson, status, canAdmit, json.optString("message", ""))
+                } else {
+                    displayLookupFailure(status, json.optString("message", "Ticket not found"))
+                }
+            }.onFailure {
+                // Network unreachable -> fallback to Room SQLite whitelist
+                resolveOfflineLookup(ticketId)
+            }
+        }
+    }
+
+    private fun displayInspectedAttendee(
+        attendee: JSONObject,
+        status: String,
+        canAdmit: Boolean,
+        message: String
+    ) {
+        activeCanAdmit = canAdmit
+        val name = attendee.optString("name", "Unknown Participant")
+        val ticket = attendee.optString("ticket_id", activeInspectedTicket)
+        val cnic = attendee.optString("cnic", "")
+        val roll = attendee.optString("roll_number", "")
+        val event = attendee.optString("event_name", "SENTEC Event Entry")
+        val gateType = attendee.optString("gate_type", "social")
+        val faceUrl = attendee.optString("face_image", "")
+        val idCardUrl = attendee.optString("id_card_image", "")
+        val usedAt = attendee.optString("used_at", "")
+
+        binding.tvResultAttendee.text = name
+        binding.tvResultTicket.text = ticket
+        binding.tvResultCnic.text = if (cnic.isNotEmpty()) " • CNIC: $cnic" else if (roll.isNotEmpty()) " • Roll: $roll" else ""
+        binding.tvResultDetail.text = event
+
+        // Load & Show Photos Row
+        binding.layoutInspectionPhotos.visibility = View.VISIBLE
+        binding.ivFacePhoto.setImageResource(android.R.drawable.ic_menu_myplaces)
+        binding.ivFacePhoto.setColorFilter(Color.parseColor("#55FFFFFF"))
+        binding.ivIdCardPhoto.setImageResource(android.R.drawable.ic_menu_gallery)
+        binding.ivIdCardPhoto.setColorFilter(Color.parseColor("#55FFFFFF"))
+
+        if (faceUrl.isNotEmpty()) {
+            fetchImageBitmap(faceUrl) { bmp ->
+                if (bmp != null) {
+                    activeFaceBitmap = bmp
+                    binding.ivFacePhoto.clearColorFilter()
+                    binding.ivFacePhoto.setImageBitmap(bmp)
+                }
+            }
+        }
+
+        if (idCardUrl.isNotEmpty()) {
+            fetchImageBitmap(idCardUrl) { bmp ->
+                if (bmp != null) {
+                    activeIdCardBitmap = bmp
+                    binding.ivIdCardPhoto.clearColorFilter()
+                    binding.ivIdCardPhoto.setImageBitmap(bmp)
+                }
+            }
+        }
+
+        // Status Evaluation & UI Styling
+        if (canAdmit && (status == "READY_TO_ADMIT" || status == "APPROVED")) {
+            soundHelper.playSuccess()
+            binding.tvResultStatus.text = "READY TO ADMIT // VERIFY ID"
+            binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.neon_green))
+            binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.neon_green)
+            binding.tvInspectionAlert.text = "Inspect participant face photo & physical ID card. If matched, tap GRANT ENTRY below."
+            binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#162A1F"))
+            binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this, R.color.neon_green))
+            binding.btnGrantEntry.visibility = View.VISIBLE
+            binding.btnGrantEntry.isEnabled = true
+            binding.btnGrantEntry.text = "GRANT ENTRY (CONFIRM)"
+            binding.btnRejectEntry.text = "Dismiss / Close"
+        } else if (status == "DUPLICATE_REJECTED" || attendee.optBoolean("is_used", false)) {
+            soundHelper.playDuplicateOrError()
+            binding.tvResultStatus.text = "DUPLICATE PASS DETECTED"
+            binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.danger_red))
+            binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.danger_red)
+            val note = if (usedAt.isNotEmpty()) "Originally scanned at $usedAt" else "Pass has already been marked present"
+            binding.tvInspectionAlert.text = "DUPLICATE ENTRY BLOCKED: $note. Entry denied."
+            binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#331515"))
+            binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this, R.color.danger_red))
+            binding.btnGrantEntry.visibility = View.GONE
+            binding.btnRejectEntry.text = "Scan Next"
+        } else if (status == "INVALID_ROLE") {
+            soundHelper.playDuplicateOrError()
+            binding.tvResultStatus.text = "WRONG GATE // INVALID ROLE"
+            binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.warning_orange))
+            binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.warning_orange)
+            binding.tvInspectionAlert.text = "Ticket belongs to $gateType gate. Please direct participant to the assigned terminal."
+            binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#332A15"))
+            binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this, R.color.warning_orange))
+            binding.btnGrantEntry.visibility = View.GONE
+            binding.btnRejectEntry.text = "Scan Next"
+        } else {
+            soundHelper.playDuplicateOrError()
+            binding.tvResultStatus.text = "ENTRY BLOCKED"
+            binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.danger_red))
+            binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.danger_red)
+            binding.tvInspectionAlert.text = if (message.isNotEmpty()) message else "Cannot admit participant with this pass."
+            binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#331515"))
+            binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this, R.color.danger_red))
+            binding.btnGrantEntry.visibility = View.GONE
+            binding.btnRejectEntry.text = "Scan Next"
+        }
+    }
+
+    private fun displayLookupFailure(status: String, message: String) {
+        soundHelper.playDuplicateOrError()
+        binding.tvResultStatus.text = "TICKET NOT FOUND"
+        binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.danger_red))
+        binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.danger_red)
+        binding.tvResultAttendee.text = "Unregistered Ticket"
+        binding.tvResultTicket.text = activeInspectedTicket
+        binding.tvResultCnic.text = ""
+        binding.tvResultDetail.text = "No registration records matched this QR code"
+        binding.layoutInspectionPhotos.visibility = View.GONE
+        binding.tvInspectionAlert.text = message
+        binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#331515"))
+        binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this, R.color.danger_red))
+        binding.btnGrantEntry.visibility = View.GONE
+        binding.btnRejectEntry.text = "Scan Next"
+    }
+
+    private fun confirmAdmission() {
+        if (!activeCanAdmit) return
+
+        binding.btnGrantEntry.isEnabled = false
+        binding.btnGrantEntry.text = "RECORDING ENTRY..."
+
         val token = prefs.getString(KEY_STATION_TOKEN, "") ?: ""
         val stationId = prefs.getString(KEY_STATION_ID, "MOBILE_STATION") ?: "MOBILE_STATION"
         val volunteer = prefs.getString(KEY_VOLUNTEER, "Volunteer") ?: "Volunteer"
 
         lifecycleScope.launch {
-            // Tier 1 & 2: Call ApiClient (Master Hub -> Cloud API)
-            val netResult = apiClient.performScan(token, rawCode, deviceId)
+            val netResult = apiClient.admitAttendee(token, activeInspectedRawCode, deviceId)
 
             netResult.onSuccess { json ->
-                val status = json.optString("status", "APPROVED")
                 val isSuccess = json.optBoolean("success", false)
-
-                if (isSuccess && status == "APPROVED") {
+                if (isSuccess) {
                     soundHelper.playSuccess()
-                    val attendee = json.optJSONObject("attendee")
-                    val name = attendee?.optString("name") ?: "Attendee"
-                    val code = attendee?.optString("ticket_id") ?: ticketId
-                    val event = attendee?.optString("event_name") ?: "Event Admission"
-                    showResultBanner("APPROVED", name, code, event, true)
-                } else if (status == "DUPLICATE_REJECTED") {
-                    soundHelper.playDuplicateOrError()
-                    val attendee = json.optJSONObject("attendee")
-                    val name = attendee?.optString("name") ?: "Attendee"
-                    val note = json.optString("message", "Already Scanned")
-                    showResultBanner("DUPLICATE ENTRY DETECTED", name, ticketId, note, false)
+                    binding.tvResultStatus.text = "ADMITTED & RECORDED"
+                    binding.tvInspectionAlert.text = "Entry successfully granted & logged to system!"
+                    binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#162A1F"))
+                    binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.neon_green))
+                    binding.btnGrantEntry.text = "ADMITTED ✓"
+                    updateOutboxCounter()
+
+                    delay(1200)
+                    dismissInspectionCard()
                 } else {
                     soundHelper.playDuplicateOrError()
-                    val msg = json.optString("message", "Invalid Pass")
-                    showResultBanner("NOT VERIFIED", "Unknown Pass", ticketId, msg, false)
+                    binding.tvResultStatus.text = "ADMISSION FAILED"
+                    binding.tvInspectionAlert.text = json.optString("message", "Could not record check-in")
+                    binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#331515"))
+                    binding.btnGrantEntry.isEnabled = true
+                    binding.btnGrantEntry.text = "RETRY ADMISSION"
                 }
             }.onFailure {
-                // Tier 3: Network completely unreachable -> Fallback to Room SQLite offline database
-                resolveOfflineCheckIn(ticketId, stationId, volunteer)
+                // Tier 3: Network offline admission
+                resolveOfflineAdmission(activeInspectedTicket, stationId, volunteer)
             }
-
-            updateOutboxCounter()
-
-            // 1.8-second auto-cooldown reset
-            delay(1800)
-            binding.resultBannerCard.visibility = View.GONE
-            isScanCooldown = false
         }
     }
 
-    private suspend fun resolveOfflineCheckIn(ticketId: String, stationId: String, volunteer: String) = withContext(Dispatchers.IO) {
+    private fun resolveOfflineLookup(ticketId: String) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val attendeeDao = database.attendeeDao()
+            val attendee = attendeeDao.findByTicket(ticketId)
+            val stationRole = prefs.getString(KEY_STATION_ROLE, "all") ?: "all"
+
+            withContext(Dispatchers.Main) {
+                if (attendee == null) {
+                    displayLookupFailure("NOT_FOUND", "Ticket $ticketId not found in downloaded whitelist")
+                } else {
+                    val isWrongRole = stationRole != "all" && attendee.gate_type != "all" && attendee.gate_type != stationRole
+                    val status = if (attendee.is_used) {
+                        "DUPLICATE_REJECTED"
+                    } else if (isWrongRole) {
+                        "INVALID_ROLE"
+                    } else {
+                        "READY_TO_ADMIT"
+                    }
+                    val canAdmit = !attendee.is_used && !isWrongRole
+                    val json = JSONObject().apply {
+                        put("name", attendee.name)
+                        put("ticket_id", attendee.ticket_id)
+                        put("cnic", attendee.cnic ?: "")
+                        put("roll_number", attendee.roll_number ?: "")
+                        put("event_name", attendee.event_name)
+                        put("gate_type", attendee.gate_type)
+                        put("face_image", attendee.face_image ?: "")
+                        put("id_card_image", attendee.id_card_image ?: "")
+                        put("is_used", attendee.is_used)
+                        put("used_at", attendee.used_at ?: "")
+                    }
+                    displayInspectedAttendee(
+                        json,
+                        status,
+                        canAdmit,
+                        if (attendee.is_used) "Marked entered at ${attendee.used_at}" else "Offline Whitelist Record"
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun resolveOfflineAdmission(ticketId: String, stationId: String, volunteer: String) = withContext(Dispatchers.IO) {
         val attendeeDao = database.attendeeDao()
         val auditDao = database.auditLogDao()
         val nowStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
@@ -393,30 +622,18 @@ class MainActivity : AppCompatActivity() {
 
         if (attendee == null) {
             withContext(Dispatchers.Main) {
-                soundHelper.playDuplicateOrError()
-                showResultBanner("OFFLINE: NOT FOUND", "Unregistered", ticketId, "Not in downloaded whitelist", false)
+                displayLookupFailure("NOT_FOUND", "Ticket not found in offline whitelist")
             }
         } else if (attendee.is_used) {
             withContext(Dispatchers.Main) {
                 soundHelper.playDuplicateOrError()
-                showResultBanner("OFFLINE: DUPLICATE", attendee.name, ticketId, "Already entered at ${attendee.used_at}", false)
+                binding.tvResultStatus.text = "OFFLINE DUPLICATE"
+                binding.tvInspectionAlert.text = "Already admitted at ${attendee.used_at}!"
+                binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#331515"))
+                binding.btnGrantEntry.visibility = View.GONE
             }
-            // Queue duplicate rejection audit log
-            val log = AuditLogEntity(
-                ticket_id = ticketId,
-                attendee_name = attendee.name,
-                gate_type = attendee.gate_type,
-                station_id = stationId,
-                volunteer_id = volunteer,
-                device_id = deviceId,
-                status = "DUPLICATE_REJECTED",
-                notes = "Offline duplicate rejected. Marked used at ${attendee.used_at}",
-                created_at = nowStr,
-                synced = false
-            )
-            auditDao.insert(log)
         } else {
-            // APPROVED OFFLINE
+            // Mark used in SQLite
             attendee.is_used = true
             attendee.used_at = nowStr
             attendee.used_by_station = stationId
@@ -430,7 +647,7 @@ class MainActivity : AppCompatActivity() {
                 volunteer_id = volunteer,
                 device_id = deviceId,
                 status = "APPROVED",
-                notes = "Offline approved and queued in outbox",
+                notes = "Admitted offline & queued in outbox",
                 created_at = nowStr,
                 synced = false
             )
@@ -438,39 +655,67 @@ class MainActivity : AppCompatActivity() {
 
             withContext(Dispatchers.Main) {
                 soundHelper.playSuccess()
-                showResultBanner("APPROVED (OFFLINE)", attendee.name, ticketId, attendee.event_name, true)
+                binding.tvResultStatus.text = "ADMITTED (OFFLINE QUEUED)"
+                binding.tvInspectionAlert.text = "Admitted offline! Queued to sync when connected."
+                binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#162A1F"))
+                binding.btnGrantEntry.text = "ADMITTED OFFLINE ✓"
+                updateOutboxCounter()
+
+                delay(1200)
+                dismissInspectionCard()
             }
         }
     }
 
-    private fun showResultBanner(status: String, name: String, ticket: String, detail: String, isSuccess: Boolean) {
-        binding.resultBannerCard.visibility = View.VISIBLE
-        binding.tvResultStatus.text = status
-        binding.tvResultAttendee.text = name
-        binding.tvResultTicket.text = "TICKET: $ticket"
-        binding.tvResultDetail.text = detail
+    private fun dismissInspectionCard() {
+        binding.resultBannerCard.visibility = View.GONE
+        binding.viewImageLightbox.visibility = View.GONE
+        activeFaceBitmap = null
+        activeIdCardBitmap = null
+        isScanCooldown = false
+    }
 
-        if (isSuccess) {
-            binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.neon_green)
-            binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.neon_green))
-        } else {
-            binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.danger_red)
-            binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.danger_red))
+    private fun openLightbox(title: String, bitmap: Bitmap?) {
+        if (bitmap == null) {
+            Toast.makeText(this, "Photo is not available for full-screen inspection", Toast.LENGTH_SHORT).show()
+            return
+        }
+        binding.tvLightboxTitle.text = title
+        binding.ivLightboxPhoto.setImageBitmap(bitmap)
+        binding.viewImageLightbox.visibility = View.VISIBLE
+    }
+
+    private fun fetchImageBitmap(url: String, onLoaded: (Bitmap?) -> Unit) {
+        if (url.isBlank()) return
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val req = Request.Builder().url(url).build()
+                val resp = imageHttpClient.newCall(req).execute()
+                if (resp.isSuccessful) {
+                    val bytes = resp.body?.bytes()
+                    if (bytes != null) {
+                        val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        withContext(Dispatchers.Main) {
+                            onLoaded(bmp)
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
         }
     }
 
     private fun showManualInputDialog() {
         val input = EditText(this).apply {
-            hint = "e.g. SOC-42 or ENG-108"
+            hint = "e.g. SOC-REG-3-1 or ENG-108"
             setPadding(40, 30, 40, 30)
         }
         AlertDialog.Builder(this)
-            .setTitle("Manual Pass Entry")
+            .setTitle("Manual Pass Lookup")
             .setView(input)
-            .setPositiveButton("Verify") { _, _ ->
+            .setPositiveButton("Lookup & Verify") { _, _ ->
                 val code = input.text.toString().trim()
                 if (code.isNotEmpty()) {
-                    triggerCheckIn(code, code)
+                    handleDetectedBarcode(code)
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -520,14 +765,22 @@ class MainActivity : AppCompatActivity() {
                     val list = mutableListOf<AttendeeEntity>()
                     for (i in 0 until items.length()) {
                         val item = items.getJSONObject(i)
+                        val face = item.optString("face_image", "").ifEmpty { item.optString("p", "") }
+                        val idCard = item.optString("id_card_image", "").ifEmpty { item.optString("card", "") }
+                        val cnicVal = item.optString("cnic", "")
+
                         list.add(
                             AttendeeEntity(
                                 ticket_id = item.getString("ticket_id"),
                                 attendee_id = item.optInt("attendee_id", 0),
                                 name = item.getString("name"),
-                                roll_number = item.optString("roll_number"),
+                                cnic = if (cnicVal.isNotEmpty()) cnicVal else null,
+                                roll_number = item.optString("roll_number", null),
+                                department = item.optString("dept", null),
                                 event_name = item.optString("event_name", "SENTEC Event"),
                                 gate_type = item.optString("gate_type", "social"),
+                                face_image = if (face.isNotEmpty()) face else null,
+                                id_card_image = if (idCard.isNotEmpty()) idCard else null,
                                 is_used = item.optInt("is_used", 0) == 1,
                                 used_at = item.optString("used_at", null)
                             )
