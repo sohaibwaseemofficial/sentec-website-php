@@ -740,10 +740,10 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
                     <h4>Payment Details</h4>
                 </div>
                 <div class="payment-meta-grid">
-                    <div><span style="color: var(--muted);">ACCOUNT NAME:</span> <strong style="color: #fff;">Sohaib Waseem</strong></div>
-                    <div><span style="color: var(--muted);">BANK / WALLET:</span> <strong style="color: #fff;">NayaPay</strong></div>
-                    <div><span style="color: var(--muted);">ACCOUNT NUMBER:</span> <strong style="color: #fff;">03132017551</strong></div>
-                    <div><span style="color: var(--muted);">IBAN:</span> <strong style="color: #ccc;">PK98NAYA1234503132017551</strong></div>
+                    <div><span style="color: var(--muted);">BANK:</span> <strong style="color: #fff;">Habib Metropolitan Bank Limited</strong></div>
+                    <div><span style="color: var(--muted);">TITLE:</span> <strong style="color: #fff;">NEDUET CONTROLLER STUDENT AFFAIRS</strong></div>
+                    <div><span style="color: var(--muted);">ACCOUNT:</span> <strong style="color: #fff;">6-99-72-29314-714-262131</strong></div>
+                    <div><span style="color: var(--muted);">IBAN:</span> <strong style="color: #ccc;">PK73MPBL9972477140262131</strong></div>
                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;">
                         <span style="color: var(--muted); font-size: 11px;">TOTAL PAYABLE:</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
