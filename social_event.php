@@ -172,9 +172,9 @@ $socialSettings = social_registrations_get_settings($conn);
     /* Key Details Ribbon */
     .hero-ribbon {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        gap: 12px;
-        max-width: 950px;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        max-width: 1120px;
         margin: 0 auto 36px;
         width: 100%;
     }
@@ -183,13 +183,14 @@ $socialSettings = social_registrations_get_settings($conn);
         background: rgba(255, 255, 255, 0.04);
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 14px;
-        padding: 12px 16px;
+        padding: 14px 18px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
         text-align: left;
         backdrop-filter: blur(12px);
         transition: all 0.25s ease;
+        min-width: 0;
     }
 
     .ribbon-pill:hover {
@@ -199,9 +200,9 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .ribbon-icon {
-        width: 40px;
-        height: 40px;
-        min-width: 40px;
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
         background: rgba(241, 90, 36, 0.12);
         border: 1px solid rgba(241, 90, 36, 0.25);
         border-radius: 10px;
@@ -209,11 +210,14 @@ $socialSettings = social_registrations_get_settings($conn);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
+        flex-shrink: 0;
     }
 
     .ribbon-meta {
-        overflow: hidden;
+        flex: 1;
+        min-width: 0;
+        overflow: visible;
     }
 
     .ribbon-label {
@@ -221,17 +225,19 @@ $socialSettings = social_registrations_get_settings($conn);
         font-family: 'IBM Plex Mono', monospace;
         color: var(--text-dim);
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 2px;
+        letter-spacing: 0.06em;
+        margin-bottom: 3px;
+        line-height: 1.2;
     }
 
     .ribbon-value {
         font-size: 0.92rem;
         font-weight: 700;
         color: #ffffff;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
+        white-space: normal;
+        word-break: normal;
+        overflow-wrap: break-word;
+        line-height: 1.35;
     }
 
     /* Buttons */
@@ -902,13 +908,22 @@ $socialSettings = social_registrations_get_settings($conn);
         box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.6);
     }
 
+    @media (max-width: 1080px) {
+        .hero-ribbon {
+            grid-template-columns: repeat(2, 1fr);
+            max-width: 680px;
+            gap: 12px;
+        }
+    }
+
     @media (max-width: 991px) {
         .venue-showcase-grid {
             grid-template-columns: 1fr;
             text-align: left;
+            gap: 32px;
         }
         .poster-container {
-            max-width: 340px;
+            max-width: 360px;
         }
     }
 
@@ -918,8 +933,13 @@ $socialSettings = social_registrations_get_settings($conn);
             min-height: auto;
         }
 
+        .hero-badge {
+            font-size: 0.75rem;
+            padding: 5px 14px;
+        }
+
         .hero-urdu {
-            font-size: 2.1rem;
+            font-size: 2.2rem;
             letter-spacing: 1px;
         }
 
@@ -928,20 +948,52 @@ $socialSettings = social_registrations_get_settings($conn);
             letter-spacing: 2px;
         }
 
+        .hero-lead {
+            font-size: 0.98rem;
+            line-height: 1.6;
+            margin-bottom: 26px;
+        }
+
         .hero-ribbon {
             grid-template-columns: 1fr;
+            max-width: 100%;
             gap: 10px;
             margin-bottom: 28px;
         }
 
         .ribbon-pill {
-            padding: 10px 14px;
+            padding: 12px 14px;
+            gap: 12px;
+        }
+
+        .ribbon-icon {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            font-size: 1rem;
+        }
+
+        .ribbon-value {
+            font-size: 0.9rem;
+            line-height: 1.35;
+        }
+
+        .hero-cta-group {
+            flex-direction: column;
+            width: 100%;
+            gap: 12px;
         }
 
         .btn-neon-solid, .btn-neon-outline {
             width: 100%;
             justify-content: center;
             padding: 14px 20px;
+            box-sizing: border-box;
+        }
+
+        .pricing-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
         }
 
         .timeline-wrap::before {
@@ -965,20 +1017,39 @@ $socialSettings = social_registrations_get_settings($conn);
 
         /* Provide clearance for mobile floating bar */
         .social-page-wrap {
-            padding-bottom: 70px;
+            padding-bottom: 85px;
         }
     }
 
     @media (max-width: 480px) {
+        .social-container {
+            padding: 0 14px;
+        }
+
         .hero-title {
             font-size: 2.15rem;
             letter-spacing: 1px;
         }
+
         .highlight-card {
             padding: 22px 18px;
         }
+
         .pricing-card {
-            padding: 30px 20px;
+            padding: 28px 18px;
+        }
+
+        .faq-question {
+            padding: 16px 18px;
+            font-size: 0.95rem;
+        }
+
+        .faq-answer {
+            padding: 0 18px;
+        }
+
+        .faq-item.active .faq-answer {
+            padding-bottom: 16px;
         }
     }
 </style>
