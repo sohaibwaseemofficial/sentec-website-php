@@ -12,19 +12,23 @@ $socialSettings = social_registrations_get_settings($conn);
 <style>
     /* =========================================================
        RUH-E-RAQS // SOCIAL NIGHT REDESIGN STYLES
-       Cyberpunk / Sufi Neon Fusion Theme
+       Sufi Orange Fusion Theme
        ========================================================= */
     :root {
-        --neon-green: #00FF94;
-        --neon-green-dim: rgba(0, 255, 148, 0.15);
-        --neon-green-glow: rgba(0, 255, 148, 0.45);
         --brand-orange: #f15a24;
-        --brand-orange-glow: rgba(241, 90, 36, 0.4);
+        --brand-orange-hover: #ff8050;
+        --brand-orange-dim: rgba(241, 90, 36, 0.15);
+        --brand-orange-glow: rgba(241, 90, 36, 0.45);
+        --neon-orange: #f15a24;
+        --neon-orange-glow: rgba(241, 90, 36, 0.45);
+        --neon-green: #f15a24;
+        --neon-green-dim: rgba(241, 90, 36, 0.15);
+        --neon-green-glow: rgba(241, 90, 36, 0.45);
         --bg-deep: #06090c;
         --bg-surface: #0e1317;
         --card-bg: rgba(16, 22, 27, 0.75);
         --glass-border: rgba(255, 255, 255, 0.08);
-        --glass-border-hover: rgba(0, 255, 148, 0.35);
+        --glass-border-hover: rgba(241, 90, 36, 0.35);
         --text-pure: #ffffff;
         --text-sub: #cbd5e1;
         --text-dim: #94a3b8;
@@ -48,7 +52,7 @@ $socialSettings = social_registrations_get_settings($conn);
         width: 100%;
         height: 100%;
         background-image: 
-            radial-gradient(circle at 50% 15%, rgba(0, 255, 148, 0.09) 0%, transparent 60%),
+            radial-gradient(circle at 50% 15%, rgba(241, 90, 36, 0.09) 0%, transparent 60%),
             radial-gradient(circle at 85% 60%, rgba(241, 90, 36, 0.06) 0%, transparent 50%),
             linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
             linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
@@ -84,7 +88,7 @@ $socialSettings = social_registrations_get_settings($conn);
         position: absolute;
         width: 320px;
         height: 320px;
-        background: radial-gradient(circle, var(--neon-green-glow) 0%, transparent 70%);
+        background: radial-gradient(circle, var(--brand-orange-glow) 0%, transparent 70%);
         border-radius: 50%;
         filter: blur(60px);
         top: 20%;
@@ -106,9 +110,9 @@ $socialSettings = social_registrations_get_settings($conn);
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: rgba(0, 255, 148, 0.08);
-        border: 1px solid rgba(0, 255, 148, 0.25);
-        color: var(--neon-green);
+        background: rgba(241, 90, 36, 0.08);
+        border: 1px solid rgba(241, 90, 36, 0.25);
+        color: var(--brand-orange);
         padding: 6px 16px;
         border-radius: 9999px;
         font-family: 'IBM Plex Mono', monospace;
@@ -123,9 +127,9 @@ $socialSettings = social_registrations_get_settings($conn);
     .hero-badge-pulse {
         width: 8px;
         height: 8px;
-        background: var(--neon-green);
+        background: var(--brand-orange);
         border-radius: 50%;
-        box-shadow: 0 0 10px var(--neon-green);
+        box-shadow: 0 0 10px var(--brand-orange);
         animation: pulseDot 2s infinite ease-in-out;
     }
 
@@ -138,8 +142,8 @@ $socialSettings = social_registrations_get_settings($conn);
         font-family: 'Outfit', 'Noto Nastaliq Urdu', serif;
         font-size: clamp(2.2rem, 5.5vw, 3.8rem);
         font-weight: 700;
-        color: var(--neon-green);
-        text-shadow: 0 0 25px var(--neon-green-glow);
+        color: var(--brand-orange);
+        text-shadow: 0 0 25px var(--brand-orange-glow);
         margin: 0 0 4px 0;
         line-height: 1.2;
         letter-spacing: 2px;
@@ -154,7 +158,7 @@ $socialSettings = social_registrations_get_settings($conn);
         letter-spacing: clamp(2px, 0.6vw, 6px);
         margin: 0 0 16px 0;
         line-height: 1.05;
-        text-shadow: 0 0 40px rgba(0, 255, 148, 0.35);
+        text-shadow: 0 0 40px rgba(241, 90, 36, 0.35);
     }
 
     .hero-lead {
@@ -189,8 +193,8 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .ribbon-pill:hover {
-        background: rgba(0, 255, 148, 0.05);
-        border-color: rgba(0, 255, 148, 0.3);
+        background: rgba(241, 90, 36, 0.05);
+        border-color: rgba(241, 90, 36, 0.3);
         transform: translateY(-2px);
     }
 
@@ -198,10 +202,10 @@ $socialSettings = social_registrations_get_settings($conn);
         width: 40px;
         height: 40px;
         min-width: 40px;
-        background: rgba(0, 255, 148, 0.12);
-        border: 1px solid rgba(0, 255, 148, 0.25);
+        background: rgba(241, 90, 36, 0.12);
+        border: 1px solid rgba(241, 90, 36, 0.25);
         border-radius: 10px;
-        color: var(--neon-green);
+        color: var(--brand-orange);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -240,7 +244,7 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .btn-neon-solid {
-        background: var(--neon-green);
+        background: var(--brand-orange);
         color: #05080a;
         font-weight: 800;
         font-size: 0.96rem;
@@ -249,7 +253,7 @@ $socialSettings = social_registrations_get_settings($conn);
         padding: 14px 34px;
         border-radius: 9999px;
         text-decoration: none;
-        box-shadow: 0 0 25px rgba(0, 255, 148, 0.45);
+        box-shadow: 0 0 25px rgba(241, 90, 36, 0.45);
         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         display: inline-flex;
         align-items: center;
@@ -257,10 +261,10 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .btn-neon-solid:hover {
-        background: #39ffb0;
+        background: #ff8050;
         color: #000;
         transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 0 40px rgba(0, 255, 148, 0.75);
+        box-shadow: 0 0 40px rgba(241, 90, 36, 0.75);
     }
 
     .btn-neon-outline {
@@ -281,9 +285,9 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .btn-neon-outline:hover {
-        border-color: var(--neon-green);
-        color: var(--neon-green);
-        background: rgba(0, 255, 148, 0.06);
+        border-color: var(--brand-orange);
+        color: var(--brand-orange);
+        background: rgba(241, 90, 36, 0.06);
         transform: translateY(-2px);
     }
 
@@ -301,7 +305,7 @@ $socialSettings = social_registrations_get_settings($conn);
         font-family: 'IBM Plex Mono', monospace;
         font-size: 0.78rem;
         font-weight: 700;
-        color: var(--neon-green);
+        color: var(--brand-orange);
         letter-spacing: 0.15em;
         text-transform: uppercase;
         margin-bottom: 8px;
@@ -358,7 +362,7 @@ $socialSettings = social_registrations_get_settings($conn);
         left: 0;
         width: 100%;
         height: 2px;
-        background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
+        background: linear-gradient(90deg, transparent, var(--brand-orange), transparent);
         opacity: 0;
         transition: opacity 0.3s ease;
     }
@@ -366,7 +370,7 @@ $socialSettings = social_registrations_get_settings($conn);
     .highlight-card:hover {
         border-color: var(--glass-border-hover);
         transform: translateY(-6px);
-        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), 0 0 25px rgba(0, 255, 148, 0.1);
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), 0 0 25px rgba(241, 90, 36, 0.1);
     }
 
     .highlight-card:hover::before {
@@ -377,9 +381,9 @@ $socialSettings = social_registrations_get_settings($conn);
         width: 52px;
         height: 52px;
         border-radius: 14px;
-        background: rgba(0, 255, 148, 0.1);
-        border: 1px solid rgba(0, 255, 148, 0.25);
-        color: var(--neon-green);
+        background: rgba(241, 90, 36, 0.1);
+        border: 1px solid rgba(241, 90, 36, 0.25);
+        color: var(--brand-orange);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -390,9 +394,9 @@ $socialSettings = social_registrations_get_settings($conn);
 
     .highlight-card:hover .highlight-icon-wrap {
         transform: scale(1.1);
-        background: var(--neon-green);
+        background: var(--brand-orange);
         color: #000;
-        box-shadow: 0 0 20px var(--neon-green-glow);
+        box-shadow: 0 0 20px var(--brand-orange-glow);
     }
 
     .highlight-title {
@@ -426,7 +430,7 @@ $socialSettings = social_registrations_get_settings($conn);
         bottom: 20px;
         left: 27px;
         width: 2px;
-        background: linear-gradient(to bottom, var(--neon-green), rgba(0, 255, 148, 0.1));
+        background: linear-gradient(to bottom, var(--brand-orange), rgba(241, 90, 36, 0.1));
     }
 
     .timeline-item {
@@ -443,13 +447,13 @@ $socialSettings = social_registrations_get_settings($conn);
         min-width: 56px;
         border-radius: 50%;
         background: #090e12;
-        border: 2px solid var(--neon-green);
-        color: var(--neon-green);
+        border: 2px solid var(--brand-orange);
+        color: var(--brand-orange);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.15rem;
-        box-shadow: 0 0 16px rgba(0, 255, 148, 0.3);
+        box-shadow: 0 0 16px rgba(241, 90, 36, 0.3);
         z-index: 2;
     }
 
@@ -464,7 +468,7 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .timeline-card:hover {
-        border-color: rgba(0, 255, 148, 0.35);
+        border-color: rgba(241, 90, 36, 0.35);
         transform: translateX(4px);
     }
 
@@ -481,8 +485,8 @@ $socialSettings = social_registrations_get_settings($conn);
         font-family: 'IBM Plex Mono', monospace;
         font-size: 0.8rem;
         font-weight: 700;
-        color: var(--neon-green);
-        background: rgba(0, 255, 148, 0.1);
+        color: var(--brand-orange);
+        background: rgba(241, 90, 36, 0.1);
         padding: 3px 10px;
         border-radius: 6px;
         letter-spacing: 0.05em;
@@ -536,14 +540,14 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .pricing-card:hover {
-        border-color: rgba(0, 255, 148, 0.35);
+        border-color: rgba(241, 90, 36, 0.35);
         transform: translateY(-6px);
-        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 255, 148, 0.1);
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 30px rgba(241, 90, 36, 0.1);
     }
 
     .pricing-card.featured {
-        border-color: var(--neon-green);
-        box-shadow: 0 0 35px rgba(0, 255, 148, 0.2);
+        border-color: var(--brand-orange);
+        box-shadow: 0 0 35px rgba(241, 90, 36, 0.2);
     }
 
     .badge-pill-top {
@@ -551,7 +555,7 @@ $socialSettings = social_registrations_get_settings($conn);
         top: -14px;
         left: 50%;
         transform: translateX(-50%);
-        background: var(--neon-green);
+        background: var(--brand-orange);
         color: #05080a;
         font-family: 'IBM Plex Mono', monospace;
         font-weight: 800;
@@ -560,7 +564,7 @@ $socialSettings = social_registrations_get_settings($conn);
         text-transform: uppercase;
         padding: 4px 18px;
         border-radius: 9999px;
-        box-shadow: 0 0 15px rgba(0, 255, 148, 0.6);
+        box-shadow: 0 0 15px rgba(241, 90, 36, 0.6);
         white-space: nowrap;
     }
 
@@ -599,7 +603,7 @@ $socialSettings = social_registrations_get_settings($conn);
     .price-currency {
         font-size: 1rem;
         font-weight: 700;
-        color: var(--neon-green);
+        color: var(--brand-orange);
         font-family: 'Space Grotesk', sans-serif;
     }
 
@@ -641,7 +645,7 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .pricing-perks li i {
-        color: var(--neon-green);
+        color: var(--brand-orange);
         font-size: 0.95rem;
         margin-top: 3px;
         min-width: 16px;
@@ -660,15 +664,15 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .btn-card-primary {
-        background: var(--neon-green);
+        background: var(--brand-orange);
         color: #05080a;
-        box-shadow: 0 0 20px rgba(0, 255, 148, 0.35);
+        box-shadow: 0 0 20px rgba(241, 90, 36, 0.35);
     }
 
     .btn-card-primary:hover {
-        background: #39ffb0;
+        background: #ff8050;
         color: #000;
-        box-shadow: 0 0 30px rgba(0, 255, 148, 0.6);
+        box-shadow: 0 0 30px rgba(241, 90, 36, 0.6);
         transform: translateY(-2px);
     }
 
@@ -679,9 +683,9 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .btn-card-outline:hover {
-        border-color: var(--neon-green);
-        color: var(--neon-green);
-        background: rgba(0, 255, 148, 0.05);
+        border-color: var(--brand-orange);
+        color: var(--brand-orange);
+        background: rgba(241, 90, 36, 0.05);
         transform: translateY(-2px);
     }
 
@@ -706,7 +710,7 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .step-card:hover {
-        border-color: rgba(0, 255, 148, 0.3);
+        border-color: rgba(241, 90, 36, 0.3);
         transform: translateY(-4px);
     }
 
@@ -756,7 +760,7 @@ $socialSettings = social_registrations_get_settings($conn);
         border-radius: 20px;
         overflow: hidden;
         border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 35px rgba(0, 255, 148, 0.15);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 35px rgba(241, 90, 36, 0.15);
         max-width: 420px;
         margin: 0 auto;
     }
@@ -789,9 +793,9 @@ $socialSettings = social_registrations_get_settings($conn);
         height: 44px;
         min-width: 44px;
         border-radius: 12px;
-        background: rgba(0, 255, 148, 0.1);
-        border: 1px solid rgba(0, 255, 148, 0.25);
-        color: var(--neon-green);
+        background: rgba(241, 90, 36, 0.1);
+        border: 1px solid rgba(241, 90, 36, 0.25);
+        color: var(--brand-orange);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -832,7 +836,7 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .faq-item.active {
-        border-color: rgba(0, 255, 148, 0.4);
+        border-color: rgba(241, 90, 36, 0.4);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
 
@@ -854,7 +858,7 @@ $socialSettings = social_registrations_get_settings($conn);
     }
 
     .faq-chevron {
-        color: var(--neon-green);
+        color: var(--brand-orange);
         transition: transform 0.3s ease;
         font-size: 0.9rem;
     }
@@ -888,7 +892,7 @@ $socialSettings = social_registrations_get_settings($conn);
         left: 0;
         right: 0;
         background: rgba(9, 13, 16, 0.92);
-        border-top: 1px solid rgba(0, 255, 148, 0.25);
+        border-top: 1px solid rgba(241, 90, 36, 0.25);
         backdrop-filter: blur(16px);
         padding: 12px 18px;
         z-index: 999;
@@ -1497,7 +1501,7 @@ $socialSettings = social_registrations_get_settings($conn);
 <!-- Mobile Bottom Floating Action Bar -->
 <div class="mobile-float-cta">
     <div>
-        <div style="font-size: 0.72rem; font-family:'IBM Plex Mono', monospace; color: var(--neon-green); text-transform: uppercase;">
+        <div style="font-size: 0.72rem; font-family:'IBM Plex Mono', monospace; color: var(--brand-orange); text-transform: uppercase;">
             RUH-E-RAQS 2026
         </div>
         <div style="font-size: 0.95rem; font-weight: 800; color: #fff;">
