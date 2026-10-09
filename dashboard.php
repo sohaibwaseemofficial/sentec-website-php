@@ -17,6 +17,8 @@ $user_name = $_SESSION['user_name'] ?? 'Participant';
 // FETCH SETTINGS
 $socialOpen = social_registrations_open($conn);
 $eventOpen = event_registrations_open($conn);
+$socialVisible = social_registrations_visible($conn);
+$eventVisible = event_registrations_visible($conn);
 
 // 2. FETCH ACTIVE EVENT LABEL (Using prepared statement)
 $activeEventLabel = 'proxion_2026'; // fallback
@@ -245,16 +247,30 @@ if($checkTable && $checkTable->num_rows > 0) {
                     <i class="fas fa-cubes"></i> Register Module
                 </a>
             <?php endif; ?>
-            <span class="btn-action-outline" aria-disabled="true" style="opacity: 0.65; cursor: default;">
-                <i class="fas fa-ticket-alt"></i> Social Pass: Coming Soon
-            </span>
+
+            <?php if (!empty($social_reg)): ?>
+                <a href="#social-pass-card" class="btn-action-outline" style="border-color: #34d399; color: #34d399;">
+                    <i class="fas fa-ticket-alt"></i> My Social Pass
+                </a>
+            <?php elseif ($socialVisible): ?>
+                <?php if ($socialOpen): ?>
+                    <a href="social_register" class="btn-action-primary" style="background: var(--orange); color: #000; font-weight: 700;">
+                        <i class="fas fa-ticket-alt"></i> Get Social Pass
+                    </a>
+                <?php else: ?>
+                    <span class="btn-action-outline" aria-disabled="true" style="opacity: 0.8; cursor: default; border-color: rgba(239, 68, 68, 0.4); color: #f87171;">
+                        <i class="fas fa-lock"></i> Social Pass: House Full
+                    </span>
+                <?php endif; ?>
+            <?php else: ?>
+                <span class="btn-action-outline" aria-disabled="true" style="opacity: 0.65; cursor: default;">
+                    <i class="fas fa-clock"></i> Social Pass: Coming Soon
+                </span>
+            <?php endif; ?>
         </div>
     </div>
 
         <?php 
-        $eventVisible = event_registrations_visible($conn);
-        $socialVisible = social_registrations_visible($conn);
-
         $showCompetitions = ($eventVisible || !empty($registrations));
         $showSocial = ($socialVisible || !empty($social_reg));
         
@@ -332,7 +348,7 @@ if($checkTable && $checkTable->num_rows > 0) {
             <?php endif; ?>
 
             <?php if ($showSocial): ?>
-            <div class="<?php echo $colClass; ?>">
+            <div class="<?php echo $colClass; ?>" id="social-pass-card">
                 <div class="glass-panel">
                     <div class="panel-header">
                         <h3 style="margin:0;">
@@ -346,11 +362,12 @@ if($checkTable && $checkTable->num_rows > 0) {
                                 <?php if($socialOpen): ?>
                                     <i class="fas fa-music mb-3 text-orange-500" style="font-size:2.8rem;"></i>
                                     <h4 class="text-white">Join the Social Night!</h4>
-                                    <p class="mb-3" style="color: #888;">Grab your Standard, Participant, or Group Pass for PROXION Social Night.</p>
+                                    <p class="mb-3" style="color: #888;">Grab your Standard, Participant, or Group Pass for RUH-E-RAQS Social Night.</p>
                                     <a href="social_register" class="btn-action-primary">Register for Social Night</a>
                                 <?php else: ?>
-                                    <i class="fas fa-lock" style="font-size: 2.5rem; color: #666; margin-bottom: 15px;"></i>
-                                    <p class="mb-0" style="color: #888;">Social night registrations are currently closed.</p>
+                                    <i class="fas fa-lock" style="font-size: 2.8rem; color: #f87171; margin-bottom: 15px;"></i>
+                                    <h4 class="text-white">House Full / Bookings Closed</h4>
+                                    <p class="mb-0" style="color: #888;">All available spots for Ruh-e-Raqs are currently booked right now.</p>
                                 <?php endif; ?>
                             </div>
                         <?php else: ?>

@@ -1,7 +1,7 @@
 {
     "open": true,
     "limit": null,
-    "visible": false,
+    "visible": true,
     "enable_individual": true,
     "enable_participant": false,
     "enable_group": false,

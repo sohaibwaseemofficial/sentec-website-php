@@ -1446,7 +1446,7 @@ $socialSettings = social_registrations_get_settings($conn);
             <div class="venue-showcase-grid">
                 
                 <div class="poster-container">
-                    <img src="images/social-poster.webp" alt="Ruh-e-Raqs Social Event Official Poster" class="poster-img" loading="lazy">
+                    <img src="images/social-poster.webp?v=<?php echo @filemtime(__DIR__ . '/images/social-poster.webp') ?: time(); ?>" alt="Ruh-e-Raqs Social Event Official Poster" class="poster-img" loading="lazy">
                 </div>
 
                 <div class="venue-info-box">

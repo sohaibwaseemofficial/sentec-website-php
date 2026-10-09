@@ -35,6 +35,9 @@ try {
 
     if (array_key_exists('visible', $_POST)) {
         $val = (int)$_POST['visible'];
+        $state = social_registrations_read_state();
+        $state['visible'] = (bool)$val;
+        social_registrations_write_state($state);
         if ($conn->query("UPDATE social_registration_settings SET is_visible = $val WHERE id = 1")) {
             $messages[] = $val ? 'Box is now VISIBLE on dashboard.' : 'Box is now VANISHED from dashboard.';
         } else {

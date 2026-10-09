@@ -265,6 +265,7 @@ function social_registrations_visible($conn = null): bool {
             return (bool)$row['is_visible'];
         }
     }
-    return true;
+    $state = social_registrations_read_state();
+    return (bool)($state['visible'] ?? false);
 }
 ?>
