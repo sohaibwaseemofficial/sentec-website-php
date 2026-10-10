@@ -6,6 +6,7 @@ ini_set('display_errors', 1);
 include 'header.php';
 include '../db_connection.php';
 require_once __DIR__ . '/../env_loader.php';
+require_once __DIR__ . '/../image_utils.php';
 require_once __DIR__ . '/../election_settings.php';
 
 $hasSocialRegistrations = false;
@@ -556,7 +557,7 @@ $past_events = $conn->query("SELECT * FROM events WHERE status = 'past' ORDER BY
             <?php if ($upcoming_events->num_rows > 0): ?>
                 <?php while ($event = $upcoming_events->fetch_assoc()): ?>
                     <div class="d-flex align-items-center mb-3 p-3" style="background: rgba(255,255,255,0.05); border-radius: 12px;">
-                        <img src="../<?php echo $event['image_url']; ?>" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px;">
+                        <img src="<?php echo htmlspecialchars(resolve_image_url($event['image_url'] ?? '', '../', '../images/favicon2.png')); ?>" onerror="this.onerror=null; this.src='../images/favicon2.png';" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px;">
                         <div class="flex-grow-1">
                             <h5 class="m-0 text-white" style="font-size: 1rem;"><?php echo htmlspecialchars($event['title']); ?></h5>
                             <small style="color: var(--accent);"><?php echo date("M j, Y", strtotime($event['event_date'])); ?></small>
@@ -580,7 +581,7 @@ $past_events = $conn->query("SELECT * FROM events WHERE status = 'past' ORDER BY
             <?php if ($past_events->num_rows > 0): ?>
                 <?php while ($event = $past_events->fetch_assoc()): ?>
                     <div class="d-flex align-items-center mb-3 p-3" style="background: rgba(255,255,255,0.02); border-radius: 12px; opacity: 0.7;">
-                        <img src="../<?php echo $event['image_url']; ?>" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px; filter: grayscale(100%);">
+                        <img src="<?php echo htmlspecialchars(resolve_image_url($event['image_url'] ?? '', '../', '../images/favicon2.png')); ?>" onerror="this.onerror=null; this.src='../images/favicon2.png';" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px; filter: grayscale(100%);">
                         <div class="flex-grow-1">
                             <h5 class="m-0 text-white" style="font-size: 1rem;"><?php echo htmlspecialchars($event['title']); ?></h5>
                             <small class="text-muted">Ended: <?php echo date("M j, Y", strtotime($event['event_date'])); ?></small>

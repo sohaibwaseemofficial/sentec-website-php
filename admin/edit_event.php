@@ -7,6 +7,7 @@ if (!isset($_SESSION['admin'])) {
 
 include 'header.php'; // Using your standard dashboard header
 include '../db_connection.php';
+require_once __DIR__ . '/../image_utils.php';
 
 $message = "";
 
@@ -40,12 +41,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $event_link = trim($_POST['event_link']);
     $category = trim($_POST['category']);
 
-    $update_query = "UPDATE events SET title = ?, description = ?, event_date = ?, event_link = ?, category = ? WHERE id = ?";
-    $update_stmt = $conn->prepare($update_query);
+    $new_image_path = null;
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = __DIR__ . '/../images/upload/event/';
+        $uploadResult = save_image_as_webp($_FILES['image'], $uploadDir, 'images/upload/event/');
+        if ($uploadResult['success']) {
+            $new_image_path = $uploadResult['path'];
+        } else {
+            $message = "<div class='alert alert-danger'>" . htmlspecialchars($uploadResult['error']) . "</div>";
+        }
+    }
 
-    if ($update_stmt) {
-        $update_stmt->bind_param('sssssi', $event_title, $event_description, $event_date, $event_link, $category, $event_id);
-        if ($update_stmt->execute()) {
+    if (empty($message)) {
+        if ($new_image_path !== null) {
+            $update_query = "UPDATE events SET title = ?, description = ?, event_date = ?, event_link = ?, category = ?, image_url = ? WHERE id = ?";
+            $update_stmt = $conn->prepare($update_query);
+            $update_stmt->bind_param('ssssssi', $event_title, $event_description, $event_date, $event_link, $category, $new_image_path, $event_id);
+        } else {
+            $update_query = "UPDATE events SET title = ?, description = ?, event_date = ?, event_link = ?, category = ? WHERE id = ?";
+            $update_stmt = $conn->prepare($update_query);
+            $update_stmt->bind_param('sssssi', $event_title, $event_description, $event_date, $event_link, $category, $event_id);
+        }
+
+        if ($update_stmt && $update_stmt->execute()) {
             if (function_exists('invalidate_cache')) invalidate_cache('public_events_data');
             $message = "<div class='alert alert-success'>Event Updated Successfully! 🚀</div>";
             // Refresh event data for the form
@@ -54,8 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $event['event_date'] = $event_date;
             $event['event_link'] = $event_link;
             $event['category'] = $category;
+            if ($new_image_path !== null) {
+                $event['image_url'] = $new_image_path;
+            }
         } else {
-            $message = "<div class='alert alert-danger'>Error: " . $update_stmt->error . "</div>";
+            $message = "<div class='alert alert-danger'>Error: " . ($update_stmt ? $update_stmt->error : $conn->error) . "</div>";
         }
     }
 }
@@ -96,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php echo $message; ?>
 
 <div class="glass-panel" style="max-width: 900px; margin: 0 auto;">
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <div class="row">
             <div class="col-md-8">
                 <div class="mb-4">
@@ -122,7 +143,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="col-md-4 border-start border-secondary ps-4">
                 <label class="form-label text-white small fw-bold uppercase">Current Cover</label>
-                <img src="../<?php echo $event['image_url']; ?>" class="current-image-preview">
+                <img src="<?php echo htmlspecialchars(resolve_image_url($event['image_url'] ?? '', '../', '../images/favicon2.png')); ?>" class="current-image-preview" onerror="this.onerror=null; this.src='../images/favicon2.png';">
+                
+                <div class="mb-4">
+                    <label class="form-label text-white small fw-bold uppercase">Replace Cover Image</label>
+                    <input type="file" class="form-control" name="image" accept="image/*">
+                    <small class="text-muted d-block mt-1">Leave empty to keep existing cover.</small>
+                </div>
                 
                 <div class="mb-4">
                     <label class="form-label text-white small fw-bold uppercase">Event Date</label>

@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         while($ev = $events->fetch_assoc()):
                         ?>
                         <tr>
-                            <td><img src="../<?php echo $ev['image_url']; ?>" class="event-thumb"></td>
+                            <td><img src="<?php echo htmlspecialchars(resolve_image_url($ev['image_url'] ?? '', '../', '../images/favicon2.png')); ?>" class="event-thumb" onerror="this.onerror=null; this.src='../images/favicon2.png';"></td>
                             <td>
                                 <strong><?php echo htmlspecialchars($ev['title']); ?></strong><br>
                                 <span class="badge bg-secondary" style="font-size:0.65rem;"><?php echo $ev['category']; ?></span>

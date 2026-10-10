@@ -251,6 +251,8 @@ if (!function_exists('save_image_as_webp')) {
             $folder = 'sentec_uploads/gallery';
         } elseif (stripos($publicPrefix, 'social') !== false || stripos($destinationDir, 'social') !== false) {
             $folder = 'sentec_uploads/social_registrations';
+        } elseif (stripos($publicPrefix, 'event') !== false || stripos($destinationDir, 'event') !== false) {
+            $folder = 'sentec_uploads/events';
         }
 
         // =========================================================

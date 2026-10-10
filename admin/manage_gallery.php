@@ -125,7 +125,7 @@ $gallery = $conn->query("SELECT * FROM gallery ORDER BY id DESC");
                     <tbody>
                         <?php while($row = $gallery->fetch_assoc()): ?>
                         <tr>
-                            <td><img src="../<?php echo $row['main_image_url']; ?>" alt="img"></td>
+                            <td><img src="<?php echo htmlspecialchars(resolve_image_url($row['main_image_url'] ?? '', '../', '../images/favicon2.png')); ?>" alt="img" onerror="this.onerror=null; this.src='../images/favicon2.png';"></td>
                             <td>
                                 <strong class="text-white"><?php echo $row['group_title']; ?></strong><br>
                                 <small><?php echo substr($row['description'], 0, 50); ?>...</small>

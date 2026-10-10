@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <div class="mb-3">
             <label class="form-label">Main Image</label><br>
-            <img src="../<?php echo htmlspecialchars($gallery_item['main_image_url']); ?>" alt="Main Image" width="150"><br>
+            <img src="<?php echo htmlspecialchars(resolve_image_url($gallery_item['main_image_url'] ?? '', '../', '../images/favicon2.png')); ?>" alt="Main Image" width="150" onerror="this.onerror=null; this.src='../images/favicon2.png';"><br>
             <small>Current Image</small>
             <input type="file" class="form-control mt-2" name="main_image" accept="image/*">
         </div>
@@ -111,9 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $additional_images = explode(',', $gallery_item['additional_image_url']);
             foreach ($additional_images as $image) {
                 if (!empty($image)) {
+                    $cleanImage = htmlspecialchars(resolve_image_url(trim($image), '../', '../images/favicon2.png'));
                     echo "<div class='mb-2'>";
-                    $cleanImage = htmlspecialchars($image);
-                    echo "<img src='../$cleanImage' alt='Additional Image' width='150' class='mr-2'>";
+                    echo "<img src='$cleanImage' alt='Additional Image' width='150' class='mr-2' onerror=\"this.onerror=null; this.src='../images/favicon2.png';\">";
                     echo "<a href='delete_image.php?image=" . urlencode($image) . "&id=$id' class='btn btn-danger btn-sm'>Delete</a>";
                     echo "</div>";
                 }

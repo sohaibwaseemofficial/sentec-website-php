@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/cache_utils.php';
+require_once __DIR__ . '/image_utils.php';
 include 'header.php';
 
 // Quick Contact Handler (Supports both form POST and AJAX)
@@ -801,7 +802,44 @@ if (isset($conn) && !$conn->connect_error) {
         letter-spacing: 0.1em;
         text-transform: uppercase;
     }
+    .project-card-image-box {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        margin-top: 16px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid rgba(241, 90, 36, 0.28);
+        background: radial-gradient(circle at center, rgba(241, 90, 36, 0.08) 0%, rgba(8, 11, 13, 0.95) 100%);
+    }
+    .project-card-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease;
+        filter: brightness(0.92) contrast(1.05);
+    }
+    .project-card:hover .project-card-image {
+        transform: scale(1.06);
+        filter: brightness(1.04) contrast(1.08);
+    }
+    .project-card-image-glow {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(8, 11, 13, 0) 45%, rgba(8, 11, 13, 0.8) 100%);
+        pointer-events: none;
+    }
     .project-card-content {
+        padding-top: 14px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        justify-content: space-between;
+    }
+    .project-card-content.no-image {
         padding-top: 40px;
     }
     .project-card-content > span {
@@ -826,6 +864,9 @@ if (isset($conn) && !$conn->connect_error) {
         line-height: 1.6;
         font-size: 14px;
         margin-bottom: 25px;
+    }
+    .project-card .text-link {
+        margin-top: auto;
     }
 
     /* ========================================================================= */
@@ -1274,13 +1315,25 @@ if (isset($conn) && !$conn->connect_error) {
                     $evCategory = htmlspecialchars($ev['category'] ?? 'Competition & Workshop');
                     $evDesc = htmlspecialchars($ev['description'] ?? 'Official technical event hosted by SENTEC at NED University.');
                     $regLink = !empty($ev['event_link']) ? htmlspecialchars($ev['event_link']) : 'event_registration?id='.($ev['id'] ?? '');
+                    $evRawImg = trim((string)($ev['image_url'] ?? ''));
+                    $evImage = !empty($evRawImg) ? resolve_image_url($evRawImg, '', '') : '';
                 ?>
                     <article class="project-card">
                         <div class="project-index"><?php echo $evDate; ?></div>
-                        <div class="project-card-content">
-                            <span><?php echo $evCategory; ?></span>
-                            <h3><?php echo $evTitle; ?></h3>
-                            <p><?php echo $evDesc; ?></p>
+                        
+                        <?php if (!empty($evImage)): ?>
+                        <div class="project-card-image-box">
+                            <img src="<?php echo htmlspecialchars($evImage); ?>" alt="<?php echo $evTitle; ?>" class="project-card-image" loading="lazy" onerror="this.closest('.project-card-image-box').style.display='none';">
+                            <div class="project-card-image-glow"></div>
+                        </div>
+                        <?php endif; ?>
+
+                        <div class="project-card-content<?php echo empty($evImage) ? ' no-image' : ''; ?>">
+                            <div>
+                                <span><?php echo $evCategory; ?></span>
+                                <h3><?php echo $evTitle; ?></h3>
+                                <p><?php echo $evDesc; ?></p>
+                            </div>
                             <a href="<?php echo $regLink; ?>" class="text-link">
                                 <span>Register Now</span>
                                 <i class="fas fa-arrow-up-right text-xs"></i>
