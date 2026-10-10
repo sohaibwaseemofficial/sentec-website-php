@@ -6,13 +6,13 @@ $socialSettings = social_registrations_get_settings($conn);
 ?>
 
 <script>
-    document.title = "RUH-E-RAQS // روحِ رقص - SENTEC '26 Annual Sufi Evening | NED University";
+    document.title = "RUH-E-RAQS // روحِ رقص - SENTEC '26 Annual Qawwali Evening | NED University";
 </script>
 
 <style>
     /* =========================================================
        RUH-E-RAQS // SOCIAL NIGHT REDESIGN STYLES
-       Sufi Orange Fusion Theme
+       Qawwali Orange Fusion Theme
        ========================================================= */
     :root {
         --brand-orange: #f15a24;
@@ -1065,14 +1065,14 @@ $socialSettings = social_registrations_get_settings($conn);
             
             <div class="hero-badge">
                 <span class="hero-badge-pulse"></span>
-                SENTEC '26 OFFICIAL SUFI EVENING
+                SENTEC '26 OFFICIAL QAWWALI EVENING
             </div>
 
             <div class="hero-urdu">روحِ رقص</div>
             <h1 class="hero-title">RUH-E-RAQS</h1>
             
             <p class="hero-lead">
-                An authentic, soul-stirring Sufi Qawwali evening. Experience the timeless rhythm of harmonium, tabla, and spiritual kalaam in the Syed Mahmood Alam Auditorium at NED University.
+                An authentic live Qawwali evening. Experience the timeless rhythm of harmonium, tabla, and captivating vocal choruses in the Syed Mahmood Alam Auditorium at NED University.
             </p>
 
             <!-- Key Info Ribbon -->
@@ -1131,9 +1131,9 @@ $socialSettings = social_registrations_get_settings($conn);
             
             <div class="section-head">
                 <span class="section-tag">WHAT TO EXPECT</span>
-                <h2 class="section-title">An Authentic Sufi Musical Evening</h2>
+                <h2 class="section-title">An Authentic Qawwali Musical Evening</h2>
                 <p class="section-desc">
-                    Ruh-e-Raqs brings the raw spiritual energy of classical Sufi Qawwali to NED University with live traditional instruments and passionate vocals.
+                    Ruh-e-Raqs brings the raw musical energy of traditional Qawwali to NED University with live acoustic instruments, thunderous clapping, and passionate vocals.
                 </p>
             </div>
 
@@ -1143,9 +1143,9 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="highlight-icon-wrap">
                         <i class="fas fa-microphone-alt"></i>
                     </div>
-                    <h3 class="highlight-title">Live Sufi Qawwali</h3>
+                    <h3 class="highlight-title">Live Qawwali Ensembles</h3>
                     <p class="highlight-text">
-                        Immerse yourself in legendary Sufi kalams, mystical poetry, and ecstatic vocal improvisations performed live by master Qawwals.
+                        Immerse yourself in legendary kalams, soulful poetry, and powerful vocal improvisations performed live by master Qawwals.
                     </p>
                 </div>
 
@@ -1184,7 +1184,7 @@ $socialSettings = social_registrations_get_settings($conn);
                 <span class="section-tag">EVENT TIMELINE</span>
                 <h2 class="section-title">Program Schedule & Timing</h2>
                 <p class="section-desc">
-                    Carefully curated from 02:00 PM to 04:00 PM for an intense, soul-stirring spiritual musical experience.
+                    Carefully curated from 02:00 PM to 04:00 PM for an unforgettable live Qawwali musical experience.
                 </p>
             </div>
 
@@ -1211,7 +1211,7 @@ $socialSettings = social_registrations_get_settings($conn);
                             <span class="timeline-time">02:30 PM</span>
                         </div>
                         <p class="timeline-desc">
-                            Brief welcoming address by the SENTEC Directorate followed by a traditional harmonium and tabla Hamd-o-Naat prelude.
+                            Brief welcoming address by the SENTEC Directorate followed by a traditional harmonium and tabla musical prelude.
                         </p>
                     </div>
                 </div>
@@ -1224,7 +1224,7 @@ $socialSettings = social_registrations_get_settings($conn);
                             <span class="timeline-time">03:00 PM</span>
                         </div>
                         <p class="timeline-desc">
-                            The main headline Qawwali performance: authentic Sufi ensemble performing timeless kalams, high-energy choruses, and spiritual rhythms.
+                            The main headline Qawwali performance: authentic ensemble performing timeless kalams, high-energy choruses, and synchronized rhythms.
                         </p>
                     </div>
                 </div>
@@ -1237,7 +1237,7 @@ $socialSettings = social_registrations_get_settings($conn);
                             <span class="timeline-time">04:00 PM</span>
                         </div>
                         <p class="timeline-desc">
-                            Soulful final verses, vote of thanks by SENTEC, and official wrap up of the evening by 04:00 PM.
+                            Memorable final verses, vote of thanks by SENTEC, and official wrap up of the evening by 04:00 PM.
                         </p>
                     </div>
                 </div>
@@ -1538,7 +1538,7 @@ $socialSettings = social_registrations_get_settings($conn);
                         <i class="fas fa-chevron-down faq-chevron"></i>
                     </button>
                     <div class="faq-answer">
-                        RUH-E-RAQS is an authentic live Sufi Qawwali evening featuring traditional vocals, harmonium, and tabla rhythms, creating a powerful spiritual and cultural atmosphere in the NED Main Auditorium.
+                        RUH-E-RAQS is an authentic live Qawwali evening featuring traditional vocals, harmonium, and tabla rhythms, creating a vibrant cultural and musical atmosphere in the NED Main Auditorium.
                     </div>
                 </div>
 
