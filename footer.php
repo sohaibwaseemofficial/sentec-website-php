@@ -30,7 +30,7 @@
                     <ul class="space-y-2.5 text-sm font-sans">
                         <li><a href="index#about" class="hover:text-white transition-colors">About SENTEC</a></li>
                         <li><a href="team" class="hover:text-white transition-colors">Executive Team</a></li>
-                        <li><a href="index#events" class="hover:text-white transition-colors">Events & Olympiads</a></li>
+                        <li><a href="events" class="hover:text-white transition-colors">Events & Olympiads</a></li>
                         <li><a href="OurPartners" class="hover:text-white transition-colors">Industry Partners</a></li>
                         <li><a href="gallery" class="hover:text-white transition-colors">Media Gallery</a></li>
                         <li><a href="contact" class="hover:text-white transition-colors">Contact Us</a></li>

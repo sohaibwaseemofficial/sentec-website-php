@@ -1089,7 +1089,7 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="ribbon-icon"><i class="fas fa-clock"></i></div>
                     <div class="ribbon-meta">
                         <div class="ribbon-label">Gates & Timing</div>
-                        <div class="ribbon-value">02:30 PM - 04:00 PM</div>
+                        <div class="ribbon-value">02:00 PM onwards</div>
                     </div>
                 </div>
 
@@ -1184,7 +1184,7 @@ $socialSettings = social_registrations_get_settings($conn);
                 <span class="section-tag">EVENT TIMELINE</span>
                 <h2 class="section-title">Program Schedule & Timing</h2>
                 <p class="section-desc">
-                    Carefully curated from 02:30 PM to 04:00 PM for an intense, soul-stirring spiritual musical experience.
+                    Carefully curated from 02:00 PM onwards for an intense, soul-stirring spiritual musical experience.
                 </p>
             </div>
 
@@ -1195,7 +1195,7 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="timeline-card">
                         <div class="timeline-header">
                             <h4 class="timeline-card-title">Gates Open & Digital Verification</h4>
-                            <span class="timeline-time">02:30 PM</span>
+                            <span class="timeline-time">02:00 PM</span>
                         </div>
                         <p class="timeline-desc">
                             Attendees arrive at NED University Gate 1 / 2. Fast-track QR Gatepass verification, security clearance, and auditorium seating.
@@ -1208,7 +1208,7 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="timeline-card">
                         <div class="timeline-header">
                             <h4 class="timeline-card-title">Welcoming Address & Opening Prelude</h4>
-                            <span class="timeline-time">02:45 PM</span>
+                            <span class="timeline-time">02:30 PM</span>
                         </div>
                         <p class="timeline-desc">
                             Brief welcoming address by the SENTEC Directorate followed by a traditional harmonium and tabla Hamd-o-Naat prelude.
@@ -1220,7 +1220,7 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="timeline-dot"><i class="fas fa-fire-alt"></i></div>
                     <div class="timeline-card">
                         <div class="timeline-header">
-                            <h4 class="timeline-card-title">The Grand Live Qawwali Session (1 Hour)</h4>
+                            <h4 class="timeline-card-title">The Grand Live Qawwali Session</h4>
                             <span class="timeline-time">03:00 PM</span>
                         </div>
                         <p class="timeline-desc">
@@ -1234,10 +1234,10 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="timeline-card">
                         <div class="timeline-header">
                             <h4 class="timeline-card-title">Concluding Kalaam & Wrap Up</h4>
-                            <span class="timeline-time">04:00 PM</span>
+                            <span class="timeline-time">04:00 PM onwards</span>
                         </div>
                         <p class="timeline-desc">
-                            Soulful final verses, vote of thanks by SENTEC, and official wrap up of the evening by 04:00 PM.
+                            Soulful final verses, vote of thanks by SENTEC, and official wrap up of the evening.
                         </p>
                     </div>
                 </div>

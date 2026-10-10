@@ -1301,7 +1301,7 @@ if (isset($conn) && !$conn->connect_error) {
                     <em>Olympiads.</em>
                 </h2>
             </div>
-            <a class="button button-outline" href="engineers_code">
+            <a class="button button-outline" href="events">
                 <span>View All Events</span>
                 <i class="fas fa-arrow-up-right text-xs"></i>
             </a>

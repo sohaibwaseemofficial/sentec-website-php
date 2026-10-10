@@ -530,7 +530,7 @@ $logoutUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_logout' : '
                 <a href="index" class="hover:text-[#f15a24] transition-colors py-1">HOME</a>
                 <a href="index#about" class="hover:text-[#f15a24] transition-colors py-1">ABOUT</a>
                 <a href="team" class="hover:text-[#f15a24] transition-colors py-1">TEAM</a>
-                <a href="index#events" class="hover:text-[#f15a24] transition-colors py-1">EVENTS</a>
+                <a href="events" class="hover:text-[#f15a24] transition-colors py-1">EVENTS</a>
                 <a href="OurPartners" class="hover:text-[#f15a24] transition-colors py-1">PARTNERS</a>
                 <a href="gallery" class="hover:text-[#f15a24] transition-colors py-1">GALLERY</a>
                 <a href="contact" class="hover:text-[#f15a24] transition-colors py-1">CONTACT US</a>
@@ -630,7 +630,7 @@ $logoutUrl = $isAmbassadorLoggedIn && !$isUserLoggedIn ? 'ambassador_logout' : '
                 <a href="index" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">HOME</a>
                 <a href="index#about" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">ABOUT</a>
                 <a href="team" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">TEAM</a>
-                <a href="index#events" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">EVENTS</a>
+                <a href="events" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">EVENTS</a>
                 <a href="OurPartners" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">PARTNERS</a>
                 <a href="gallery" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">GALLERY</a>
                 <a href="contact" class="text-neutral-300 hover:text-[#f15a24] py-1.5 border-b border-white/[0.04]">CONTACT US</a>
