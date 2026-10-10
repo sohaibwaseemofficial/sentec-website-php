@@ -132,6 +132,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="Workshop" <?php if($event['category'] == 'Workshop') echo 'selected'; ?>>Workshop</option>
                         <option value="Competition" <?php if($event['category'] == 'Competition') echo 'selected'; ?>>Competition</option>
                         <option value="Seminar" <?php if($event['category'] == 'Seminar') echo 'selected'; ?>>Seminar</option>
+                        <option value="Social" <?php if($event['category'] == 'Social') echo 'selected'; ?>>Social</option>
+                        <option value="Qawwali" <?php if($event['category'] == 'Qawwali') echo 'selected'; ?>>Qawwali</option>
+                        <?php if (!in_array($event['category'] ?? '', ['Workshop', 'Competition', 'Seminar', 'Social', 'Qawwali']) && !empty($event['category'])): ?>
+                            <option value="<?php echo htmlspecialchars($event['category']); ?>" selected><?php echo htmlspecialchars($event['category']); ?></option>
+                        <?php endif; ?>
                     </select>
                 </div>
 

@@ -69,6 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <option value="Workshop">Workshop</option>
                         <option value="Competition">Competition</option>
                         <option value="Seminar">Seminar</option>
+                        <option value="Social">Social</option>
+                        <option value="Qawwali">Qawwali</option>
                     </select>
                 </div>
                 <div class="mb-3">
