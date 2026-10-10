@@ -395,6 +395,23 @@
         transform: translateY(-2px);
     }
 
+    .btn-rulebook-available {
+        background: rgba(241, 90, 36, 0.08);
+        border-color: rgba(241, 90, 36, 0.35);
+        color: #ffffff;
+    }
+
+    .btn-rulebook-available i {
+        color: var(--accent);
+    }
+
+    .btn-rulebook-available:hover {
+        background: rgba(241, 90, 36, 0.22);
+        border-color: var(--accent);
+        color: #ffffff;
+        box-shadow: 0 0 18px rgba(241, 90, 36, 0.35);
+    }
+
     .btn-rulebook-pending {
         border-style: dashed;
         color: #9aa3a3;
@@ -732,7 +749,7 @@
                 </div>
                 <div class="module-actions">
                     <?php if ($hasRulebook): ?>
-                        <a href="<?php echo htmlspecialchars($rulebookHref); ?>" target="_blank" class="btn-rulebook">
+                        <a href="<?php echo htmlspecialchars($rulebookHref); ?>" target="_blank" class="btn-rulebook btn-rulebook-available" title="View / Download Official Rulebook">
                             <i class="fas fa-file-pdf"></i> <span>Rulebook</span>
                         </a>
                     <?php else: ?>
