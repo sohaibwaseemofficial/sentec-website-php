@@ -65,7 +65,7 @@ try {
                         . $cnicLine
                         . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Date:</strong> 15th October 2026</p>"
                         . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Venue:</strong> Syed Mahmood Alam Auditorium (Main Auditorium), NED University</p>"
-                        . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Time:</strong> 02:00 PM onwards</p>"
+                        . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Time:</strong> 02:00 PM to 04:00 PM</p>"
                         . "</div>"
                         . "<p style='margin:0;color:#ff7878;font-size:13px;text-align:center;'>Note: This pass allows single entry only.</p>";
 
@@ -191,7 +191,7 @@ try {
                             . $cnicLine
                             . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Date:</strong> 15th October 2026</p>"
                             . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Venue:</strong> Syed Mahmood Alam Auditorium (Main Auditorium), NED University</p>"
-                            . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Time:</strong> 02:00 PM onwards</p>"
+                            . "<p style='margin:4px 0'><strong style='color:#00ff94;'>Time:</strong> 02:00 PM to 04:00 PM</p>"
                             . "</div>"
                             . "<p style='margin:0;color:#ff7878;font-size:13px;text-align:center;'>Note: This pass allows single entry only.</p>";
 

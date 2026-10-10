@@ -1089,7 +1089,7 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="ribbon-icon"><i class="fas fa-clock"></i></div>
                     <div class="ribbon-meta">
                         <div class="ribbon-label">Gates & Timing</div>
-                        <div class="ribbon-value">02:00 PM onwards</div>
+                        <div class="ribbon-value">02:00 PM - 04:00 PM</div>
                     </div>
                 </div>
 
@@ -1184,7 +1184,7 @@ $socialSettings = social_registrations_get_settings($conn);
                 <span class="section-tag">EVENT TIMELINE</span>
                 <h2 class="section-title">Program Schedule & Timing</h2>
                 <p class="section-desc">
-                    Carefully curated from 02:00 PM onwards for an intense, soul-stirring spiritual musical experience.
+                    Carefully curated from 02:00 PM to 04:00 PM for an intense, soul-stirring spiritual musical experience.
                 </p>
             </div>
 
@@ -1234,10 +1234,10 @@ $socialSettings = social_registrations_get_settings($conn);
                     <div class="timeline-card">
                         <div class="timeline-header">
                             <h4 class="timeline-card-title">Concluding Kalaam & Wrap Up</h4>
-                            <span class="timeline-time">04:00 PM onwards</span>
+                            <span class="timeline-time">04:00 PM</span>
                         </div>
                         <p class="timeline-desc">
-                            Soulful final verses, vote of thanks by SENTEC, and official wrap up of the evening.
+                            Soulful final verses, vote of thanks by SENTEC, and official wrap up of the evening by 04:00 PM.
                         </p>
                     </div>
                 </div>

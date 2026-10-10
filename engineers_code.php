@@ -358,18 +358,200 @@
         justify-content: center;
     }
 
-    .module-register {
-        margin-top: 20px;
+    .module-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 22px;
+        align-items: center;
+    }
+
+    .btn-rulebook {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: #eef2f5;
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 12px 10px;
+        border-radius: 50px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        text-decoration: none;
+        transition: all 0.25s ease;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .btn-rulebook:hover {
+        background: rgba(241, 90, 36, 0.15);
+        border-color: var(--accent);
+        color: var(--accent);
+        box-shadow: 0 0 16px rgba(241, 90, 36, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .btn-rulebook-pending {
+        border-style: dashed;
+        color: #9aa3a3;
+    }
+
+    .btn-rulebook-pending:hover {
+        border-color: rgba(241, 90, 36, 0.5);
+        color: #ffffff;
+    }
+
+    .module-register-btn {
+        margin-top: 0 !important;
         width: 100%;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 12px 18px;
-        font-size: 0.72rem;
+        gap: 6px;
+        padding: 12px 10px !important;
+        font-size: 0.72rem !important;
         line-height: 1.2;
-        letter-spacing: 0.14em;
-        border-radius: 50px;
-        box-shadow: 0 0 25px rgba(241, 90, 36, 0.35);
+        letter-spacing: 0.1em !important;
+        border-radius: 50px !important;
+        box-shadow: 0 0 20px rgba(241, 90, 36, 0.35);
+        text-decoration: none;
+    }
+
+    /* Rulebook Modal Styles */
+    .rulebook-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 8, 10, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        animation: fadeInModal 0.2s ease-out;
+    }
+    @keyframes fadeInModal {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .rulebook-modal-content {
+        background: #101518;
+        border: 1px solid rgba(241, 90, 36, 0.35);
+        border-radius: 20px;
+        padding: 34px 28px;
+        max-width: 520px;
+        width: 100%;
+        position: relative;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(241, 90, 36, 0.2);
+    }
+    .rulebook-modal-close {
+        position: absolute;
+        top: 18px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #9aa3a3;
+        font-size: 20px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .rulebook-modal-close:hover {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+    }
+    .rulebook-modal-badge {
+        font-family: var(--font-mono);
+        color: var(--accent);
+        font-size: 0.72rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .rulebook-modal-title {
+        color: #fff;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.45rem;
+        font-weight: 700;
+        margin: 0 0 12px;
+        line-height: 1.25;
+    }
+    .rulebook-modal-desc {
+        color: #9aa3a3;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .rulebook-modal-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 20px;
+    }
+    .rulebook-modal-meta-item .meta-label {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        color: #7b9096;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+    .rulebook-modal-meta-item .meta-val {
+        font-family: var(--font-mono);
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.82rem;
+    }
+    .rulebook-status-notice {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        background: rgba(241, 90, 36, 0.08);
+        border: 1px solid rgba(241, 90, 36, 0.25);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 24px;
+    }
+    .rulebook-status-notice i {
+        color: var(--accent);
+        font-size: 1.1rem;
+        margin-top: 2px;
+    }
+    .rulebook-status-notice strong {
+        display: block;
+        color: #fff;
+        font-size: 0.85rem;
+        margin-bottom: 3px;
+    }
+    .rulebook-status-notice p {
+        margin: 0;
+        color: #cfd3dc;
+        font-size: 0.78rem;
+        line-height: 1.45;
+    }
+    .rulebook-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
     }
 
     /* 7. REGISTRATION STEPS */
@@ -503,31 +685,67 @@
     <div id="university-grid" class="modules-grid">
         <?php
         $uni_modules = [
-            ["title" => "Line Following Robot (LFR)", "desc" => "A practical robotics competition in which autonomous robots follow a predefined track using sensors and control logic.", "team_size" => "Team of 2-4", "price" => "PKR 1,200"],
-            ["title" => "Circuit Designing Competition", "desc" => "An electronics and digital-logic focused competition involving circuit design, problem solving, and circuit debugging through simulation.", "team_size" => "Team of 2-4", "price" => "PKR 1,200"],
-            ["title" => "CYBER WAR ROOM", "desc" => "Cyber War Room is a direct Attack & Defense Web Security Competition. Teams must first build and secure their own functional web application, package it using Docker, and submit it to the organizers. The application is then randomly assigned to another team.", "team_size" => "Team of 3-4", "price" => "PKR 1,400"],
-            ["title" => "RAG CHATBOT BUILDER", "desc" => "Build a Retrieval-Augmented Generation chatbot from a provided PDF that answers accurately and stays polite under a live adversarial roleplay.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
-            ["title" => "AGENT SPRINT: LIVE GMAIL AUTOMATION", "desc" => "Build an agent that reads real emails from a provided Gmail account, classifies them, drafts policy-based replies, and displays live status on a dashboard.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
-            ["title" => "AI COURT: FAKE OR REAL", "desc" => "Classify six curated items as real or AI-generated and defend the verdict before a judging panel.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
-            ["title" => "DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE", "desc" => "Digitize and clean a single messy hardcopy dataset, build a dashboard, and catch a live injected anomaly.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
-            ["title" => "BREAK THE RULES", "desc" => "Break a locked chatbot's hidden behavioral rules through conversation alone, across a minimum of three rule categories.", "team_size" => "Team of 1", "price" => "PKR 1000"],
-            ["title" => "PitchFest", "desc" => "Students can come up with their ideas and projects, then present them to a panel of evaluators who assess innovation, feasibility, and impact. The module rewards bold thinking, clear communication, and the ability to turn an idea into a compelling solution.", "team_size" => "Team of 1-4", "price" => "PKR 500"],
-            ["title" => "AI DEBATE COLOSSEUM", "desc" => "Build a competing AI debate persona and face another team's persona live, with a live-updating public transcript and an AI judge deciding the winner.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
-            ["title" => "Web Forces", "desc" => "Teams ship a working full stack app against a live spec that is only revealed at the start of the module. Partway through, a twist is dropped in (a broken API, a new requirement) to test how well the team adapts, not just how fast they can build.", "team_size" => "Team of 3-4", "price" => "PKR 1,400"],
-            ["title" => "Reactor Zero", "desc" => "A high-stakes competition where teams must design and build a reactor from scratch, facing real-world challenges and constraints.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"],
-            ["title" => "Fault Line", "desc" => "Teams get mixed data, concrete stress tests and fabric tensile tests, and must build one classifier pipeline that generalizes across material types.", "team_size" => "Team of 2-3", "price" => "PKR 1,200"]
+            ["title" => "Line Following Robot (LFR)", "slug" => "lfr", "desc" => "A practical robotics competition in which autonomous robots follow a predefined track using sensors and control logic.", "team_size" => "Team of 2-4", "price" => "PKR 1,200", "rulebook" => "rulebooks/lfr.pdf"],
+            ["title" => "Circuit Designing Competition", "slug" => "circuit_designing", "desc" => "An electronics and digital-logic focused competition involving circuit design, problem solving, and circuit debugging through simulation.", "team_size" => "Team of 2-4", "price" => "PKR 1,200", "rulebook" => "rulebooks/circuit_designing.pdf"],
+            ["title" => "CYBER WAR ROOM", "slug" => "cyber_war_room", "desc" => "Cyber War Room is a direct Attack & Defense Web Security Competition. Teams must first build and secure their own functional web application, package it using Docker, and submit it to the organizers. The application is then randomly assigned to another team.", "team_size" => "Team of 3-4", "price" => "PKR 1,400", "rulebook" => "rulebooks/cyber_war_room.pdf"],
+            ["title" => "RAG CHATBOT BUILDER", "slug" => "rag_chatbot_builder", "desc" => "Build a Retrieval-Augmented Generation chatbot from a provided PDF that answers accurately and stays polite under a live adversarial roleplay.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/rag_chatbot_builder.pdf"],
+            ["title" => "AGENT SPRINT: LIVE GMAIL AUTOMATION", "slug" => "agent_sprint", "desc" => "Build an agent that reads real emails from a provided Gmail account, classifies them, drafts policy-based replies, and displays live status on a dashboard.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/agent_sprint.pdf"],
+            ["title" => "AI COURT: FAKE OR REAL", "slug" => "ai_court", "desc" => "Classify six curated items as real or AI-generated and defend the verdict before a judging panel.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/ai_court.pdf"],
+            ["title" => "DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE", "slug" => "data_detective", "desc" => "Digitize and clean a single messy hardcopy dataset, build a dashboard, and catch a live injected anomaly.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/data_detective.pdf"],
+            ["title" => "BREAK THE RULES", "slug" => "break_the_rules", "desc" => "Break a locked chatbot's hidden behavioral rules through conversation alone, across a minimum of three rule categories.", "team_size" => "Team of 1", "price" => "PKR 1000", "rulebook" => "rulebooks/break_the_rules.pdf"],
+            ["title" => "PitchFest", "slug" => "pitchfest", "desc" => "Students can come up with their ideas and projects, then present them to a panel of evaluators who assess innovation, feasibility, and impact. The module rewards bold thinking, clear communication, and the ability to turn an idea into a compelling solution.", "team_size" => "Team of 1-4", "price" => "PKR 500", "rulebook" => "rulebooks/pitchfest.pdf"],
+            ["title" => "AI DEBATE COLOSSEUM", "slug" => "ai_debate_colosseum", "desc" => "Build a competing AI debate persona and face another team's persona live, with a live-updating public transcript and an AI judge deciding the winner.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/ai_debate_colosseum.pdf"],
+            ["title" => "Web Forces", "slug" => "web_forces", "desc" => "Teams ship a working full stack app against a live spec that is only revealed at the start of the module. Partway through, a twist is dropped in (a broken API, a new requirement) to test how well the team adapts, not just how fast they can build.", "team_size" => "Team of 3-4", "price" => "PKR 1,400", "rulebook" => "rulebooks/web_forces.pdf"],
+            ["title" => "Reactor Zero", "slug" => "reactor_zero", "desc" => "A high-stakes competition where teams must design and build a reactor from scratch, facing real-world challenges and constraints.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/reactor_zero.pdf"],
+            ["title" => "Fault Line", "slug" => "fault_line", "desc" => "Teams get mixed data, concrete stress tests and fabric tensile tests, and must build one classifier pipeline that generalizes across material types.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/fault_line.pdf"]
         ];
+
         foreach ($uni_modules as $mod) {
-            echo '
+            $rulebookPath = trim($mod['rulebook'] ?? '');
+            $hasRulebook = false;
+            $rulebookHref = '';
+
+            if (!empty($rulebookPath)) {
+                if (strpos($rulebookPath, 'http://') === 0 || strpos($rulebookPath, 'https://') === 0) {
+                    $hasRulebook = true;
+                    $rulebookHref = $rulebookPath;
+                } elseif (file_exists(__DIR__ . '/' . $rulebookPath)) {
+                    $hasRulebook = true;
+                    $rulebookHref = $rulebookPath;
+                }
+            }
+
+            $titleEsc = htmlspecialchars($mod["title"], ENT_QUOTES, 'UTF-8');
+            $descEsc = htmlspecialchars($mod["desc"], ENT_QUOTES, 'UTF-8');
+            $teamEsc = htmlspecialchars($mod["team_size"], ENT_QUOTES, 'UTF-8');
+            $priceEsc = htmlspecialchars($mod["price"], ENT_QUOTES, 'UTF-8');
+            $regUrl = 'event_registration?module=' . urlencode($mod["title"]);
+            ?>
             <div class="module-card">
-                <h3 class="module-title mt-2">' . htmlspecialchars($mod["title"]) . '</h3>
-                <p class="module-desc">' . htmlspecialchars($mod["desc"]) . '</p>
-                <div class="module-meta">
-                    <span class="module-meta-pill">' . htmlspecialchars($mod["team_size"]) . '</span>
-                    <span class="module-meta-pill">' . htmlspecialchars($mod["price"]) . '</span>
+                <div>
+                    <h3 class="module-title mt-2"><?php echo $titleEsc; ?></h3>
+                    <p class="module-desc"><?php echo $descEsc; ?></p>
+                    <div class="module-meta">
+                        <span class="module-meta-pill"><i class="fas fa-users me-1" style="color:var(--accent);"></i> <?php echo $teamEsc; ?></span>
+                        <span class="module-meta-pill"><i class="fas fa-ticket-alt me-1" style="color:var(--accent);"></i> <?php echo $priceEsc; ?></span>
+                    </div>
                 </div>
-                <a href="event_registration?module=' . urlencode($mod["title"]) . '" class="btn-neon module-register">Register Here</a>
-            </div>';
+                <div class="module-actions">
+                    <?php if ($hasRulebook): ?>
+                        <a href="<?php echo htmlspecialchars($rulebookHref); ?>" target="_blank" class="btn-rulebook">
+                            <i class="fas fa-file-pdf"></i> <span>Rulebook</span>
+                        </a>
+                    <?php else: ?>
+                        <button type="button" class="btn-rulebook btn-rulebook-pending" onclick="openRulebookModal('<?php echo htmlspecialchars(addslashes($mod['title'])); ?>', '<?php echo htmlspecialchars(addslashes($mod['desc'])); ?>', '<?php echo htmlspecialchars(addslashes($mod['team_size'])); ?>', '<?php echo htmlspecialchars(addslashes($mod['price'])); ?>', '<?php echo $regUrl; ?>')">
+                            <i class="fas fa-file-alt"></i> <span>Rulebook</span>
+                        </button>
+                    <?php endif; ?>
+                    <a href="<?php echo $regUrl; ?>" class="btn-neon module-register-btn">
+                        <span>Register</span> <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <?php
         }
         ?>
     </div>
@@ -582,6 +800,42 @@
 </section>
 
 <!-- ================= JAVASCRIPT LOGIC ================= -->
+<!-- Rulebook Information Modal -->
+<div id="rulebookModal" class="rulebook-modal-backdrop" style="display:none;" onclick="closeRulebookModal(event)">
+    <div class="rulebook-modal-content" onclick="event.stopPropagation()">
+        <button type="button" class="rulebook-modal-close" onclick="closeRulebookModal()">&times;</button>
+        <div class="rulebook-modal-badge"><i class="fas fa-book-open"></i> MODULE RULEBOOK</div>
+        <h3 id="modalModuleTitle" class="rulebook-modal-title">Module Title</h3>
+        <p id="modalModuleDesc" class="rulebook-modal-desc">Module description...</p>
+        
+        <div class="rulebook-modal-meta">
+            <div class="rulebook-modal-meta-item">
+                <span class="meta-label">TEAM FORMAT</span>
+                <span id="modalModuleTeam" class="meta-val">Team of 2-4</span>
+            </div>
+            <div class="rulebook-modal-meta-item">
+                <span class="meta-label">REGISTRATION FEE</span>
+                <span id="modalModulePrice" class="meta-val">PKR 1,200</span>
+            </div>
+        </div>
+
+        <div class="rulebook-status-notice">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <strong>Official PDF Rulebook In Final Review</strong>
+                <p>The detailed technical scoring rubric and competition guidelines are being finalized by the module lead and will be released here. Registrations are currently active!</p>
+            </div>
+        </div>
+
+        <div class="rulebook-modal-actions">
+            <button type="button" class="btn-rulebook" style="width:auto; padding:10px 20px;" onclick="closeRulebookModal()">Close</button>
+            <a id="modalRegisterBtn" href="event_registration" class="btn-neon" style="padding:10px 24px; font-size:0.75rem;">
+                Register For This Module <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
 <script>
     // Hero background slideshow autoplay
     (function() {
@@ -595,6 +849,29 @@
             }, 5000);
         }
     })();
+
+    // Rulebook modal functions
+    function openRulebookModal(title, desc, team, price, regUrl) {
+        document.getElementById('modalModuleTitle').innerText = title;
+        document.getElementById('modalModuleDesc').innerText = desc;
+        document.getElementById('modalModuleTeam').innerText = team;
+        document.getElementById('modalModulePrice').innerText = price;
+        document.getElementById('modalRegisterBtn').href = regUrl || 'event_registration';
+        document.getElementById('rulebookModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeRulebookModal(e) {
+        const modal = document.getElementById('rulebookModal');
+        if (modal) modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeRulebookModal();
+        }
+    });
 </script>
 
 <?php include 'footer.php'; ?>
