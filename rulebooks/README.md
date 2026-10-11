@@ -1,6 +1,6 @@
 # SENTEC Competition Rulebooks Directory
 
-Place PDF rulebook documents in this folder.
+Place PDF or WebP rulebook documents in this folder. Both PDF (`.pdf`) and optimized WebP images (`.webp`) are automatically detected and linked by `engineers_code.php`.
 
 ### Recommended File Naming for The Engineer's Code Modules:
 1. `lfr.pdf` — Line Following Robot (LFR)

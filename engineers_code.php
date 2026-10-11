@@ -707,11 +707,11 @@
             ["title" => "CYBER WAR ROOM", "slug" => "cyber_war_room", "desc" => "Cyber War Room is a direct Attack & Defense Web Security Competition. Teams must first build and secure their own functional web application, package it using Docker, and submit it to the organizers. The application is then randomly assigned to another team.", "team_size" => "Team of 3-4", "price" => "PKR 1,400", "rulebook" => "rulebooks/cyber_war_room.pdf"],
             ["title" => "RAG CHATBOT BUILDER", "slug" => "rag_chatbot_builder", "desc" => "Build a Retrieval-Augmented Generation chatbot from a provided PDF that answers accurately and stays polite under a live adversarial roleplay.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/rag_chatbot_builder.pdf"],
             ["title" => "AGENT SPRINT: LIVE GMAIL AUTOMATION", "slug" => "agent_sprint", "desc" => "Build an agent that reads real emails from a provided Gmail account, classifies them, drafts policy-based replies, and displays live status on a dashboard.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/agent_sprint.pdf"],
-            ["title" => "AI COURT: FAKE OR REAL", "slug" => "ai_court", "desc" => "Classify six curated items as real or AI-generated and defend the verdict before a judging panel.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/ai_court.pdf"],
-            ["title" => "DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE", "slug" => "data_detective", "desc" => "Digitize and clean a single messy hardcopy dataset, build a dashboard, and catch a live injected anomaly.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/data_detective.pdf"],
-            ["title" => "BREAK THE RULES", "slug" => "break_the_rules", "desc" => "Break a locked chatbot's hidden behavioral rules through conversation alone, across a minimum of three rule categories.", "team_size" => "Team of 1", "price" => "PKR 1000", "rulebook" => "rulebooks/break_the_rules.pdf"],
+            ["title" => "AI COURT: FAKE OR REAL", "slug" => "ai_court", "desc" => "Classify six curated items as real or AI-generated and defend the verdict before a judging panel.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/ai_court.webp"],
+            ["title" => "DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE", "slug" => "data_detective", "desc" => "Digitize and clean a single messy hardcopy dataset, build a dashboard, and catch a live injected anomaly.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/data_detective.webp"],
+            ["title" => "BREAK THE RULES", "slug" => "break_the_rules", "desc" => "Break a locked chatbot's hidden behavioral rules through conversation alone, across a minimum of three rule categories.", "team_size" => "Team of 1", "price" => "PKR 1000", "rulebook" => "rulebooks/break_the_rules.webp"],
             ["title" => "PitchFest", "slug" => "pitchfest", "desc" => "Students can come up with their ideas and projects, then present them to a panel of evaluators who assess innovation, feasibility, and impact. The module rewards bold thinking, clear communication, and the ability to turn an idea into a compelling solution.", "team_size" => "Team of 1-4", "price" => "PKR 500", "rulebook" => "rulebooks/pitchfest.pdf"],
-            ["title" => "AI DEBATE COLOSSEUM", "slug" => "ai_debate_colosseum", "desc" => "Build a competing AI debate persona and face another team's persona live, with a live-updating public transcript and an AI judge deciding the winner.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/ai_debate_colosseum.pdf"],
+            ["title" => "AI DEBATE COLOSSEUM", "slug" => "ai_debate_colosseum", "desc" => "Build a competing AI debate persona and face another team's persona live, with a live-updating public transcript and an AI judge deciding the winner.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/ai_debate_colosseum.webp"],
             ["title" => "Web Forces", "slug" => "web_forces", "desc" => "Teams ship a working full stack app against a live spec that is only revealed at the start of the module. Partway through, a twist is dropped in (a broken API, a new requirement) to test how well the team adapts, not just how fast they can build.", "team_size" => "Team of 3-4", "price" => "PKR 1,400", "rulebook" => "rulebooks/web_forces.pdf"],
             ["title" => "Reactor Zero", "slug" => "reactor_zero", "desc" => "A high-stakes competition where teams must design and build a reactor from scratch, facing real-world challenges and constraints.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/reactor_zero.pdf"],
             ["title" => "Fault Line", "slug" => "fault_line", "desc" => "Teams get mixed data, concrete stress tests and fabric tensile tests, and must build one classifier pipeline that generalizes across material types.", "team_size" => "Team of 2-3", "price" => "PKR 1,200", "rulebook" => "rulebooks/fault_line.pdf"]
@@ -729,8 +729,23 @@
                 } elseif (file_exists(__DIR__ . '/' . $rulebookPath)) {
                     $hasRulebook = true;
                     $rulebookHref = $rulebookPath;
+                } else {
+                    $baseNoExt = preg_replace('/\.(pdf|webp|png|jpe?g)$/i', '', $rulebookPath);
+                    if (file_exists(__DIR__ . '/' . $baseNoExt . '.webp')) {
+                        $hasRulebook = true;
+                        $rulebookHref = $baseNoExt . '.webp';
+                    } elseif (file_exists(__DIR__ . '/' . $baseNoExt . '.pdf')) {
+                        $hasRulebook = true;
+                        $rulebookHref = $baseNoExt . '.pdf';
+                    } elseif (file_exists(__DIR__ . '/' . $baseNoExt . '.png')) {
+                        $hasRulebook = true;
+                        $rulebookHref = $baseNoExt . '.png';
+                    }
                 }
             }
+
+            $isPdf = strtolower(pathinfo($rulebookHref, PATHINFO_EXTENSION)) === 'pdf';
+            $rulebookIcon = $isPdf ? 'fa-file-pdf' : 'fa-file-image';
 
             $titleEsc = htmlspecialchars($mod["title"], ENT_QUOTES, 'UTF-8');
             $descEsc = htmlspecialchars($mod["desc"], ENT_QUOTES, 'UTF-8');
@@ -750,7 +765,7 @@
                 <div class="module-actions">
                     <?php if ($hasRulebook): ?>
                         <a href="<?php echo htmlspecialchars($rulebookHref); ?>" target="_blank" class="btn-rulebook btn-rulebook-available" title="View / Download Official Rulebook">
-                            <i class="fas fa-file-pdf"></i> <span>Rulebook</span>
+                            <i class="fas <?php echo $rulebookIcon; ?>"></i> <span>Rulebook</span>
                         </a>
                     <?php else: ?>
                         <button type="button" class="btn-rulebook btn-rulebook-pending" onclick="openRulebookModal('<?php echo htmlspecialchars(addslashes($mod['title'])); ?>', '<?php echo htmlspecialchars(addslashes($mod['desc'])); ?>', '<?php echo htmlspecialchars(addslashes($mod['team_size'])); ?>', '<?php echo htmlspecialchars(addslashes($mod['price'])); ?>', '<?php echo $regUrl; ?>')">
