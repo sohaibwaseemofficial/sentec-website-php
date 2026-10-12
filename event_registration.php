@@ -121,7 +121,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             "AI COURT: FAKE OR REAL" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
             "DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
             "BREAK THE RULES" => ["min" => 1, "max" => 1, "price" => "PKR 1,000"],
-            "PitchFest" => ["min" => 1, "max" => 4, "price" => "PKR 500"],
             "AI DEBATE COLOSSEUM" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
             "Web Forces" => ["min" => 3, "max" => 4, "price" => "PKR 1,400"],
             "Reactor Zero" => ["min" => 2, "max" => 3, "price" => "PKR 1,200"],
@@ -655,7 +654,6 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
                                 <option value="AI COURT: FAKE OR REAL">AI COURT: FAKE OR REAL (AI/ML) — Team of 2-3</option>
                                 <option value="DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE">DATA DETECTIVE: SINGLE HARDCOPY CHALLENGE (Data) — Team of 2-3</option>
                                 <option value="BREAK THE RULES">BREAK THE RULES (AI/Security) — Solo (1 Member)</option>
-                                <option value="PitchFest">PitchFest (Innovation) — Team of 1-4</option>
                                 <option value="AI DEBATE COLOSSEUM">AI DEBATE COLOSSEUM (AI/ML) — Team of 2-3</option>
                                 <option value="Web Forces">Web Forces (Web Dev) — Team of 3-4</option>
                                 <option value="Reactor Zero">Reactor Zero (Engineering) — Team of 2-3</option>
@@ -853,13 +851,6 @@ if ($visibleCount == 1) { $colClass = 'col-md-6'; } // Widest, centered for 1 bo
             price: "PKR 1,000",
             category: "AI/Security",
             desc: "Break a locked chatbot's hidden behavioral rules through conversation alone, across a minimum of three rule categories."
-        },
-        "PitchFest": {
-            min: 1,
-            max: 4,
-            price: "PKR 500",
-            category: "Innovation",
-            desc: "Students can come up with their ideas and projects, then present them to a panel of evaluators who assess innovation, feasibility, and impact. The module rewards bold thinking, clear communication, and the ability to turn an idea into a compelling solution."
         },
         "AI DEBATE COLOSSEUM": {
             min: 2,
