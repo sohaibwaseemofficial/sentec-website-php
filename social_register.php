@@ -4,7 +4,248 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 2. SECURITY CHECK
+// -------------------------------------------------------------------------
+// 2. BACKEND API / FORM SUBMISSION PROCESSING (Runs before any HTML output)
+// -------------------------------------------------------------------------
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    ini_set('display_errors', 0);
+    error_reporting(E_ALL);
+    ini_set('memory_limit', '256M');
+    ini_set('max_execution_time', 300);
+
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    ob_start();
+
+    $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+              || (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+              || !empty($_POST['ajax']);
+
+    function sendSocialResponse($success, $message, $redirect = null) {
+        global $isAjax;
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        if ($isAjax) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'status'   => $success ? 'success' : 'error',
+                'success'  => $success,
+                'message'  => $message,
+                'redirect' => $redirect
+            ]);
+            exit;
+        }
+        if ($success) {
+            echo "<script>alert('" . addslashes($message) . "'); window.location.href='" . ($redirect ?: 'dashboard') . "';</script>";
+            exit;
+        } else {
+            $_SESSION['social_reg_error'] = $message;
+            header("Location: social_register");
+            exit;
+        }
+    }
+
+    // Detect silent POST drops when payload exceeds post_max_size
+    if (empty($_POST) && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
+        sendSocialResponse(false, 'Total upload size exceeded server limits. Please ensure files are optimized and try again.');
+    }
+
+    // Security check: Must be authenticated
+    if (!isset($_SESSION['user_id'])) {
+        sendSocialResponse(false, 'Your session has expired. Please log in again to register.', 'login');
+    }
+
+    require_once __DIR__ . '/db_connection.php';
+    require_once __DIR__ . '/image_utils.php';
+    require_once __DIR__ . '/social_attendees_helper.php';
+    require_once __DIR__ . '/social_registration_settings.php';
+
+    $user_id = (int)$_SESSION['user_id'];
+
+    // Registration window check
+    if (!social_registrations_open($conn)) {
+        sendSocialResponse(false, 'Registrations for Social Night are currently closed or full.');
+    }
+
+    // Fetch active event label
+    $activeEventLabel = 'proxion_2026';
+    $eventRes = $conn->query("SELECT title FROM events WHERE status = 'upcoming' ORDER BY event_date DESC LIMIT 1");
+    if ($eventRes && $eventRes->num_rows > 0) {
+        $activeEventLabel = $eventRes->fetch_assoc()['title'];
+    }
+
+    // Duplicate check
+    $checkStmt = $conn->prepare("SELECT id FROM social_registrations WHERE user_id = ? AND event_label = ? LIMIT 1");
+    $checkStmt->bind_param("is", $user_id, $activeEventLabel);
+    $checkStmt->execute();
+    $checkRes = $checkStmt->get_result();
+    if ($checkRes && $checkRes->num_rows > 0) {
+        $checkStmt->close();
+        sendSocialResponse(false, 'You have already registered for Social Night!', 'dashboard');
+    }
+    $checkStmt->close();
+
+    try {
+        $settings = social_registrations_get_settings($conn);
+        $allowedTypes = [];
+        if (!empty($settings['enable_individual'])) $allowedTypes[] = 'standard';
+        if (!empty($settings['enable_participant'])) $allowedTypes[] = 'participant';
+        if (!empty($settings['enable_group'])) $allowedTypes[] = 'group';
+        if (empty($allowedTypes)) $allowedTypes = ['standard'];
+
+        $requestedType = in_array($_POST['reg_type'] ?? '', ['standard', 'participant', 'group'], true) ? $_POST['reg_type'] : 'standard';
+        $reg_type = in_array($requestedType, $allowedTypes, true) ? $requestedType : $allowedTypes[0];
+        $amb_code = !empty($_POST['ambassador_code']) ? trim($_POST['ambassador_code']) : NULL;
+        
+        $amount = social_tier_effective_price($reg_type, $settings);
+
+        if (!function_exists('uploadSocialFile')) {
+            function uploadSocialFile($file, $prefix = 'social', $uid = 0) {
+                if (!isset($file['name']) || empty($file['name']) || !isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+                    return null;
+                }
+                $targetDir = __DIR__ . '/images/uploads/social/';
+                $publicPrefix = 'images/uploads/social/';
+                if (!is_dir($targetDir)) {
+                    @mkdir($targetDir, 0777, true);
+                }
+                $res = save_image_as_webp($file, $targetDir, $publicPrefix);
+                if (!empty($res['success']) && !empty($res['path'])) {
+                    return $res['path'];
+                }
+                return false;
+            }
+        }
+
+        // Validate Primary Attendee
+        $p1_name = mb_substr(trim($_POST['name'] ?? ''), 0, 100);
+        $p1_cnic = mb_substr(trim($_POST['cnic'] ?? ''), 0, 50);
+        $p1_email = mb_substr(trim($_POST['email'] ?? ''), 0, 100);
+        $p1_phone = mb_substr(trim($_POST['phone'] ?? ''), 0, 50);
+
+        if (empty($p1_name)) throw new Exception("Primary attendee full name is required.");
+        if (empty($p1_cnic)) throw new Exception("Primary attendee CNIC / Form-B is required.");
+        if (empty($p1_email)) throw new Exception("Primary attendee email address is required.");
+        if (empty($p1_phone)) throw new Exception("Primary attendee phone number is required.");
+
+        $p1_face = uploadSocialFile($_FILES['face_image'] ?? [], "face1", $user_id);
+        if (!$p1_face) throw new Exception("Face portrait photo for Person 1 is required.");
+
+        $p1_card = uploadSocialFile($_FILES['id_card'] ?? [], "card1", $user_id);
+        if (!$p1_card) throw new Exception("Student ID / CNIC card photo for Person 1 is required.");
+
+        $requiresPayment = ($amount > 0);
+        $pay_proof = null;
+        if ($requiresPayment) {
+            $pay_proof = isset($_FILES['payment_proof']) ? uploadSocialFile($_FILES['payment_proof'], "pay", $user_id) : null;
+            if (!$pay_proof) throw new Exception("Payment proof receipt is required for paid pass tiers.");
+        } else {
+            $pay_proof = 'free_participant_pass';
+        }
+
+        // Group members validation
+        if ($reg_type === 'group') {
+            $p2_name = mb_substr(trim($_POST['p2_name'] ?? ''), 0, 100);
+            $p2_cnic = mb_substr(trim($_POST['p2_cnic'] ?? ''), 0, 50);
+            $p2_email = mb_substr(trim($_POST['p2_email'] ?? ''), 0, 100);
+            $p2_phone = mb_substr(trim($_POST['p2_phone'] ?? ''), 0, 50);
+            $p2_face = isset($_FILES['p2_face']) ? uploadSocialFile($_FILES['p2_face'], "face2", $user_id) : null;
+            $p2_card = isset($_FILES['p2_card']) ? uploadSocialFile($_FILES['p2_card'], "card2", $user_id) : null;
+
+            $p3_name = mb_substr(trim($_POST['p3_name'] ?? ''), 0, 100);
+            $p3_cnic = mb_substr(trim($_POST['p3_cnic'] ?? ''), 0, 50);
+            $p3_email = mb_substr(trim($_POST['p3_email'] ?? ''), 0, 100);
+            $p3_phone = mb_substr(trim($_POST['p3_phone'] ?? ''), 0, 50);
+            $p3_face = isset($_FILES['p3_face']) ? uploadSocialFile($_FILES['p3_face'], "face3", $user_id) : null;
+            $p3_card = isset($_FILES['p3_card']) ? uploadSocialFile($_FILES['p3_card'], "card3", $user_id) : null;
+
+            if (empty($p2_name) || empty($p2_cnic) || empty($p2_email) || empty($p2_phone) || !$p2_face || !$p2_card) {
+                throw new Exception("Group passes require complete information, face photo, and student ID for Person 2.");
+            }
+            if (empty($p3_name) || empty($p3_cnic) || empty($p3_email) || empty($p3_phone) || !$p3_face || !$p3_card) {
+                throw new Exception("Group passes require complete information, face photo, and student ID for Person 3.");
+            }
+        } else {
+            $p2_name = $p2_cnic = $p2_email = $p2_phone = $p2_face = $p2_card = null;
+            $p3_name = $p3_cnic = $p3_email = $p3_phone = $p3_face = $p3_card = null;
+        }
+
+        // Build member payload for attendee records
+        $memberPayload = [[
+            'label' => 'Primary',
+            'name'  => $p1_name,
+            'email' => $p1_email,
+            'phone' => $p1_phone,
+            'cnic'  => $p1_cnic,
+            'face'  => $p1_face,
+            'card'  => $p1_card
+        ]];
+        if ($reg_type === 'group') {
+            $memberPayload[] = [
+                'label' => 'Person 2',
+                'name'  => $p2_name,
+                'email' => $p2_email,
+                'phone' => $p2_phone,
+                'cnic'  => $p2_cnic,
+                'face'  => $p2_face,
+                'card'  => $p2_card
+            ];
+            $memberPayload[] = [
+                'label' => 'Person 3',
+                'name'  => $p3_name,
+                'email' => $p3_email,
+                'phone' => $p3_phone,
+                'cnic'  => $p3_cnic,
+                'face'  => $p3_face,
+                'card'  => $p3_card
+            ];
+        }
+
+        $sql = "INSERT INTO social_registrations 
+        (user_id, full_name, email, phone, cnic, face_image, id_card_image, payment_proof, payment_status, 
+         registration_type, ambassador_code, total_amount,
+         participant2_name, participant2_email, participant2_phone, participant2_cnic, participant2_face, participant2_card,
+         participant3_name, participant3_email, participant3_phone, participant3_cnic, participant3_face, participant3_card,
+         event_label) 
+        VALUES (?,?,?,?,?,?,?,?, 'submitted', ?,?,?, ?,?,?,?,?,?, ?,?,?,?,?,?, ?)";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Database prepare error: " . $conn->error);
+        }
+
+        $types = 'i' . str_repeat('s', 9) . 'i' . str_repeat('s', 13);
+        $stmt->bind_param($types, 
+            $user_id, $p1_name, $p1_email, $p1_phone, $p1_cnic, $p1_face, $p1_card, $pay_proof, 
+            $reg_type, $amb_code, $amount,
+            $p2_name, $p2_email, $p2_phone, $p2_cnic, $p2_face, $p2_card,
+            $p3_name, $p3_email, $p3_phone, $p3_cnic, $p3_face, $p3_card,
+            $activeEventLabel
+        );
+
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to record registration: " . $stmt->error);
+        }
+
+        $registrationId = $conn->insert_id;
+        $stmt->close();
+
+        if (!empty($memberPayload)) {
+            social_attendees_sync($conn, $registrationId, $memberPayload, $pay_proof, 'submitted');
+        }
+
+        sendSocialResponse(true, 'Registration Submitted Successfully!', 'dashboard');
+
+    } catch (Exception $e) {
+        sendSocialResponse(false, $e->getMessage());
+    }
+}
+
+// -------------------------------------------------------------------------
+// 3. PAGE VIEW / GET REQUEST (Renders standard HTML layout)
+// -------------------------------------------------------------------------
 if (!isset($_SESSION['user_id'])) {
     header("Location: login");
     exit;
@@ -20,13 +261,13 @@ $socialOpen = social_registrations_open($conn);
 $user_id = (int)$_SESSION['user_id'];
 
 // Fetch active event label
-$activeEventLabel = 'proxion_2026'; // fallback
+$activeEventLabel = 'proxion_2026';
 $eventRes = $conn->query("SELECT title FROM events WHERE status = 'upcoming' ORDER BY event_date DESC LIMIT 1");
 if ($eventRes && $eventRes->num_rows > 0) {
     $activeEventLabel = $eventRes->fetch_assoc()['title'];
 }
 
-// 2b. REGISTRATION WINDOW CHECK
+// Check if registration window is closed
 if (!$socialOpen) {
     ?>
     <section style="padding-top: 140px; padding-bottom: 80px;">
@@ -44,7 +285,7 @@ if (!$socialOpen) {
     exit;
 }
 
-// 3. CHECK EXISTING REGISTRATION FOR ACTIVE EVENT
+// Check existing registration
 $checkStmt = $conn->prepare("SELECT id FROM social_registrations WHERE user_id = ? AND event_label = ? LIMIT 1");
 $checkStmt->bind_param("is", $user_id, $activeEventLabel);
 $checkStmt->execute();
@@ -56,154 +297,10 @@ if ($checkRes && $checkRes->num_rows > 0) {
 }
 $checkStmt->close();
 
-// 4. HANDLE FORM SUBMISSION
 $msg = "";
-if (($_SERVER['REQUEST_METHOD'] ?? '') == 'POST') {
-    $settings = social_registrations_get_settings($conn);
-    $allowedTypes = [];
-    if (!empty($settings['enable_individual'])) $allowedTypes[] = 'standard';
-    if (!empty($settings['enable_participant'])) $allowedTypes[] = 'participant';
-    if (!empty($settings['enable_group'])) $allowedTypes[] = 'group';
-    if (empty($allowedTypes)) $allowedTypes = ['standard'];
-
-    $requestedType = in_array($_POST['reg_type'] ?? '', ['standard', 'participant', 'group'], true) ? $_POST['reg_type'] : 'standard';
-    $reg_type = in_array($requestedType, $allowedTypes, true) ? $requestedType : $allowedTypes[0];
-    $amb_code = !empty($_POST['ambassador_code']) ? trim($_POST['ambassador_code']) : NULL;
-    
-    // Dynamic Effective Price from Admin Settings (honors discount active state)
-    $amount = social_tier_effective_price($reg_type, $settings);
-
-    // --- Cloudinary / WebP Upload Helper ---
-    if (!function_exists('uploadSocialFile')) {
-        function uploadSocialFile($file, $prefix = 'social', $uid = 0) {
-            if (!isset($file['name']) || empty($file['name']) || !isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
-                return null;
-            }
-
-            $targetDir = __DIR__ . '/images/uploads/social_registrations/';
-            $publicPrefix = 'images/uploads/social_registrations/';
-
-            $res = save_image_as_webp($file, $targetDir, $publicPrefix);
-            if (!empty($res['success']) && !empty($res['path'])) {
-                return $res['path'];
-            }
-            return false;
-        }
-    }
-
-    // Capture & Sanitize Basic Info
-    $p1_name = mb_substr(trim($_POST['name'] ?? ''), 0, 100);
-    $p1_cnic = mb_substr(trim($_POST['cnic'] ?? ''), 0, 50);
-    $p1_email = mb_substr(trim($_POST['email'] ?? ''), 0, 100);
-    $p1_phone = mb_substr(trim($_POST['phone'] ?? ''), 0, 50);
-    
-    // Upload Images via Cloudinary
-    $p1_face = uploadSocialFile($_FILES['face_image'] ?? [], "face1", $user_id);
-    $p1_card = uploadSocialFile($_FILES['id_card'] ?? [], "card1", $user_id);
-    $pay_proof = isset($_FILES['payment_proof']) ? uploadSocialFile($_FILES['payment_proof'], "pay", $user_id) : null;
-
-    // Group Member Variables
-    $groupValid = true;
-    if ($reg_type === 'group') {
-        $p2_name = !empty($_POST['p2_name']) ? mb_substr(trim($_POST['p2_name']), 0, 100) : null;
-        $p2_cnic = !empty($_POST['p2_cnic']) ? mb_substr(trim($_POST['p2_cnic']), 0, 50) : null;
-        $p2_email = !empty($_POST['p2_email']) ? mb_substr(trim($_POST['p2_email']), 0, 100) : null;
-        $p2_phone = !empty($_POST['p2_phone']) ? mb_substr(trim($_POST['p2_phone']), 0, 50) : null;
-        $p2_face = isset($_FILES['p2_face']) ? uploadSocialFile($_FILES['p2_face'], "face2", $user_id) : null;
-        $p2_card = isset($_FILES['p2_card']) ? uploadSocialFile($_FILES['p2_card'], "card2", $user_id) : null;
-
-        $p3_name = !empty($_POST['p3_name']) ? mb_substr(trim($_POST['p3_name']), 0, 100) : null;
-        $p3_cnic = !empty($_POST['p3_cnic']) ? mb_substr(trim($_POST['p3_cnic']), 0, 50) : null;
-        $p3_email = !empty($_POST['p3_email']) ? mb_substr(trim($_POST['p3_email']), 0, 100) : null;
-        $p3_phone = !empty($_POST['p3_phone']) ? mb_substr(trim($_POST['p3_phone']), 0, 50) : null;
-        $p3_face = isset($_FILES['p3_face']) ? uploadSocialFile($_FILES['p3_face'], "face3", $user_id) : null;
-        $p3_card = isset($_FILES['p3_card']) ? uploadSocialFile($_FILES['p3_card'], "card3", $user_id) : null;
-
-        if (empty($p2_name) || empty($p2_cnic) || empty($p2_email) || empty($p2_phone) || !$p2_face || !$p2_card ||
-            empty($p3_name) || empty($p3_cnic) || empty($p3_email) || empty($p3_phone) || !$p3_face || !$p3_card) {
-            $groupValid = false;
-            $msg = "<div class='alert alert-danger'>Group passes require complete information and photo uploads (face portrait & student ID/CNIC) for all 3 members.</div>";
-        }
-    } else {
-        $p2_name = $p2_cnic = $p2_email = $p2_phone = $p2_face = $p2_card = null;
-        $p3_name = $p3_cnic = $p3_email = $p3_phone = $p3_face = $p3_card = null;
-    }
-
-    // Build participant payload
-    $memberPayload = [[
-        'label' => 'Primary',
-        'name' => $p1_name,
-        'email' => $p1_email,
-        'phone' => $p1_phone,
-        'cnic' => $p1_cnic,
-        'face' => $p1_face,
-        'card' => $p1_card
-    ]];
-    if ($reg_type === 'group' && $groupValid) {
-        if (!empty($p2_name)) {
-            $memberPayload[] = [
-                'label' => 'Person 2',
-                'name' => $p2_name,
-                'email' => $p2_email,
-                'phone' => $p2_phone,
-                'cnic' => $p2_cnic,
-                'face' => $p2_face,
-                'card' => $p2_card
-            ];
-        }
-        if (!empty($p3_name)) {
-            $memberPayload[] = [
-                'label' => 'Person 3',
-                'name' => $p3_name,
-                'email' => $p3_email,
-                'phone' => $p3_phone,
-                'cnic' => $p3_cnic,
-                'face' => $p3_face,
-                'card' => $p3_card
-            ];
-        }
-    }
-
-    // Validate Required Files (Payment proof only mandatory if amount > 0)
-    $requiresPayment = ($amount > 0);
-    $payProofOk = $requiresPayment ? (!empty($pay_proof) && $pay_proof !== false) : true;
-    if (!$requiresPayment && empty($pay_proof)) {
-        $pay_proof = 'free_participant_pass';
-    }
-
-    if ($p1_face && $p1_card && $payProofOk && $groupValid && empty($msg)) {
-        // Insert into DB
-        $sql = "INSERT INTO social_registrations 
-        (user_id, full_name, email, phone, cnic, face_image, id_card_image, payment_proof, payment_status, 
-         registration_type, ambassador_code, total_amount,
-         participant2_name, participant2_email, participant2_phone, participant2_cnic, participant2_face, participant2_card,
-         participant3_name, participant3_email, participant3_phone, participant3_cnic, participant3_face, participant3_card,
-         event_label) 
-        VALUES (?,?,?,?,?,?,?,?, 'submitted', ?,?,?, ?,?,?,?,?,?, ?,?,?,?,?,?, ?)";
-
-        $stmt = $conn->prepare($sql);
-        $types = 'i' . str_repeat('s', 9) . 'i' . str_repeat('s', 13); // 2 integers, 22 strings
-        $stmt->bind_param($types, 
-            $user_id, $p1_name, $p1_email, $p1_phone, $p1_cnic, $p1_face, $p1_card, $pay_proof, 
-            $reg_type, $amb_code, $amount,
-            $p2_name, $p2_email, $p2_phone, $p2_cnic, $p2_face, $p2_card,
-            $p3_name, $p3_email, $p3_phone, $p3_cnic, $p3_face, $p3_card,
-            $activeEventLabel
-        );
-
-        if ($stmt->execute()) {
-            $registrationId = $conn->insert_id;
-            if (!empty($memberPayload)) {
-                social_attendees_sync($conn, $registrationId, $memberPayload, $pay_proof, 'submitted');
-            }
-            echo "<script>alert('Registration Submitted Successfully!'); window.location.href='dashboard';</script>";
-            exit;
-        } else {
-            $msg = "<div class='alert alert-danger'>DB Error: " . $conn->error . "</div>";
-        }
-    } else if (empty($msg)) {
-        $msg = "<div class='alert alert-danger'>Upload failed. Please ensure face photo, ID card, and " . ($requiresPayment ? "payment receipt (JPG, PNG, or PDF)" : "required photos") . " are provided in valid formats.</div>";
-    }
+if (!empty($_SESSION['social_reg_error'])) {
+    $msg = "<div class='alert alert-danger'>" . htmlspecialchars($_SESSION['social_reg_error']) . "</div>";
+    unset($_SESSION['social_reg_error']);
 }
 ?>
 
@@ -499,6 +596,7 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
 
 <div class="social-reg-wrapper">
     <div class="reg-wizard-card">
+        <div id="socialAlertContainer" style="display:none; margin-bottom: 24px;"></div>
         <?php echo $msg; ?>
 
         <form method="POST" enctype="multipart/form-data" id="socialForm" action="">
@@ -855,51 +953,122 @@ $p1_prefill_phone = $_SESSION['user']['phone'] ?? '';
     selectType('<?php echo $defaultType; ?>', document.getElementById('btn-<?php echo $defaultType; ?>'));
 
     document.getElementById('socialForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
         const btn = document.getElementById('socialSubmitBtn');
         const btnText = document.getElementById('socialSubmitText');
-        if (btn.dataset.ready === 'true') return;
+        const alertBox = document.getElementById('socialAlertContainer');
 
-        e.preventDefault();
+        function showError(msg) {
+            if (alertBox) {
+                alertBox.style.display = 'block';
+                alertBox.innerHTML = `
+                    <div style="background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.5); color: #f87171; padding: 14px 18px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; border-radius: 4px; line-height: 1.5;">
+                        <i class="fas fa-exclamation-triangle me-2"></i> ${msg}
+                    </div>
+                `;
+                alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                alert(msg);
+            }
+            btn.disabled = false;
+            btnText.textContent = "SUBMIT REGISTRATION // CONFIRM PASS";
+        }
+
+        if (alertBox) {
+            alertBox.style.display = 'none';
+        }
+
+        // Validate required HTML5 constraints first
+        if (!this.checkValidity()) {
+            this.reportValidity();
+            return;
+        }
+
+        // Validate payment screenshot requirement for paid tiers
+        const currentType = document.getElementById('reg_type').value;
+        const currentAmount = getTierEffectivePrice(currentType);
+        const payInput = document.getElementById('payment-input');
+        if (currentAmount > 0 && (!payInput || !payInput.files || payInput.files.length === 0)) {
+            showError("Please attach your payment receipt / transaction screenshot before submitting.");
+            return;
+        }
+
         btn.disabled = true;
-        btnText.textContent = "OPTIMIZING IMAGES...";
+        btnText.textContent = "PREPARING FILES...";
 
         try {
-            const fileInputs = this.querySelectorAll('input[type="file"]');
-            for (let i = 0; i < fileInputs.length; i++) {
-                const inp = fileInputs[i];
-                if (inp.files && inp.files[0] && window.sentecCompressFile) {
-                    const origFile = inp.files[0];
-                    const isPdf = (origFile.type && origFile.type.toLowerCase().includes('pdf')) || (origFile.name && origFile.name.toLowerCase().endsWith('.pdf'));
-                    if (isPdf) continue;
+            const rawFormData = new FormData(this);
+            const finalFormData = new FormData();
+            const fileEntries = [];
 
-                    try {
-                        const optimized = await window.sentecCompressFile(origFile, {
-                            maxWidthOrHeight: 1600,
-                            quality: 0.82
-                        });
-                        try {
-                            const dt = new DataTransfer();
-                            dt.items.add(optimized);
-                            inp.files = dt.files;
-                        } catch (dtErr) {
-                            // DataTransfer fallback for older browsers
-                        }
-                    } catch (err) {
-                        console.warn('Compress fallback for', inp.name, err);
-                    }
+            for (const [key, value] of rawFormData.entries()) {
+                if (value instanceof File && value.name !== '') {
+                    fileEntries.push({ key, file: value });
+                } else if (!(value instanceof File)) {
+                    finalFormData.append(key, value);
                 }
             }
 
+            finalFormData.append('ajax', '1');
+
+            for (let i = 0; i < fileEntries.length; i++) {
+                const item = fileEntries[i];
+                btnText.textContent = `OPTIMIZING IMAGE ${i + 1} OF ${fileEntries.length}...`;
+
+                let readyFile = item.file;
+                const isAlreadyWebp = readyFile.type === 'image/webp' || (readyFile.name && readyFile.name.toLowerCase().endsWith('.webp'));
+                const isPdf = (readyFile.type && readyFile.type.toLowerCase().includes('pdf')) || (readyFile.name && readyFile.name.toLowerCase().endsWith('.pdf'));
+
+                if (window.sentecCompressFile && !isPdf && !isAlreadyWebp && readyFile.size > 150 * 1024) {
+                    try {
+                        readyFile = await window.sentecCompressFile(item.file, {
+                            maxWidthOrHeight: 1600,
+                            quality: 0.82
+                        });
+                    } catch (compErr) {
+                        console.warn("Client compression fallback for", item.file.name, compErr);
+                        readyFile = item.file;
+                    }
+                }
+
+                const safeFileName = readyFile.name || (item.file && item.file.name) || 'upload.webp';
+                finalFormData.append(item.key, readyFile, safeFileName);
+            }
+
             btnText.textContent = "TRANSMITTING REGISTRATION...";
-            btn.dataset.ready = 'true';
-            btn.disabled = false;
-            this.submit();
-        } catch (submitErr) {
-            console.error('Submission pre-process error:', submitErr);
-            btn.dataset.ready = 'true';
-            btn.disabled = false;
-            btnText.textContent = "TRANSMITTING REGISTRATION...";
-            this.submit();
+
+            const targetUrl = window.location.href;
+            const res = await fetch(targetUrl, {
+                method: 'POST',
+                body: finalFormData,
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const rawText = await res.text();
+            let data = null;
+            try {
+                data = JSON.parse(rawText);
+            } catch (jsonErr) {
+                console.error("Non-JSON server response:", rawText);
+                throw new Error("A server error occurred during transmission. Please try again.");
+            }
+
+            if (data && (data.status === 'success' || data.success === true)) {
+                btnText.textContent = "SUCCESSFUL! REDIRECTING...";
+                alert(data.message || 'Registration Submitted Successfully!');
+                window.location.href = data.redirect || 'dashboard';
+            } else {
+                const errorMsg = (data && data.message) ? data.message : 'Upload failed. Please check your details and try again.';
+                showError(errorMsg);
+            }
+
+        } catch (err) {
+            console.error("Submission error:", err);
+            showError(err.message || 'Network communication error. Please check your internet connection and try again.');
         }
     });
 
