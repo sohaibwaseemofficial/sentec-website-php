@@ -74,19 +74,19 @@ try {
                         'Social Event 2026',
                         'E-PASS READY',
                         "Dear <strong>{$recipientName}</strong>",
-                        "<p style='margin:0 0 12px 0;'>Your entry pass for RUH-E-RAQS Social Event has been approved.</p>" . $qrBlock . $detailHtml,
+                        "<p style='margin:0 0 12px 0;'>Your entry pass for SENTEC Qawwali Social Event has been approved.</p>" . $qrBlock . $detailHtml,
                         null,
                         null,
                         'Show this email to gate staff along with your CNIC.'
                     );
                 } else {
                     $recipientName = htmlspecialchars($attendee['full_name'] ?? 'Guest', ENT_QUOTES);
-                    $bodyCopy = "<p>Thank you for your interest in RUH-E-RAQS Social Event.</p>"
+                    $bodyCopy = "<p>Thank you for your interest in SENTEC Qawwali Social Event.</p>"
                         . "<p>After reviewing your application, we regret to inform you that we cannot confirm your registration at this time.</p>"
                         . "<p>If you believe this decision was made in error, please reply to this email with your details.</p>"
                         . "<p>Regards,<br>SENTEC Team</p>";
 
-                    $mail->Subject = "Registration Update - RUH-E-RAQS Social Event";
+                    $mail->Subject = "Registration Update - SENTEC Qawwali Social Event";
                     $mail->Body = sentec_build_email_html(
                         'Social Event 2026',
                         'Registration Update',
@@ -200,19 +200,19 @@ try {
                             'Social Event 2026',
                             'E-PASS READY',
                             "Dear <strong>{$recipientName}</strong>",
-                            "<p style='margin:0 0 12px 0;'>Your entry pass for RUH-E-RAQS Social Event has been approved.</p>" . $qrBlock . $detailHtml,
+                            "<p style='margin:0 0 12px 0;'>Your entry pass for SENTEC Qawwali Social Event has been approved.</p>" . $qrBlock . $detailHtml,
                             null,
                             null,
                             'Show this email to gate staff along with your CNIC.'
                         );
                     } else {
                         $recipientName = htmlspecialchars($person['name'] ?? 'Guest', ENT_QUOTES);
-                        $bodyCopy = "<p>Thank you for your interest in RUH-E-RAQS Social Event.</p>"
+                        $bodyCopy = "<p>Thank you for your interest in SENTEC Qawwali Social Event.</p>"
                             . "<p>After reviewing your application, we regret to inform you that we cannot confirm your registration at this time.</p>"
                             . "<p>If you believe this decision was made in error, please reply to this email with your details.</p>"
                             . "<p>Regards,<br>SENTEC Team</p>";
 
-                        $mail->Subject = "Registration Update - RUH-E-RAQS Social Event";
+                        $mail->Subject = "Registration Update - SENTEC Qawwali Social Event";
                         $mail->Body = sentec_build_email_html(
                             'Social Event 2026',
                             'Registration Update',

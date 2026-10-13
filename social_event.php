@@ -6,12 +6,12 @@ $socialSettings = social_registrations_get_settings($conn);
 ?>
 
 <script>
-    document.title = "RUH-E-RAQS // روحِ رقص - SENTEC '26 Annual Qawwali Evening | NED University";
+    document.title = "SENTEC QAWWALI // A Golden Mehfil - SENTEC '26 Annual Qawwali Evening | NED University";
 </script>
 
 <style>
     /* =========================================================
-       RUH-E-RAQS // SOCIAL NIGHT REDESIGN STYLES
+       SENTEC QAWWALI // A GOLDEN MEHFIL // SOCIAL NIGHT REDESIGN STYLES
        Qawwali Orange Fusion Theme
        ========================================================= */
     :root {
@@ -1068,11 +1068,11 @@ $socialSettings = social_registrations_get_settings($conn);
                 SENTEC '26 OFFICIAL QAWWALI EVENING
             </div>
 
-            <div class="hero-urdu">روحِ رقص</div>
-            <h1 class="hero-title">RUH-E-RAQS</h1>
+            <div class="hero-urdu">A Golden Mehfil</div>
+            <h1 class="hero-title">SENTEC QAWWALI</h1>
             
             <p class="hero-lead">
-                An authentic live Qawwali evening. Experience the timeless rhythm of harmonium, tabla, and captivating vocal choruses in the Syed Mahmood Alam Auditorium at NED University.
+                An authentic live Qawwali evening — A Golden Mehfil. Experience the timeless rhythm of harmonium, tabla, and captivating vocal choruses in the Syed Mahmood Alam Auditorium at NED University.
             </p>
 
             <!-- Key Info Ribbon -->
@@ -1133,7 +1133,7 @@ $socialSettings = social_registrations_get_settings($conn);
                 <span class="section-tag">WHAT TO EXPECT</span>
                 <h2 class="section-title">An Authentic Qawwali Musical Evening</h2>
                 <p class="section-desc">
-                    Ruh-e-Raqs brings the raw musical energy of traditional Qawwali to NED University with live acoustic instruments, thunderous clapping, and passionate vocals.
+                    SENTEC Qawwali brings the raw musical energy of traditional Qawwali to NED University with live acoustic instruments, thunderous clapping, and passionate vocals.
                 </p>
             </div>
 
@@ -1446,7 +1446,7 @@ $socialSettings = social_registrations_get_settings($conn);
             <div class="venue-showcase-grid">
                 
                 <div class="poster-container">
-                    <img src="images/social-poster.webp?v=<?php echo @filemtime(__DIR__ . '/images/social-poster.webp') ?: time(); ?>" alt="Ruh-e-Raqs Social Event Official Poster" class="poster-img" loading="lazy">
+                    <img src="images/social-poster.webp?v=<?php echo @filemtime(__DIR__ . '/images/social-poster.webp') ?: time(); ?>" alt="SENTEC Qawwali - A Golden Mehfil Official Poster" class="poster-img" loading="lazy">
                 </div>
 
                 <div class="venue-info-box">
@@ -1486,7 +1486,7 @@ $socialSettings = social_registrations_get_settings($conn);
                         <div class="venue-item-icon"><i class="fas fa-user-tie"></i></div>
                         <div>
                             <div class="venue-item-title">Dress Code</div>
-                            <div class="venue-item-desc">Traditional / Cultural / Smart Formal attire is encouraged to honor the spirit of Ruh-e-Raqs.</div>
+                            <div class="venue-item-desc">Traditional / Cultural / Smart Formal attire is encouraged to honor the spirit of SENTEC Qawwali.</div>
                         </div>
                     </div>
                 </div>
@@ -1518,7 +1518,7 @@ $socialSettings = social_registrations_get_settings($conn);
                         <i class="fas fa-chevron-down faq-chevron"></i>
                     </button>
                     <div class="faq-answer">
-                        No, RUH-E-RAQS is strictly restricted to currently enrolled students of NED University. Non-NEDians are not permitted, and an original valid NED Student ID card is mandatory at the gate along with your digital QR E-Gatepass.
+                        No, SENTEC Qawwali is strictly restricted to currently enrolled students of NED University. Non-NEDians are not permitted, and an original valid NED Student ID card is mandatory at the gate along with your digital QR E-Gatepass.
                     </div>
                 </div>
 
@@ -1534,11 +1534,11 @@ $socialSettings = social_registrations_get_settings($conn);
 
                 <div class="faq-item">
                     <button class="faq-question" type="button">
-                        <span>What kind of performance is RUH-E-RAQS?</span>
+                        <span>What kind of performance is SENTEC Qawwali?</span>
                         <i class="fas fa-chevron-down faq-chevron"></i>
                     </button>
                     <div class="faq-answer">
-                        RUH-E-RAQS is an authentic live Qawwali evening featuring traditional vocals, harmonium, and tabla rhythms, creating a vibrant cultural and musical atmosphere in the NED Main Auditorium.
+                        SENTEC Qawwali (A Golden Mehfil) is an authentic live Qawwali evening featuring traditional vocals, harmonium, and tabla rhythms, creating a vibrant cultural and musical atmosphere in the NED Main Auditorium.
                     </div>
                 </div>
 
@@ -1573,7 +1573,7 @@ $socialSettings = social_registrations_get_settings($conn);
 <div class="mobile-float-cta">
     <div>
         <div style="font-size: 0.72rem; font-family:'IBM Plex Mono', monospace; color: var(--brand-orange); text-transform: uppercase;">
-            RUH-E-RAQS 2026
+            SENTEC QAWWALI 2026
         </div>
         <div style="font-size: 0.95rem; font-weight: 800; color: #fff;">
             Passes from <?php echo social_tier_effective_price('standard', $socialSettings); ?> PKR

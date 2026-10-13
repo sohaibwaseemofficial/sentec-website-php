@@ -362,12 +362,12 @@ if($checkTable && $checkTable->num_rows > 0) {
                                 <?php if($socialOpen): ?>
                                     <i class="fas fa-music mb-3 text-orange-500" style="font-size:2.8rem;"></i>
                                     <h4 class="text-white">Join the Social Night!</h4>
-                                    <p class="mb-3" style="color: #888;">Grab your Standard, Participant, or Group Pass for RUH-E-RAQS Social Night.</p>
+                                    <p class="mb-3" style="color: #888;">Grab your Standard, Participant, or Group Pass for SENTEC Qawwali Social Night.</p>
                                     <a href="social_register" class="btn-action-primary">Register for Social Night</a>
                                 <?php else: ?>
                                     <i class="fas fa-lock" style="font-size: 2.8rem; color: #f87171; margin-bottom: 15px;"></i>
                                     <h4 class="text-white">House Full / Bookings Closed</h4>
-                                    <p class="mb-0" style="color: #888;">All available spots for Ruh-e-Raqs are currently booked right now.</p>
+                                    <p class="mb-0" style="color: #888;">All available spots for SENTEC Qawwali are currently booked right now.</p>
                                 <?php endif; ?>
                             </div>
                         <?php else: ?>

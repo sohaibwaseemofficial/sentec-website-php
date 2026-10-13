@@ -1,6 +1,6 @@
 # SENTEC Native Android Gate Scanner APK
 
-High-performance, offline-resilient gate check-in mobile application designed for **SENTEC Ruh-e-Raqs (Social Night)** and **Engineer's Code Olympiad**.
+High-performance, offline-resilient gate check-in mobile application designed for **SENTEC Qawwali (Social Night)** and **Engineer's Code Olympiad**.
 
 ---
 
@@ -20,8 +20,8 @@ High-performance, offline-resilient gate check-in mobile application designed fo
    - **4-Digit Station PIN**:
      - `1011` → Gate 1 (Engineer Entry)
      - `1012` → Gate 2 (Engineer Entry)
-     - `2011` → Gate 1 (Ruh-e-Raqs Social Entry)
-     - `2012` → Gate 2 (Ruh-e-Raqs Social Entry)
+     - `2011` → Gate 1 (SENTEC Qawwali Social Entry)
+     - `2012` → Gate 2 (SENTEC Qawwali Social Entry)
      - `9999` → Universal Gate (All Allowed)
 
 ---

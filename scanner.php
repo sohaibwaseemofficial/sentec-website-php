@@ -7,7 +7,7 @@ header("Expires: 0");
  * Fast, offline-first mobile QR scanner supporting:
  * - 3-Tier Distributed Fallback (Hotspot 192.168.43.1 -> Cloud Direct -> Local IndexedDB)
  * - Persistent Station Login (PIN & QR Activation)
- * - Dual Event Verification (Engineer's Code & RUH-E-RAQS Social Night)
+ * - Dual Event Verification (Engineer's Code & SENTEC Qawwali Social Night)
  * - Audio Chimes, Haptics, Screen WakeLock & Auto-Dismiss Scanning
  */
 ?>
@@ -889,7 +889,7 @@ header("Expires: 0");
                             </div>
                             <div class="inspect-detail-item">
                                 <span class="detail-label">PASS TYPE</span>
-                                <span class="detail-val" id="inspect-event">Ruh-e-Raqs</span>
+                                <span class="detail-val" id="inspect-event">SENTEC Qawwali</span>
                             </div>
                             <div class="inspect-detail-item" id="inspect-module-container" style="grid-column: span 2; display: none; background: rgba(0, 255, 148, 0.08); border: 1px solid rgba(0, 255, 148, 0.25); border-radius: 8px; padding: 6px 10px; margin-top: 4px;">
                                 <span class="detail-label" style="color: var(--neon-green); font-weight: 700;">🎯 COMPETITION MODULE</span>
@@ -1268,7 +1268,7 @@ header("Expires: 0");
             nameEl.innerText = attendee.name || "Unknown Attendee";
             ticketEl.innerText = data.ticket_id || rawCode;
             cnicEl.innerText = attendee.cnic || attendee.roll_number || 'N/A';
-            eventEl.innerText = attendee.event_name || (data.role === 'engineer' ? "Engineer's Code" : "RUH-E-RAQS Social Night");
+            eventEl.innerText = attendee.event_name || (data.role === 'engineer' ? "Engineer's Code" : "SENTEC Qawwali Social Night");
 
             // Competition Module & Team Name Display
             const modWrap = document.getElementById('inspect-module-container');
@@ -1463,7 +1463,7 @@ header("Expires: 0");
                     const canAdmit = !isUsed && !isWrongRole;
                     const status = isWrongRole ? 'INVALID_ROLE' : (isUsed ? 'DUPLICATE' : 'READY_TO_ADMIT');
                     const msg = isWrongRole 
-                        ? `Pass belongs to ${item.r === 'social' ? 'RUH-E-RAQS Social Night' : "Engineer's Code Registration"}. Entry denied at this checkpoint.` 
+                        ? `Pass belongs to ${item.r === 'social' ? 'SENTEC Qawwali Social Night' : "Engineer's Code Registration"}. Entry denied at this checkpoint.` 
                         : (isUsed ? 'Pass already marked as present in offline cache' : 'Verified in offline whitelist');
 
                     displayInspectionSheet({
@@ -1477,7 +1477,7 @@ header("Expires: 0");
                             cnic: item.c,
                             face_image: item.p,
                             id_card_image: item.card,
-                            event_name: item.r === 'engineer' ? "Engineer's Code" : "RUH-E-RAQS Social Night",
+                            event_name: item.r === 'engineer' ? "Engineer's Code" : "SENTEC Qawwali Social Night",
                             module: item.r === 'engineer' ? item.m : '',
                             team: ''
                         }

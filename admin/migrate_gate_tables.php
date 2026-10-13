@@ -41,8 +41,8 @@ if ($count === 0) {
     $seedSql = "INSERT INTO `gate_stations` (`station_id`, `station_pin`, `station_name`, `role`) VALUES
         ('GATE_ENG_01', '1011', 'Gate 1 - Engineer Entry', 'engineer'),
         ('GATE_ENG_02', '1012', 'Gate 2 - Engineer Entry', 'engineer'),
-        ('GATE_SOC_01', '2011', 'Gate 1 - Social Ruh-e-Raqs', 'social'),
-        ('GATE_SOC_02', '2012', 'Gate 2 - Social Ruh-e-Raqs', 'social'),
+        ('GATE_SOC_01', '2011', 'Gate 1 - Social SENTEC Qawwali', 'social'),
+        ('GATE_SOC_02', '2012', 'Gate 2 - Social SENTEC Qawwali', 'social'),
         ('GATE_ALL_01', '9999', 'Universal Master Station', 'all');";
     if ($conn->query($seedSql)) {
         echo "✓ Seeded 5 default gate stations (PINs: 1011, 1012, 2011, 2012, 9999).\n";

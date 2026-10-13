@@ -274,8 +274,8 @@ class MainActivity : AppCompatActivity() {
                 val offlinePins = mapOf(
                     "1011" to Triple("GATE_ENG_01", "Gate 1 - Engineer Entry", "engineer"),
                     "1012" to Triple("GATE_ENG_02", "Gate 2 - Engineer Entry", "engineer"),
-                    "2011" to Triple("GATE_SOC_01", "Gate 1 - Ruh-e-Raqs Entry", "social"),
-                    "2012" to Triple("GATE_SOC_02", "Gate 2 - Ruh-e-Raqs Entry", "social"),
+                    "2011" to Triple("GATE_SOC_01", "Gate 1 - SENTEC Qawwali Entry", "social"),
+                    "2012" to Triple("GATE_SOC_02", "Gate 2 - SENTEC Qawwali Entry", "social"),
                     "9999" to Triple("GATE_VIP_ALL", "Universal Gate (All)", "all")
                 )
                 if (offlinePins.containsKey(pin)) {
@@ -524,8 +524,8 @@ class MainActivity : AppCompatActivity() {
             binding.tvResultStatus.text = "RESTRICTION HIT // WRONG GATE"
             binding.tvResultStatus.setTextColor(ContextCompat.getColor(this, R.color.warning_orange))
             binding.resultBannerCard.strokeColor = ContextCompat.getColor(this, R.color.warning_orange)
-            val gateName = if (gateType.equals("social", ignoreCase = true)) "RUH-E-RAQS Social Night" else "Engineer's Code"
-            val correctGate = if (gateType.equals("social", ignoreCase = true)) "RUH-E-RAQS Social Gate" else "Engineer's Code Registration Gate"
+            val gateName = if (gateType.equals("social", ignoreCase = true)) "SENTEC Qawwali Social Night" else "Engineer's Code"
+            val correctGate = if (gateType.equals("social", ignoreCase = true)) "SENTEC Qawwali Social Gate" else "Engineer's Code Registration Gate"
             binding.tvInspectionAlert.text = "⚠️ RESTRICTION HIT: This pass belongs to $gateName! Entry denied at this checkpoint. Direct attendee to $correctGate."
             binding.tvInspectionAlert.setBackgroundColor(Color.parseColor("#332A15"))
             binding.tvInspectionAlert.setTextColor(ContextCompat.getColor(this, R.color.warning_orange))

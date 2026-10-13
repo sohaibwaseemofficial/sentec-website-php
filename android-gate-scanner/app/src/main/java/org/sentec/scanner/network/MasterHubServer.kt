@@ -25,8 +25,8 @@ class MasterHubServer(
     private val validPins = mapOf(
         "1011" to Triple("GATE_ENG_01", "Gate 1 - Engineer Entry", "engineer"),
         "1012" to Triple("GATE_ENG_02", "Gate 2 - Engineer Entry", "engineer"),
-        "2011" to Triple("GATE_SOC_01", "Gate 1 - Ruh-e-Raqs Entry", "social"),
-        "2012" to Triple("GATE_SOC_02", "Gate 2 - Ruh-e-Raqs Entry", "social"),
+        "2011" to Triple("GATE_SOC_01", "Gate 1 - SENTEC Qawwali Entry", "social"),
+        "2012" to Triple("GATE_SOC_02", "Gate 2 - SENTEC Qawwali Entry", "social"),
         "9999" to Triple("GATE_VIP_ALL", "Universal Gate (All)", "all")
     )
 

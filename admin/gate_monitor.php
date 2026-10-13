@@ -202,7 +202,7 @@ if ($cntRes) {
         <div class="col-xl-3 col-sm-6">
             <div class="gate-stat-card">
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="gate-stat-label">Ruh-e-Raqs (Social)</span>
+                    <span class="gate-stat-label">SENTEC Qawwali (Social)</span>
                     <i class="fas fa-ticket-alt text-muted" style="font-size:1.2rem;"></i>
                 </div>
                 <div class="gate-stat-num text-white" id="stat-social-admitted">
@@ -391,7 +391,7 @@ if ($cntRes) {
                     <div class="mb-3">
                         <label class="form-label small text-muted font-mono">ALLOWED ROLE</label>
                         <select name="station_role" class="form-select bg-black text-white border-secondary">
-                            <option value="social">RUH-E-RAQS (Social Evening Only)</option>
+                            <option value="social">SENTEC Qawwali (Social Evening Only)</option>
                             <option value="engineer">Engineer's Code (Olympiad Only)</option>
                             <option value="all">Universal (All Events Allowed)</option>
                         </select>

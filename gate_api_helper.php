@@ -244,7 +244,7 @@ function gate_lookup_attendee(mysqli $conn, string $rawInput, string $stationRol
                     'roll_number' => '',
                     'team' => '',
                     'category' => $row['label'] ?? 'Guest Pass',
-                    'event_name' => 'RUH-E-RAQS (Qawwali Musical Evening)',
+                    'event_name' => 'SENTEC Qawwali (A Golden Mehfil)',
                     'face_image' => gate_normalize_image_url($row['face_image']),
                     'id_card_image' => gate_normalize_image_url($row['id_card_image']),
                     'payment_proof' => gate_normalize_image_url($row['payment_proof'] ?? $row['group_payment_proof'] ?? null),
@@ -273,7 +273,7 @@ function gate_lookup_attendee(mysqli $conn, string $rawInput, string $stationRol
                         'roll_number' => '',
                         'team' => '',
                         'category' => $row['label'] ?? 'Guest Pass',
-                        'event_name' => 'RUH-E-RAQS (Qawwali Musical Evening)',
+                        'event_name' => 'SENTEC Qawwali (A Golden Mehfil)',
                         'face_image' => gate_normalize_image_url($row['face_image']),
                         'id_card_image' => gate_normalize_image_url($row['id_card_image']),
                         'payment_proof' => gate_normalize_image_url($row['payment_proof'] ?? null),
@@ -327,7 +327,7 @@ function gate_lookup_attendee(mysqli $conn, string $rawInput, string $stationRol
                         'roll_number' => '',
                         'team' => '',
                         'category' => "Pass #{$memberIdx}",
-                        'event_name' => 'RUH-E-RAQS (Qawwali Musical Evening)',
+                        'event_name' => 'SENTEC Qawwali (A Golden Mehfil)',
                         'face_image' => gate_normalize_image_url($face),
                         'id_card_image' => gate_normalize_image_url($card),
                         'payment_proof' => gate_normalize_image_url($sr['payment_proof'] ?? null),
@@ -419,8 +419,8 @@ function gate_lookup_attendee(mysqli $conn, string $rawInput, string $stationRol
 
     // Check Role Mismatch (Strict Gate Restriction)
     if ($stationRole !== 'all' && $stationRole !== $ticketRole) {
-        $targetGate = ($ticketRole === 'social') ? "RUH-E-RAQS Social Night Gate" : "Engineer's Code Gate";
-        $passRoleName = ($ticketRole === 'social') ? "RUH-E-RAQS (Social Night)" : "Engineer's Code Registration";
+        $targetGate = ($ticketRole === 'social') ? "SENTEC Qawwali Social Night Gate" : "Engineer's Code Gate";
+        $passRoleName = ($ticketRole === 'social') ? "SENTEC Qawwali (Social Night)" : "Engineer's Code Registration";
         return [
             'valid' => true,
             'can_admit' => false,
@@ -574,7 +574,7 @@ function gate_verify_and_checkin(mysqli $conn, array $params): array {
         'device_id' => $deviceId,
         'gate_type' => $ticketRole,
         'status' => 'APPROVED',
-        'notes' => ($ticketRole === 'engineer') ? "Admitted for Day {$eventDay}" : "Admitted for Ruh-e-Raqs",
+        'notes' => ($ticketRole === 'engineer') ? "Admitted for Day {$eventDay}" : "Admitted for SENTEC Qawwali",
         'device_ts' => $deviceTs,
         'synced_ts' => $syncedTs
     ]);
