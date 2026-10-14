@@ -9,6 +9,12 @@ $socialOpen = social_registrations_open($conn);
 $socialLimit = social_registrations_limit();
 $socialCount = social_registrations_count($conn);
 $tierSettings = social_registrations_get_settings($conn);
+
+$pendingSocialRes = $conn->query("SELECT COUNT(*) as c FROM social_registrations WHERE status != 'approved' OR status IS NULL");
+$pendingSocialCount = $pendingSocialRes ? (int)$pendingSocialRes->fetch_assoc()['c'] : 0;
+
+$confirmedSocialRes = $conn->query("SELECT COUNT(*) as c FROM social_registrations WHERE status = 'approved'");
+$confirmedSocialCount = $confirmedSocialRes ? (int)$confirmedSocialRes->fetch_assoc()['c'] : 0;
 ?>
 
 <style>
@@ -411,10 +417,32 @@ $tierSettings = social_registrations_get_settings($conn);
 </div>
 
 <div class="glass-panel">
+    <!-- BULK ACTIONS CONTROL PANEL -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 rounded" style="background: linear-gradient(135deg, rgba(0, 255, 148, 0.08), rgba(4, 9, 20, 0.95)); border: 1px solid rgba(0, 255, 148, 0.3); border-radius: 14px;">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="text-white fw-bold fs-6"><i class="fas fa-layer-group text-success me-1"></i> Bulk Operations:</span>
+            <span class="badge bg-secondary px-2 py-1"><i class="fas fa-users me-1"></i> Total: <?php echo (int)$socialCount; ?></span>
+            <span class="badge bg-warning text-dark px-2 py-1"><i class="fas fa-hourglass-half me-1"></i> Pending: <strong id="pending-badge-val"><?php echo (int)$pendingSocialCount; ?></strong></span>
+            <span class="badge bg-success px-2 py-1"><i class="fas fa-check-circle me-1"></i> Confirmed: <strong id="confirmed-badge-val"><?php echo (int)$confirmedSocialCount; ?></strong></span>
+            <span class="badge bg-info text-dark px-2 py-1" id="selected-badge-wrap" style="display: none;"><i class="fas fa-check-square me-1"></i> Selected: <strong id="selected-count">0</strong></span>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" class="btn btn-success fw-bold px-3 py-2 shadow-sm" id="btn-bulk-confirm-social" title="Approve unconfirmed registrations, set payment to confirmed, and dispatch their E-Pass">
+                <i class="fas fa-check-double me-1"></i> Bulk Confirmation &amp; E-Pass
+            </button>
+            <button type="button" class="btn btn-primary fw-bold px-3 py-2 shadow-sm" id="btn-bulk-epass-social" title="Broadcast or resend official gate E-Pass to all confirmed attendees">
+                <i class="fas fa-paper-plane me-1"></i> Bulk E-Pass (Confirmed)
+            </button>
+        </div>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-hover text-white align-middle">
             <thead>
                 <tr style="border-bottom: 2px solid #00FF94;">
+                    <th style="width: 38px;" class="text-center">
+                        <input type="checkbox" id="select-all-social" class="form-check-input" style="cursor: pointer;" title="Select All Rows">
+                    </th>
                     <th>ID</th>
                     <th>Form Type</th>
                     <th>Ambassador Code</th>
@@ -542,7 +570,7 @@ $tierSettings = social_registrations_get_settings($conn);
                     }
 
                     if (empty($groups)) {
-                        echo "<tr><td colspan='6' class='text-center text-muted p-5'>No registrations found yet.</td></tr>";
+                        echo "<tr><td colspan='9' class='text-center text-muted p-5'>No registrations found yet.</td></tr>";
                     } else {
                         foreach ($groups as $group) {
                             $row = $group['registration'];
@@ -550,6 +578,9 @@ $tierSettings = social_registrations_get_settings($conn);
                             $payStatus = $row['payment_status'] ?? 'pending';
                             ?>
                             <tr>
+                                <td class="text-center" data-label="Select">
+                                    <input type="checkbox" class="social-check form-check-input" value="<?php echo $row['id']; ?>" data-status="<?php echo htmlspecialchars($row['status'] ?? 'pending'); ?>" data-pay="<?php echo htmlspecialchars($payStatus); ?>" style="cursor: pointer;">
+                                </td>
                                 <td data-label="ID">#<?php echo $row['id']; ?></td>
                                 <td data-label="Form Type">
                                     <?php
@@ -690,6 +721,119 @@ $tierSettings = social_registrations_get_settings($conn);
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
+    // A. ROW SELECTION & SELECT-ALL
+    function updateSelectedCount() {
+        var cnt = $('.social-check:checked').length;
+        $('#selected-count').text(cnt);
+        if (cnt > 0) {
+            $('#selected-badge-wrap').fadeIn(150);
+        } else {
+            $('#selected-badge-wrap').fadeOut(150);
+        }
+    }
+
+    $('#select-all-social').on('change', function() {
+        var isChecked = $(this).is(':checked');
+        $('.social-check').prop('checked', isChecked);
+        updateSelectedCount();
+    });
+
+    $(document).on('change', '.social-check', function() {
+        updateSelectedCount();
+        var allChecked = $('.social-check').length > 0 && $('.social-check:not(:checked)').length === 0;
+        $('#select-all-social').prop('checked', allChecked);
+    });
+
+    // B. BULK CONFIRMATION & E-PASS (FOR UNCONFIRMED / PENDING)
+    $('#btn-bulk-confirm-social').click(function() {
+        var btn = $(this);
+        var selectedIds = [];
+        $('.social-check:checked').each(function() {
+            selectedIds.push($(this).val());
+        });
+
+        var targetMode = 'all_pending';
+        var confirmMsg = '';
+
+        if (selectedIds.length > 0) {
+            targetMode = 'selected';
+            confirmMsg = "Confirm and dispatch E-Passes to the " + selectedIds.length + " SELECTED registration(s)?\n(This will approve their status and send gate QR passes via email)";
+        } else {
+            var pendingNum = parseInt($('#pending-badge-val').text()) || 0;
+            if (pendingNum <= 0) {
+                alert("There are no pending/unconfirmed registrations to approve.");
+                return;
+            }
+            confirmMsg = "Confirm ALL " + pendingNum + " PENDING registration(s) and dispatch their E-Passes?\n(This will approve their status and send unique gate QR passes via email)";
+        }
+
+        if (!confirm(confirmMsg)) return;
+
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Processing & Sending E-Passes...');
+
+        $.post('bulk_confirm_social.php', {
+            target: targetMode,
+            ids: selectedIds
+        }, function(res) {
+            btn.prop('disabled', false).html(originalHtml);
+            if (res.success) {
+                alert("✓ " + res.message);
+                location.reload();
+            } else {
+                alert("Error: " + (res.message || "Failed to complete bulk confirmation"));
+            }
+        }, 'json').fail(function(xhr) {
+            btn.prop('disabled', false).html(originalHtml);
+            alert("Server Error: " + xhr.responseText);
+        });
+    });
+
+    // C. BULK E-PASS SENDER (FOR ALL CONFIRMED PARTICIPANTS)
+    $('#btn-bulk-epass-social').click(function() {
+        var btn = $(this);
+        var selectedIds = [];
+        $('.social-check:checked').each(function() {
+            selectedIds.push($(this).val());
+        });
+
+        var targetMode = 'all_confirmed';
+        var confirmMsg = '';
+
+        if (selectedIds.length > 0) {
+            targetMode = 'selected';
+            confirmMsg = "Send/Resend official gate E-Pass emails to the " + selectedIds.length + " SELECTED participant(s)?";
+        } else {
+            var confirmedNum = parseInt($('#confirmed-badge-val').text()) || 0;
+            if (confirmedNum <= 0) {
+                alert("No confirmed attendees found to send E-Passes.");
+                return;
+            }
+            confirmMsg = "Send / Resend official gate E-Pass emails to ALL " + confirmedNum + " CONFIRMED attendees?";
+        }
+
+        if (!confirm(confirmMsg)) return;
+
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Sending Bulk E-Passes...');
+
+        $.post('bulk_send_social_epass.php', {
+            target: targetMode,
+            ids: selectedIds
+        }, function(res) {
+            btn.prop('disabled', false).html(originalHtml);
+            if (res.success) {
+                alert("✓ " + res.message);
+                location.reload();
+            } else {
+                alert("Error: " + (res.message || "Failed to send bulk E-Passes"));
+            }
+        }, 'json').fail(function(xhr) {
+            btn.prop('disabled', false).html(originalHtml);
+            alert("Server Error: " + xhr.responseText);
+        });
+    });
+
     // 0. TOGGLE REGISTRATION OPEN/CLOSE
     $('#toggle-social-btn').click(function() {
         var btn = $(this);
