@@ -1,165 +1,69 @@
 <?php
 /**
- * Centralized Mailer using Resend HTTP API (cURL)
- * Eliminates SMTP port blocks on cloud hosts like Render.
+ * Centralized SENTEC SMTP Mailer
+ * Detached from third-party APIs (Resend).
+ * Powered by PHPMailer with TLS/SMTPS dual-port fallback.
  */
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
+require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/env_loader.php';
 
 /**
- * Resend API Mailer Adapter
- * Mimics PHPMailer interface for 100% backwards compatibility.
+ * Configure and return a standard PHPMailer instance
  */
-class SentecResendMailer {
-    public string $Subject = '';
-    public string $Body = '';
-    public string $AltBody = '';
-    public string $ErrorInfo = '';
-    public int $Port = 443;
-    public string $Host = 'api.resend.com';
-    public string $SMTPSecure = 'ssl';
+function sentec_mailer(): PHPMailer {
+    $mail = new PHPMailer(true);
 
-    protected array $to = [];
-    protected array $replyTo = [];
-    protected string $fromEmail = 'noreply@sentecneduet.live';
-    protected string $fromName = 'SENTEC';
-    protected string $apiKey = '';
+    $host     = env('SMTP_HOST') ?: 'smtp.gmail.com';
+    $user     = env('SMTP_USERNAME') ?: (env('SMTP_USER') ?: 'neduetsentec@gmail.com');
+    $rawPass  = env('SMTP_PASSWORD') ?: (env('SMTP_PASS') ?: 'csmw ddum nqgb czcn');
+    $pass     = str_replace(' ', '', (string)$rawPass);
+    $port     = (int)(env('SMTP_PORT') ?: 587);
+    $secure   = strtolower((string)(env('SMTP_SECURE') ?: 'tls'));
+    $fromMail = env('FROM_EMAIL') ?: 'neduetsentec@gmail.com';
+    $fromName = env('FROM_NAME') ?: 'SENTEC';
 
-    public function __construct() {
-        // Pull API Key securely from all possible environment sources
-        $this->apiKey = trim((string)(
-            getenv('RESEND_API_KEY')
-            ?: ($_ENV['RESEND_API_KEY'] ?? ($_SERVER['RESEND_API_KEY'] ?? (function_exists('env') ? env('RESEND_API_KEY') : '')))
-        ));
+    $mail->isSMTP();
+    $mail->Host       = $host;
+    $mail->SMTPAuth   = true;
+    $mail->Username   = $user;
+    $mail->Password   = $pass;
+    $mail->Port       = $port;
 
-        // Configurable authenticated From address (defaults to domain noreply@sentecneduet.live)
-        $envFrom = getenv('FROM_EMAIL') ?: (function_exists('env') ? env('FROM_EMAIL') : null);
-        // Resend blocks unverified public mailbox providers (gmail.com, yahoo.com, etc.)
-        if (!empty($envFrom) && !preg_match('/@(gmail|yahoo|hotmail|outlook)\.com$/i', $envFrom)) {
-            $this->fromEmail = $envFrom;
-        } else {
-            $this->fromEmail = 'noreply@sentecneduet.live';
-        }
-        $this->fromName  = getenv('FROM_NAME') ?: (function_exists('env') ? env('FROM_NAME') : 'SENTEC');
+    if ($port === 465 || $secure === 'ssl' || $secure === 'smtps') {
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    } else {
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     }
 
-    public function isSMTP(): void {
-        // Compatibility no-op
+    $mail->Timeout = 15;
+    $mail->SMTPOptions = [
+        'ssl' => [
+            'verify_peer'       => false,
+            'verify_peer_name'  => false,
+            'allow_self_signed' => true,
+        ]
+    ];
+
+    $mail->CharSet = 'UTF-8';
+    $mail->isHTML(true);
+
+    try {
+        $mail->setFrom($fromMail, $fromName);
+    } catch (Exception $e) {
+        $mail->From     = $fromMail;
+        $mail->FromName = $fromName;
     }
 
-    public function isHTML(bool $isHtml = true): void {
-        // Compatibility no-op
-    }
-
-    public function setFrom(string $email, string $name = ''): void {
-        if (!empty($email) && !preg_match('/@(gmail|yahoo|hotmail|outlook)\.com$/i', $email)) {
-            $this->fromEmail = $email;
-        }
-        if (!empty($name)) {
-            $this->fromName = $name;
-        }
-    }
-
-    public function addAddress(string $email, string $name = ''): void {
-        $cleanEmail = trim($email);
-        if ($cleanEmail) {
-            $this->to[] = $cleanEmail;
-        }
-    }
-
-    public function addReplyTo(string $email, string $name = ''): void {
-        $cleanEmail = trim($email);
-        if ($cleanEmail) {
-            $this->replyTo[] = $cleanEmail;
-        }
-    }
-
-    public function send(): bool {
-        if (empty($this->to)) {
-            $this->ErrorInfo = "No recipient email addresses specified.";
-            sentec_mail_log('resend_api', 'error', $this->ErrorInfo);
-            throw new \Exception($this->ErrorInfo);
-        }
-
-        if (empty($this->apiKey)) {
-            $this->ErrorInfo = "RESEND_API_KEY is not configured in the environment.";
-            sentec_mail_log('resend_api', 'error', $this->ErrorInfo);
-            throw new \Exception($this->ErrorInfo);
-        }
-
-        $fromHeader = $this->fromName ? "{$this->fromName} <{$this->fromEmail}>" : $this->fromEmail;
-        $cleanTo = array_values(array_unique($this->to));
-
-        $payload = [
-            'from'    => $fromHeader,
-            'to'      => $cleanTo,
-            'subject' => $this->Subject,
-            'html'    => $this->Body,
-        ];
-
-        if (!empty($this->AltBody)) {
-            $payload['text'] = $this->AltBody;
-        }
-
-        if (!empty($this->replyTo)) {
-            $payload['reply_to'] = array_values(array_unique($this->replyTo));
-        }
-
-        $jsonPayload = json_encode($payload);
-
-        $ch = curl_init('https://api.resend.com/emails');
-        curl_setopt_array($ch, [
-            CURLOPT_POST           => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 5,
-            CURLOPT_CONNECTTIMEOUT => 3,
-            CURLOPT_HTTPHEADER     => [
-                'Authorization: Bearer ' . $this->apiKey,
-                'Content-Type: application/json',
-                'User-Agent: SENTEC-PHP-Mailer/2.0',
-            ],
-            CURLOPT_POSTFIELDS     => $jsonPayload,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
-        ]);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
-
-        $recipientStr = implode(',', $cleanTo);
-
-        if ($curlError) {
-            $this->ErrorInfo = "Resend cURL Error: " . $curlError;
-            sentec_mail_log('resend_api', 'error', "to={$recipientStr} error=" . $this->ErrorInfo);
-            throw new \Exception($this->ErrorInfo);
-        }
-
-        $resData = json_decode((string)$response, true);
-
-        if ($httpCode >= 200 && $httpCode < 300) {
-            $resendId = $resData['id'] ?? 'ok';
-            sentec_mail_log('resend_api', 'sent', "to={$recipientStr} resend_id={$resendId}");
-            return true;
-        }
-
-        $errMsg = $resData['message'] ?? ($resData['error']['message'] ?? "HTTP {$httpCode}: " . substr((string)$response, 0, 200));
-        $this->ErrorInfo = "Resend API Error ({$httpCode}): " . $errMsg;
-        sentec_mail_log('resend_api', 'error', "to={$recipientStr} error=" . $this->ErrorInfo);
-        throw new \Exception($this->ErrorInfo);
-    }
+    return $mail;
 }
 
 /**
- * Get configured Mailer instance
- */
-function sentec_mailer(): SentecResendMailer {
-    return new SentecResendMailer();
-}
-
-/**
- * Functional helper to send email directly via Resend API
+ * Functional helper to send email with automatic port-fallback (587 -> 465)
  */
 function sentec_send_email(
     string|array $to,
@@ -169,27 +73,56 @@ function sentec_send_email(
     ?string $fromEmail = null,
     ?string $fromName = null
 ): bool {
-    $mailer = sentec_mailer();
-    if ($fromEmail) {
-        $mailer->setFrom($fromEmail, $fromName ?? '');
-    }
-    if (is_array($to)) {
-        foreach ($to as $recipient) {
-            $mailer->addAddress($recipient);
+    $recipients = is_array($to) ? array_values(array_unique($to)) : [$to];
+    $recipientsStr = implode(',', $recipients);
+
+    $portsToTry = [
+        ['port' => (int)(env('SMTP_PORT') ?: 587), 'secure' => strtolower((string)(env('SMTP_SECURE') ?: 'tls'))],
+        ['port' => 465, 'secure' => 'ssl'],
+    ];
+
+    $lastError = '';
+
+    foreach ($portsToTry as $cfg) {
+        try {
+            $mail = sentec_mailer();
+            $mail->Port = $cfg['port'];
+            if ($cfg['port'] === 465 || $cfg['secure'] === 'ssl') {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            } else {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            }
+
+            if ($fromEmail) {
+                $mail->setFrom($fromEmail, $fromName ?? 'SENTEC');
+            }
+
+            foreach ($recipients as $addr) {
+                $mail->addAddress(trim($addr));
+            }
+
+            $mail->Subject = $subject;
+            $mail->Body    = $htmlBody;
+            if ($textBody) {
+                $mail->AltBody = $textBody;
+            }
+
+            $sent = $mail->send();
+            if ($sent) {
+                sentec_mail_log('smtp', 'sent', "to={$recipientsStr} subject=\"{$subject}\" via_port={$cfg['port']}");
+                return true;
+            }
+        } catch (Exception $e) {
+            $lastError = $e->getMessage();
+            sentec_mail_log('smtp', 'error', "port={$cfg['port']} to={$recipientsStr} error=" . $lastError);
         }
-    } else {
-        $mailer->addAddress($to);
     }
-    $mailer->Subject = $subject;
-    $mailer->Body    = $htmlBody;
-    if ($textBody) {
-        $mailer->AltBody = $textBody;
-    }
-    return $mailer->send();
+
+    return false;
 }
 
 /**
- * Log email activity
+ * Log email activity to storage/mail.log
  */
 function sentec_mail_log($context, $status, $details = ''): void {
     $dir = __DIR__ . '/storage';

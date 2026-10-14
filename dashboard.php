@@ -45,13 +45,23 @@ $stmt->close();
 $social_reg = null;
 $checkTable = $conn->query("SHOW TABLES LIKE 'social_registrations'");
 if($checkTable && $checkTable->num_rows > 0) {
-    $s_sql = "SELECT * FROM social_registrations WHERE user_id = ? AND event_label = ? LIMIT 1";
+    $user_email = $_SESSION['email'] ?? '';
+    if (empty($user_email)) {
+        $uQ = $conn->query("SELECT email FROM users WHERE id = " . (int)$user_id);
+        if ($uQ && $uRow = $uQ->fetch_assoc()) {
+            $user_email = $uRow['email'];
+        }
+    }
+    $s_sql = "SELECT * FROM social_registrations WHERE (user_id = ? OR (email = ? AND email != '')) AND event_label = ? ORDER BY id DESC LIMIT 1";
     $stmt = $conn->prepare($s_sql);
-    $stmt->bind_param("is", $user_id, $activeEventLabel);
+    $stmt->bind_param("iss", $user_id, $user_email, $activeEventLabel);
     $stmt->execute();
     $s_result = $stmt->get_result();
     if ($s_result && $s_result->num_rows > 0) {
         $social_reg = $s_result->fetch_assoc();
+        if (empty($social_reg['user_id'])) {
+            $conn->query("UPDATE social_registrations SET user_id = " . (int)$user_id . " WHERE id = " . (int)$social_reg['id']);
+        }
     }
     $stmt->close();
 }
