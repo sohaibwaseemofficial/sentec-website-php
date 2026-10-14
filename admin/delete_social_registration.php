@@ -13,39 +13,56 @@ try {
     include '../db_connection.php';
     require_once __DIR__ . '/../social_attendees_helper.php';
 
+    require_once __DIR__ . '/admin_logger.php';
+
     $id = intval($_POST['id'] ?? 0);
     if ($id <= 0) throw new Exception("Invalid ID");
 
-    // 1. Get image paths first so we can delete the files
-    $stmt = $conn->prepare("SELECT face_image, id_card_image, payment_proof FROM social_registrations WHERE id = ?");
+    // 1. Fetch full registration record to archive before deletion
+    $stmt = $conn->prepare("SELECT * FROM social_registrations WHERE id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
 
     if ($row) {
-        // Delete files from server to save space
-        if (!empty($row['face_image']) && file_exists("../" . $row['face_image'])) unlink("../" . $row['face_image']);
-        if (!empty($row['id_card_image']) && file_exists("../" . $row['id_card_image'])) unlink("../" . $row['id_card_image']);
-        if (!empty($row['payment_proof']) && file_exists("../" . $row['payment_proof'])) unlink("../" . $row['payment_proof']);
+        $adminId = $_SESSION['admin_id'] ?? null;
+        $adminUser = $_SESSION['admin'] ?? ($_SESSION['admin_user'] ?? 'Admin');
+
+        // Archive into archived_social_registrations table
+        $archStmt = $conn->prepare("INSERT INTO archived_social_registrations 
+            (original_id, admin_id, full_name, email, phone, cnic, face_image, id_card_image, payment_proof, 
+             registration_type, ambassador_code, total_amount, participant2_name, participant2_email, 
+             participant3_name, participant3_email, deleted_by) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        if ($archStmt) {
+            $archStmt->bind_param("iisssssssssisssss",
+                $id,
+                $adminId,
+                $row['full_name'],
+                $row['email'],
+                $row['phone'],
+                $row['cnic'],
+                $row['face_image'],
+                $row['id_card_image'],
+                $row['payment_proof'],
+                $row['registration_type'],
+                $row['ambassador_code'],
+                $row['total_amount'],
+                $row['participant2_name'],
+                $row['participant2_email'],
+                $row['participant3_name'],
+                $row['participant3_email'],
+                $adminUser
+            );
+            $archStmt->execute();
+            $archStmt->close();
+        }
+
+        // Log admin action
+        log_admin_action('DELETE_SOCIAL_REGISTRATION', "Deleted registration #{$id} ({$row['full_name']} - {$row['email']})", $conn);
     }
 
     if (social_attendees_table_exists($conn)) {
-        $att = $conn->prepare("SELECT face_image, id_card_image FROM social_attendees WHERE registration_id = ?");
-        $att->bind_param("i", $id);
-        $att->execute();
-        $attRes = $att->get_result();
-        $paths = [];
-        while ($attRow = $attRes->fetch_assoc()) {
-            if (!empty($attRow['face_image'])) $paths[] = $attRow['face_image'];
-            if (!empty($attRow['id_card_image'])) $paths[] = $attRow['id_card_image'];
-        }
-        $att->close();
-        foreach (array_unique($paths) as $path) {
-            $full = "../" . ltrim($path, '/');
-            if (file_exists($full)) {
-                @unlink($full);
-            }
-        }
         $delAtt = $conn->prepare("DELETE FROM social_attendees WHERE registration_id = ?");
         $delAtt->bind_param("i", $id);
         $delAtt->execute();
@@ -58,7 +75,7 @@ try {
     
     if ($del->execute()) {
         $response['success'] = true;
-        $response['message'] = "Deleted Successfully";
+        $response['message'] = "Deleted and archived successfully";
     } else {
         throw new Exception("Database Error: " . $conn->error);
     }
