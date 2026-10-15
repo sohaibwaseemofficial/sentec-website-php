@@ -248,6 +248,9 @@ $confirmedSocialCount = $confirmedSocialRes ? (int)$confirmedSocialRes->fetch_as
         <a href="download_social_registrations_csv" class="btn btn-outline-success">
             <i class="fas fa-file-csv me-2"></i>Export CSV
         </a>
+        <a href="import_google_form.php" class="btn btn-info text-dark fw-bold" title="Import Google Form responses directly into Cloudinary & Database">
+            <i class="fas fa-file-import me-1"></i>Import Google Form
+        </a>
         <a href="archived_social_registrations.php" class="btn btn-outline-warning" title="View archived / deleted social registrations">
             <i class="fas fa-trash-restore me-1"></i>Deleted Archive
         </a>
