@@ -24,6 +24,25 @@ if (isset($_GET['deleted']) && $_GET['deleted'] === '1') {
     $msg = '<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>Admin account successfully deleted.</div>';
 }
 
+// Handle Change / Reset Password (Super Super Admin only)
+if (isset($_POST['change_password']) && $isSuperSuperAdmin) {
+    $targetId = intval($_POST['target_id'] ?? 0);
+    $newPass = trim($_POST['new_password'] ?? '');
+    if (!empty($newPass) && $targetId > 0) {
+        $newHash = password_hash($newPass, PASSWORD_DEFAULT);
+        $upStmt = $conn->prepare("UPDATE admin_users SET password = ?, plain_password = ? WHERE id = ?");
+        $upStmt->bind_param("ssi", $newHash, $newPass, $targetId);
+        if ($upStmt->execute()) {
+            $msg = '<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>Password updated successfully for account #' . $targetId . '.</div>';
+        } else {
+            $msg = '<div class="alert alert-danger">Error updating password: ' . htmlspecialchars($upStmt->error) . '</div>';
+        }
+        $upStmt->close();
+    } else {
+        $msg = '<div class="alert alert-warning">Please enter a valid new password.</div>';
+    }
+}
+
 // Handle Add Admin
 if (isset($_POST['add_admin'])) {
     $username = trim($_POST['username'] ?? '');
@@ -52,8 +71,8 @@ if (isset($_POST['add_admin'])) {
             $msg = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>Username "' . htmlspecialchars($username) . '" already exists. Please choose a different username.</div>';
         } else {
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("INSERT INTO admin_users (username, password, full_name, role) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("ssss", $username, $hash, $full_name, $requestedRole);
+            $stmt = $conn->prepare("INSERT INTO admin_users (username, password, plain_password, full_name, role) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssss", $username, $hash, $password, $full_name, $requestedRole);
             
             if ($stmt->execute()) {
                 $roleLabel = ($requestedRole === 'super_super_admin') ? 'Super Super Admin' : (($requestedRole === 'super_admin') ? 'Super Admin' : 'Moderator');
@@ -106,12 +125,12 @@ $admins = $conn->query("SELECT * FROM admin_users ORDER BY
 <div class="page-header d-flex align-items-center justify-content-between mb-4">
     <div>
         <h2 class="text-white mb-1"><i class="fas fa-user-shield me-2 text-primary"></i> Staff & Access Management</h2>
-        <p class="text-muted small mb-0">Manage portal administrative credentials and role hierarchies.</p>
+        <p class="text-muted small mb-0">Manage portal administrative credentials, passwords, and role hierarchies.</p>
     </div>
     <div>
         <?php if ($isSuperSuperAdmin): ?>
             <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); font-size: 11px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 12px rgba(139,92,246,0.4);">
-                <i class="fas fa-crown me-1"></i> Root Super Super Admin
+                <i class="fas fa-crown me-1 text-warning"></i> Root Super Super Admin
             </span>
         <?php else: ?>
             <span class="badge bg-warning text-dark px-3 py-2" style="font-size: 11px;">
@@ -181,7 +200,10 @@ $admins = $conn->query("SELECT * FROM admin_users ORDER BY
                         <tr class="text-muted small text-uppercase" style="letter-spacing: 0.05em; font-family: var(--font-mono);">
                             <th>Name / Identity</th>
                             <th>Username</th>
-                            <th>Clearance Role</th>
+                            <th>Role</th>
+                            <?php if ($isSuperSuperAdmin): ?>
+                                <th>Password Clearance</th>
+                            <?php endif; ?>
                             <th>Last Active</th>
                             <th class="text-end">Actions</th>
                         </tr>
@@ -204,7 +226,7 @@ $admins = $conn->query("SELECT * FROM admin_users ORDER BY
                             <td>
                                 <?php if ($a['role'] === 'super_super_admin'): ?>
                                     <span class="badge font-mono" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 8px rgba(139,92,246,0.35);">
-                                        <i class="fas fa-crown me-1 text-warning"></i>Super Super Admin
+                                        <i class="fas fa-crown me-1 text-warning"></i>Super Super
                                     </span>
                                 <?php elseif ($a['role'] === 'super_admin'): ?>
                                     <span class="badge bg-warning text-dark font-mono">
@@ -216,6 +238,33 @@ $admins = $conn->query("SELECT * FROM admin_users ORDER BY
                                     </span>
                                 <?php endif; ?>
                             </td>
+
+                            <?php if ($isSuperSuperAdmin): ?>
+                            <td>
+                                <?php if (!empty($a['plain_password'])): ?>
+                                    <div class="d-flex align-items-center gap-1.5">
+                                        <span id="pass_dots_<?php echo $a['id']; ?>" class="font-mono text-muted" style="letter-spacing: 0.1em;">••••••••</span>
+                                        <span id="pass_text_<?php echo $a['id']; ?>" class="font-mono text-warning fw-bold d-none user-select-all" style="font-size: 12px; letter-spacing: 0.05em; background: rgba(0,0,0,0.5); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(234,179,8,0.35);">
+                                            <?php echo htmlspecialchars($a['plain_password']); ?>
+                                        </span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1.5" onclick="togglePass(<?php echo $a['id']; ?>)" title="Show/Hide Password">
+                                            <i class="fas fa-eye" id="pass_icon_<?php echo $a['id']; ?>" style="font-size: 11px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1.5" onclick="openResetModal(<?php echo $a['id']; ?>, '<?php echo htmlspecialchars(addslashes($a['username'])); ?>')" title="Change Password">
+                                            <i class="fas fa-key" style="font-size: 11px;"></i>
+                                        </button>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="d-flex align-items-center gap-1.5">
+                                        <span class="badge bg-dark border border-secondary font-mono text-muted" style="font-size: 10px;" title="Password was created before migration; set new password or it will record on their next login">Hashed</span>
+                                        <button type="button" class="btn btn-sm btn-outline-warning py-0 px-2" onclick="openResetModal(<?php echo $a['id']; ?>, '<?php echo htmlspecialchars(addslashes($a['username'])); ?>')" title="Set plain password now">
+                                            <i class="fas fa-key me-1" style="font-size: 10px;"></i>Set
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
+                            <?php endif; ?>
+
                             <td class="text-muted small font-mono">
                                 <?php echo $a['last_login'] ? date('M j, Y H:i', strtotime($a['last_login'])) : '<span class="text-secondary">Never</span>'; ?>
                             </td>
@@ -240,5 +289,86 @@ $admins = $conn->query("SELECT * FROM admin_users ORDER BY
         </div>
     </div>
 </div>
+
+<?php if ($isSuperSuperAdmin): ?>
+<!-- Password Reset Modal for Super Super Admin -->
+<div class="modal fade" id="resetPassModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary" style="border-radius: 12px; background: #0f172a !important; border: 1px solid rgba(255,255,255,0.15);">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title d-flex align-items-center gap-2">
+                    <i class="fas fa-key text-warning"></i> Set / Change Administrator Password
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="target_id" id="modalTargetId" value="">
+                    <p class="text-muted small mb-3">
+                        Setting a new password for account: <strong id="modalTargetUser" class="text-warning font-mono"></strong>.<br>
+                        This will update their login credential and make it immediately viewable to you as Super Super Admin.
+                    </p>
+                    <div class="mb-3">
+                        <label class="text-muted small mb-1">New Password</label>
+                        <div class="input-group">
+                            <input type="text" name="new_password" id="modalNewPass" class="form-control bg-black text-white border-secondary font-mono" placeholder="Enter new password" required autocomplete="off">
+                            <button class="btn btn-outline-info" type="button" onclick="generateRandomPass()"><i class="fas fa-dice me-1"></i> Generate</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" name="change_password" class="btn btn-sm btn-warning fw-bold px-3">
+                        <i class="fas fa-save me-1"></i> Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePass(id) {
+    const dots = document.getElementById('pass_dots_' + id);
+    const text = document.getElementById('pass_text_' + id);
+    const icon = document.getElementById('pass_icon_' + id);
+    if (!text || !dots || !icon) return;
+    
+    if (text.classList.contains('d-none')) {
+        text.classList.remove('d-none');
+        dots.classList.add('d-none');
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        text.classList.add('d-none');
+        dots.classList.remove('d-none');
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+function openResetModal(id, username) {
+    document.getElementById('modalTargetId').value = id;
+    document.getElementById('modalTargetUser').textContent = username;
+    document.getElementById('modalNewPass').value = '';
+    const modalEl = document.getElementById('resetPassModal');
+    if (window.bootstrap && bootstrap.Modal) {
+        const myModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        myModal.show();
+    } else {
+        $(modalEl).modal('show');
+    }
+}
+
+function generateRandomPass() {
+    const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%';
+    let pass = '';
+    for (let i = 0; i < 10; i++) {
+        pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    document.getElementById('modalNewPass').value = pass;
+}
+</script>
+<?php endif; ?>
 
 <?php include 'footer.php'; ?>

