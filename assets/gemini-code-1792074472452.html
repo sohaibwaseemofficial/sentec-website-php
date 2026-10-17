@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSA Audit Notebook — Bank Screenshot Reconciler</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- LocalForage (IndexedDB Wrapper for persistent Notebook storage) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+  <!-- SheetJS for Excel Import/Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- jsPDF for 4-Per-Page A4 Audit Booklet -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+
+  <!-- TOP NAVBAR -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-lg font-bold text-emerald-400">CSA Audit Notebook • NED University</h1>
+        <p class="text-xs text-slate-400">Chronological Bank Statement Reconciler, Deduplicator & 4-Per-Page PDF Generator</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <input id="apiKeyInput" type="password" value="" placeholder="Paste Gemini API Key" 
+          class="bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-xs w-56 focus:outline-none focus:border-emerald-500" />
+        <select id="modelSelect" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs">
+          <option value="gemini-3.8-flash" selected>gemini-3.8-flash (Recommended Free)</option>
+          <option value="gemini-3.5-flash">gemini-3.5-flash</option>
+          <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+        </select>
+        <button onclick="saveSettings()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-xs font-medium">
+          Save Key
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+    <!-- STEP 1: UPLOAD & QUEUE CONTROLS -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      
+      <!-- Card 1: Optional Excel Roster Linker -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Step 1 (Optional)</span>
+          <h2 class="text-sm font-bold mt-1">Link Student Registration Excel/CSV</h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Upload your DB/Form export so screenshots automatically attach to Student Names & Roll Numbers by filename.
+          </p>
+        </div>
+        <div class="mt-4">
+          <input type="file" id="rosterInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleRosterUpload(event)" />
+          <label for="rosterInput" class="block text-center bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg py-2 px-3 text-xs font-medium cursor-pointer">
+            📄 Upload Registration Sheet (.xlsx / .csv)
+          </label>
+          <p id="rosterStatus" class="text-[11px] text-slate-400 mt-1.5 text-center">No roster linked yet (filenames used as labels)</p>
+        </div>
+      </div>
+
+      <!-- Card 2: Add Screenshots Incremental Dropzone -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Step 2 (Add Anytime)</span>
+          <h2 class="text-sm font-bold mt-1">Add Payment Screenshots to Notebook</h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Select 10, 50, or 350 images. Already-scanned files are skipped; duplicate friend receipts auto-merge.
+          </p>
+        </div>
+        <div class="mt-4">
+          <input type="file" id="screenshotsInput" accept="image/*" multiple class="hidden" onchange="handleScreenshotsUpload(event)" />
+          <label for="screenshotsInput" class="block text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg py-2 px-3 text-xs cursor-pointer">
+            ➕ Select Screenshots (Bulk Upload)
+          </label>
+          <button onclick="addManualRow()" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded py-1 text-[11px]">
+            + Add Empty Manual Entry Row
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 3: Queue Controller & Export Actions -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Step 3 • Queue & Exports</span>
+            <span id="queueBadge" class="text-xs bg-slate-800 px-2 py-0.5 rounded text-slate-300">0 Pending</span>
+          </div>
+          <div class="mt-2 flex gap-2">
+            <button id="startQueueBtn" onclick="toggleQueue()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-1.5 px-3 rounded text-xs">
+              ▶ Start AI Extraction Queue
+            </button>
+          </div>
+          <p id="queueLog" class="text-[11px] text-slate-400 mt-1.5 truncate">Ready. Paced at ~12 imgs/min for Free Tier safety.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-800">
+          <button onclick="exportCSAExcel()" class="bg-emerald-700 hover:bg-emerald-600 text-white py-1.5 px-2 rounded text-xs font-semibold">
+            📊 Export CSA Excel
+          </button>
+          <button onclick="export4PerPagePDF()" class="bg-indigo-600 hover:bg-indigo-500 text-white py-1.5 px-2 rounded text-xs font-semibold">
+            📑 Export 4-Per-Page PDF
+          </button>
+          <button onclick="exportBackupJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-1 px-2 rounded text-[11px]">
+            💾 Save Notebook (.json)
+          </button>
+          <label class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-1 px-2 rounded text-[11px] text-center cursor-pointer">
+            📂 Load Notebook (.json)
+            <input type="file" accept=".json" class="hidden" onchange="importBackupJSON(event)" />
+          </label>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- STATS & VIEW TOGGLE BAR -->
+    <section class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-wrap items-center gap-4 text-xs">
+        <div>Total Uploads: <strong id="statTotal" class="text-white">0</strong></div>
+        <div>Unique Bank Transactions: <strong id="statUnique" class="text-emerald-400">0</strong></div>
+        <div>Duplicates Merged: <strong id="statDupes" class="text-amber-400">0</strong></div>
+        <div>Total Verified PKR: <strong id="statPKR" class="text-emerald-400">0</strong></div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <input id="searchInput" type="text" oninput="renderTable()" placeholder="Search TID, Sender, Student, Date..." 
+          class="bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-xs w-56" />
+        <select id="viewMode" onchange="renderTable()" class="bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-xs font-medium text-emerald-400">
+          <option value="dedup">CSA Audit View (Deduplicated & Sorted by Date/Time)</option>
+          <option value="raw">Raw Notebook View (All Individual Uploads)</option>
+        </select>
+        <button onclick="clearAllData()" class="bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800/50 px-2.5 py-1 rounded text-xs">
+          Reset All
+        </button>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE NOTEBOOK TABLE -->
+    <section class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+      <div class="overflow-x-auto max-h-[65vh]">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="bg-slate-800/90 text-slate-300 sticky top-0 z-10">
+            <tr>
+              <th class="p-2.5 border-b border-slate-700">Audit ID / PDF</th>
+              <th class="p-2.5 border-b border-slate-700">Receipt</th>
+              <th class="p-2.5 border-b border-slate-700">Date (YYYY-MM-DD)</th>
+              <th class="p-2.5 border-b border-slate-700">Time (24h)</th>
+              <th class="p-2.5 border-b border-slate-700">Ref / Transaction ID</th>
+              <th class="p-2.5 border-b border-slate-700">Bank / Wallet</th>
+              <th class="p-2.5 border-b border-slate-700">Sender Title</th>
+              <th class="p-2.5 border-b border-slate-700">Sender Account / IBAN</th>
+              <th class="p-2.5 border-b border-slate-700">PKR</th>
+              <th class="p-2.5 border-b border-slate-700">Passes</th>
+              <th class="p-2.5 border-b border-slate-700 min-w-[200px]">Covered Students (Click to Edit)</th>
+              <th class="p-2.5 border-b border-slate-700">Status / Action</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-slate-800"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- IMAGE PREVIEW MODAL -->
+  <div id="imgModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4" onclick="closeModal()">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-lg w-full p-4" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center mb-2">
+        <h3 id="modalTitle" class="text-xs font-bold text-emerald-400 truncate">Receipt Preview</h3>
+        <button onclick="closeModal()" class="text-xs text-slate-400 hover:text-white">✕ Close</button>
+      </div>
+      <img id="modalImg" src="" class="max-h-[75vh] mx-auto rounded object-contain" />
+    </div>
+  </div>
+
+<script>
+// =====================================================
+// 1. STATE & INDEXEDDB PERSISTENCE
+// =====================================================
+localforage.config({ name: "NED_CSA_Audit_Notebook", storeName: "receipts_store" });
+
+let records = [];       // Array of receipt objects saved in IndexedDB
+let rosterMap = {};     // Map of normalized filename -> "Student Name (Roll No)"
+let isQueueRunning = false;
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const defaultKey = atob("QVEuQWI4Uk42SzlubVZjUFRBSllia1RTUHA1dEhsT1U2UUU0WUtqa2MwQjRZQzVtbm9WRnc=");
+  const savedKey = localStorage.getItem("CSA_GEMINI_KEY") || defaultKey;
+  document.getElementById("apiKeyInput").value = savedKey;
+
+  const savedRecords = await localforage.getItem("CSA_RECORDS");
+  const savedRoster = await localforage.getItem("CSA_ROSTER");
+  if (savedRecords) records = savedRecords;
+  if (savedRoster) {
+    rosterMap = savedRoster;
+    document.getElementById("rosterStatus").innerText = `Linked ${Object.keys(rosterMap).length} filenames from sheet`;
+  }
+  renderTable();
+});
+
+function saveSettings() {
+  const key = document.getElementById("apiKeyInput").value.trim();
+  localStorage.setItem("CSA_GEMINI_KEY", key);
+  alert("API Key saved locally in your browser!");
+}
+
+async function persistRecords() {
+  await localforage.setItem("CSA_RECORDS", records);
+  renderTable();
+}
+
+// =====================================================
+// 2. STEP 1: OPTIONAL EXCEL/CSV ROSTER MATCHING
+// =====================================================
+function handleRosterUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+    let count = 0;
+    rows.forEach((r) => {
+      // Automatically detect common column headers for Name, Roll No, and Screenshot
+      const keys = Object.keys(r);
+      const nameKey = keys.find(k => /name/i.test(k)) || keys[0];
+      const rollKey = keys.find(k => /roll|seat|id|reg/i.test(k));
+      const imgKey = keys.find(k => /screen|image|receipt|proof|photo|file|upload/i.test(k));
+
+      if (imgKey && r[imgKey]) {
+        const rawPath = String(r[imgKey]).trim();
+        const baseName = rawPath.split(/[/\\]/).pop().toLowerCase();
+        const studentStr = rollKey && r[rollKey] ? `${r[nameKey]} (${r[rollKey]})` : `${r[nameKey]}`;
+        if (baseName) {
+          if (rosterMap[baseName] && !rosterMap[baseName].includes(studentStr)) {
+            rosterMap[baseName] += ` | ${studentStr}`;
+          } else {
+            rosterMap[baseName] = studentStr;
+          }
+          count++;
+        }
+      }
+    });
+
+    await localforage.setItem("CSA_ROSTER", rosterMap);
+    document.getElementById("rosterStatus").innerText = `Linked ${count} rows from ${file.name}`;
+
+    // Retroactively update any existing records whose filename matches
+    records.forEach(rec => {
+      const match = rosterMap[rec.fileName.toLowerCase()];
+      if (match && rec.student === rec.fileName) rec.student = match;
+    });
+    await persistRecords();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// =====================================================
+// 3. STEP 2: BULK SCREENSHOT COMPRESSION & HASHING
+// =====================================================
+async function computeSHA256(file) {
+  const buf = await file.arrayBuffer();
+  const hashBuf = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+}
+
+function compressImageToDataURL(file, maxWidth = 1000, quality = 0.78) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleScreenshotsUpload(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+
+  const logEl = document.getElementById("queueLog");
+  let added = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    logEl.innerText = `Reading & hashing (${i + 1}/${files.length}): ${f.name}...`;
+    const fileHash = await computeSHA256(f);
+    const cleanName = f.name.toLowerCase();
+    const matchedStudent = rosterMap[cleanName] || f.name.replace(/\.[^/.]+$/, "");
+
+    // Check if this exact fileHash is already processed in our notebook
+    const existingProcessed = records.find(r => r.fileHash === fileHash && r.status === "Verified");
+    const dataUrl = await compressImageToDataURL(f);
+
+    if (existingProcessed) {
+      // Copy extracted details immediately without using an API call!
+      records.push({
+        id: "REC_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+        fileName: f.name,
+        fileHash,
+        student: matchedStudent,
+        dataUrl,
+        date: existingProcessed.date,
+        time: existingProcessed.time,
+        tid: existingProcessed.tid,
+        bank: existingProcessed.bank,
+        senderTitle: existingProcessed.senderTitle,
+        senderAccount: existingProcessed.senderAccount,
+        amount: existingProcessed.amount,
+        status: "Verified"
+      });
+    } else {
+      records.push({
+        id: "REC_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+        fileName: f.name,
+        fileHash,
+        student: matchedStudent,
+        dataUrl,
+        date: "",
+        time: "",
+        tid: "",
+        bank: "",
+        senderTitle: "",
+        senderAccount: "",
+        amount: 0,
+        status: "Pending"
+      });
+    }
+    added++;
+  }
+
+  e.target.value = "";
+  logEl.innerText = `Added ${added} screenshots to Notebook. Click "Start AI Extraction Queue" to process.`;
+  await persistRecords();
+}
+
+async function addManualRow() {
+  records.push({
+    id: "REC_" + Date.now(),
+    fileName: "Manual_Entry",
+    fileHash: "MANUAL_" + Date.now(),
+    student: "Student Name (Roll No)",
+    dataUrl: "",
+    date: "2026-10-15",
+    time: "12:00",
+    tid: "MANUAL-" + Math.floor(1000 + Math.random() * 9000),
+    bank: "Meezan Bank",
+    senderTitle: "Account Title",
+    senderAccount: "",
+    amount: 500,
+    status: "Verified"
+  });
+  await persistRecords();
+}
+
+// =====================================================
+// 4. STEP 3: GEMINI VISION EXTRACTION QUEUE (RATE-LIMIT SAFE)
+// =====================================================
+async function toggleQueue() {
+  if (isQueueRunning) {
+    isQueueRunning = false;
+    document.getElementById("startQueueBtn").innerText = "▶ Resume AI Extraction Queue";
+    return;
+  }
+
+  const apiKey = document.getElementById("apiKeyInput").value.trim();
+  if (!apiKey) {
+    alert("Please paste your Gemini API Key at the top right first!");
+    return;
+  }
+
+  isQueueRunning = true;
+  document.getElementById("startQueueBtn").innerText = "⏸ Pause Queue";
+  const logEl = document.getElementById("queueLog");
+
+  while (isQueueRunning) {
+    const nextRec = records.find(r => r.status === "Pending" || r.status === "Error");
+    if (!nextRec) {
+      isQueueRunning = false;
+      document.getElementById("startQueueBtn").innerText = "▶ Start AI Extraction Queue";
+      logEl.innerText = "✅ All screenshots in Notebook have been processed!";
+      break;
+    }
+
+    // Check if another identical fileHash was just verified earlier in this run
+    const twin = records.find(r => r.fileHash === nextRec.fileHash && r.status === "Verified");
+    if (twin) {
+      Object.assign(nextRec, {
+        date: twin.date, time: twin.time, tid: twin.tid,
+        bank: twin.bank, senderTitle: twin.senderTitle,
+        senderAccount: twin.senderAccount, amount: twin.amount,
+        status: "Verified"
+      });
+      logEl.innerText = `⚡ Instant hash match for ${nextRec.fileName} (0 API calls used)`;
+      await persistRecords();
+      continue;
+    }
+
+    logEl.innerText = `🔍 Extracting via Gemini Vision: ${nextRec.fileName}...`;
+    const result = await callGeminiVision(apiKey, nextRec.dataUrl);
+
+    if (result.rateLimited) {
+      logEl.innerText = `⏳ Rate limit hit (HTTP 429). Cooling down for 20 seconds...`;
+      await new Promise(r => setTimeout(r, 20000));
+      continue;
+    }
+
+    if (result.success) {
+      const d = result.data;
+      nextRec.date = d.transaction_date || "";
+      nextRec.time = d.transaction_time || "00:00";
+      nextRec.tid = String(d.transaction_id || "").replace(/\s+/g, "");
+      nextRec.bank = d.bank_name || "";
+      nextRec.senderTitle = d.sender_title || "";
+      nextRec.senderAccount = d.sender_account || "";
+      nextRec.amount = Number(d.amount) || 0;
+      nextRec.status = (d.is_valid_receipt && nextRec.date && nextRec.tid) ? "Verified" : "Flagged (Check Info)";
+      await persistRecords();
+
+      // Safe 4.5s pacing (~13 requests/minute) for Free Tier stability
+      await new Promise(r => setTimeout(r, 4500));
+    } else {
+      nextRec.status = "Error";
+      logEl.innerText = `⚠️ Error on ${nextRec.fileName}: ${result.error}`;
+      await persistRecords();
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+}
+
+async function callGeminiVision(apiKey, dataUrl) {
+  const model = document.getElementById("modelSelect").value;
+  const base64Data = dataUrl.split(",")[1];
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  const prompt = `Extract bank transaction details from this Pakistani payment screenshot (Meezan, SadaPay, NayaPay, EasyPaisa, JazzCash, HBL, UBL, Raast, etc.).
+Return strictly JSON with these keys:
+- is_valid_receipt (boolean)
+- transaction_date (YYYY-MM-DD format strictly)
+- transaction_time (24-hour HH:MM format strictly)
+- transaction_id (Reference No / TID / STAN / RRN / Raast ID without spaces)
+- bank_name (Bank or Wallet name)
+- sender_title (Sender Account Title / From Name)
+- sender_account (Sender Account No, IBAN, or masked digits if visible)
+- amount (numeric amount in PKR)`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+          ]
+        }],
+        generationConfig: {
+          response_mime_type: "application/json",
+          temperature: 0.0
+        }
+      })
+    });
+
+    if (res.status === 429) return { rateLimited: true };
+    if (!res.ok) {
+      const errText = await res.text();
+      return { success: false, error: `HTTP ${res.status}: ${errText.slice(0, 80)}` };
+    }
+    const json = await res.json();
+    const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    return { success: true, data: JSON.parse(rawText) };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+// =====================================================
+// 5. DEDUPLICATION & CHRONOLOGICAL SORT ENGINE
+// =====================================================
+function getDeduplicatedRows() {
+  const groups = new Map();
+
+  records.forEach((rec) => {
+    // Group by cleaned Transaction ID if >= 4 chars, otherwise by image fileHash
+    const cleanTid = (rec.tid || "").trim().toUpperCase();
+    const key = cleanTid.length >= 4 ? `TID_${cleanTid}` : `HASH_${rec.fileHash}`;
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        groupKey: key,
+        primaryRec: rec,
+        memberIds: [rec.id],
+        students: [rec.student]
+      });
+    } else {
+      const g = groups.get(key);
+      g.memberIds.push(rec.id);
+      if (!g.students.includes(rec.student)) g.students.push(rec.student);
+    }
+  });
+
+  const unified = Array.from(groups.values()).map(g => {
+    const r = g.primaryRec;
+    return {
+      ...r,
+      memberIds: g.memberIds,
+      passesCount: g.memberIds.length,
+      coveredStudents: g.students.join(" | "),
+      sortTimestamp: `${r.date || "9999-99-99"} ${r.time || "99:99"}`
+    };
+  });
+
+  // Sort strictly chronologically by Transaction Date + Time for CSA Bank Statement
+  unified.sort((a, b) => a.sortTimestamp.localeCompare(b.sortTimestamp));
+
+  // Assign CSA Audit ID and exact 4-Per-Page PDF slot
+  unified.forEach((row, idx) => {
+    row.auditId = `CSA-${String(idx + 1).padStart(3, "0")}`;
+    const pageNo = Math.floor(idx / 4) + 1;
+    const slotNo = (idx % 4) + 1;
+    row.pdfLocation = `Page ${pageNo} • Box ${slotNo}`;
+  });
+
+  return unified;
+}
+
+// =====================================================
+// 6. RENDER INTERACTIVE NOTEBOOK TABLE & INLINE EDITS
+// =====================================================
+function renderTable() {
+  const viewMode = document.getElementById("viewMode").value;
+  const query = document.getElementById("searchInput").value.trim().toLowerCase();
+  const deduped = getDeduplicatedRows();
+
+  // Update stats bar
+  const pendingCount = records.filter(r => r.status === "Pending").length;
+  document.getElementById("queueBadge").innerText = `${pendingCount} Pending`;
+  document.getElementById("statTotal").innerText = records.length;
+  document.getElementById("statUnique").innerText = deduped.length;
+  document.getElementById("statDupes").innerText = Math.max(0, records.length - deduped.length);
+  const totalPKR = deduped.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+  document.getElementById("statPKR").innerText = totalPKR.toLocaleString();
+
+  const rowsToRender = viewMode === "dedup" ? deduped : records.map((r, i) => ({
+    ...r,
+    auditId: `RAW-${i + 1}`,
+    pdfLocation: r.fileName,
+    passesCount: 1,
+    coveredStudents: r.student,
+    memberIds: [r.id]
+  }));
+
+  const filtered = rowsToRender.filter(r => {
+    if (!query) return true;
+    const hay = `${r.auditId} ${r.date} ${r.time} ${r.tid} ${r.bank} ${r.senderTitle} ${r.senderAccount} ${r.coveredStudents} ${r.status}`.toLowerCase();
+    return hay.includes(query);
+  });
+
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = filtered.map(r => {
+    const statusColor = r.status === "Verified" ? "text-emerald-400" :
+                        r.status === "Pending" ? "text-amber-400" : "text-rose-400";
+    return `
+      <tr class="hover:bg-slate-800/50">
+        <td class="p-2 font-mono">
+          <div class="font-bold text-emerald-400">${r.auditId}</div>
+          <div class="text-[10px] text-slate-400">${r.pdfLocation}</div>
+        </td>
+        <td class="p-2">
+          ${r.dataUrl ? `<img src="${r.dataUrl}" onclick="openModal('${r.id}')" class="w-10 h-12 object-cover rounded border border-slate-700 cursor-pointer hover:scale-105 transition" title="Click to enlarge" />` : `<span class="text-slate-500">No Img</span>`}
+        </td>
+        <td class="p-2"><input value="${r.date || ""}" onchange="updateField('${r.id}', 'date', this.value, '${r.memberIds.join(",")}')" class="bg-transparent border-b border-transparent focus:border-emerald-500 focus:bg-slate-800 px-1 py-0.5 rounded w-24 font-mono" placeholder="YYYY-MM-DD" /></td>
+        <td class="p-2"><input value="${r.time || ""}" onchange="updateField('${r.id}', 'time', this.value, '${r.memberIds.join(",")}')" class="bg-transparent border-b border-transparent focus:border-emerald-500 focus:bg-slate-800 px-1 py-0.5 rounded w-16 font-mono" placeholder="HH:MM" /></td>
+        <td class="p-2"><input value="${r.tid || ""}" onchange="updateField('${r.id}', 'tid', this.value, '${r.memberIds.join(",")}')" class="bg-transparent border-b border-transparent focus:border-emerald-500 focus:bg-slate-800 px-1 py-0.5 rounded w-32 font-mono text-amber-300" placeholder="Ref / TID" /></td>
+        <td class="p-2"><input value="${r.bank || ""}" onchange="updateField('${r.id}', 'bank', this.value, '${r.memberIds.join(",")}')" class="bg-transparent border-b border-transparent focus:border-emerald-500 focus:bg-slate-800 px-1 py-0.5 rounded w-28" placeholder="Bank Name" /></td>
+        <td class="p-2"><input value="${r.senderTitle || ""}" onchange="updateField('${r.id}', 'senderTitle', this.value, '${r.memberIds.join(",")}')" class="bg-transparent border-b border-transparent focus:border-emerald-500 focus:bg-slate-800 px-1 py-0.5 rounded w-32" placeholder="Sender Title" /></td>
+        <td class="p-2"><input value="${r.senderAccount || ""}" onchange="updateField('${r.id}', 'senderAccount', this.value, '${r.memberIds.join(",")}')" class="bg-transparent border-b border-transparent focus:border-emerald-500 focus:bg-slate-800 px-1 py-0.5 rounded w-32 font-mono" placeholder="Acct / IBAN" /></td>
+        <td class="p-2"><input type="number" value="${r.amount || 0}" onchange="updateField('${r.id}', 'amount', Number(this.value), '${r.memberIds.join(",")}')" class="bg-transparent border-b border-transparent focus:border-emerald-500 focus:bg-slate-800 px-1 py-0.5 rounded w-20 font-bold text-emerald-400" /></td>
+        <td class="p-2 text-center">
+          <span class="px-2 py-0.5 rounded font-bold ${r.passesCount > 1 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-slate-800 text-slate-300'}">${r.passesCount}</span>
+        </td>
+        <td class="p-2">
+          <input value="${r.coveredStudents.replace(/"/g, '&quot;')}" onchange="updateField('${r.id}', 'student', this.value, '${r.id}')" class="bg-transparent border-b border-transparent focus:border-emerald-500 focus:bg-slate-800 px-1 py-0.5 rounded w-full" />
+        </td>
+        <td class="p-2">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold ${statusColor}">${r.status}</span>
+            <button onclick="deleteRow('${r.memberIds.join(",")}')" class="text-slate-500 hover:text-rose-400 ml-auto" title="Delete row">🗑</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+async function updateField(primaryId, field, value, memberIdsCSV) {
+  const ids = memberIdsCSV.split(",");
+  records.forEach(r => {
+    if (ids.includes(r.id)) {
+      if (field === "student" && r.id !== primaryId) return;
+      r[field] = value;
+      if (r.date && r.tid) r.status = "Verified";
+    }
+  });
+  await persistRecords();
+}
+
+async function deleteRow(memberIdsCSV) {
+  if (!confirm("Remove this entry from your Notebook?")) return;
+  const ids = memberIdsCSV.split(",");
+  records = records.filter(r => !ids.includes(r.id));
+  await persistRecords();
+}
+
+// =====================================================
+// 7. EXPORTS: CSA EXCEL, 4-PER-PAGE PDF, & JSON BACKUP
+// =====================================================
+function exportCSAExcel() {
+  const deduped = getDeduplicatedRows();
+  if (!deduped.length) return alert("No records to export!");
+
+  const csaSheetData = deduped.map(r => ({
+    "Audit ID": r.auditId,
+    "Transaction Date": r.date,
+    "Transaction Time": r.time,
+    "Reference / Transaction ID": r.tid,
+    "Bank / Wallet": r.bank,
+    "Sender Account Title": r.senderTitle,
+    "Sender Account No / IBAN": r.senderAccount,
+    "Amount Paid (PKR)": Number(r.amount) || 0,
+    "Passes Covered": r.passesCount,
+    "Student Name(s) & Roll No": r.coveredStudents,
+    "PDF Booklet Location": r.pdfLocation,
+    "Verification Status": r.status
+  }));
+
+  const rawSheetData = records.map((r, idx) => ({
+    "Row #": idx + 1,
+    "File Name": r.fileName,
+    "Student": r.student,
+    "Transaction Date": r.date,
+    "Transaction Time": r.time,
+    "Reference / Transaction ID": r.tid,
+    "Bank / Wallet": r.bank,
+    "Sender Title": r.senderTitle,
+    "Sender Account": r.senderAccount,
+    "Amount (PKR)": Number(r.amount) || 0,
+    "Status": r.status
+  }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(csaSheetData), "Chronological_CSA_Audit");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rawSheetData), "All_Raw_Uploads");
+  XLSX.writeFile(wb, `CSA_Audit_Reconciliation_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+async function export4PerPagePDF() {
+  const deduped = getDeduplicatedRows();
+  if (!deduped.length) return alert("No records to export!");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageW = 210, pageH = 297, margin = 8;
+  const cellW = (pageW - margin * 3) / 2;   // 93 mm
+  const cellH = (pageH - margin * 3) / 2;   // 136.5 mm
+  const headerH = 22;                       // 22 mm metadata header banner
+
+  const slots = [
+    { x: margin, y: margin },
+    { x: margin * 2 + cellW, y: margin },
+    { x: margin, y: margin * 2 + cellH },
+    { x: margin * 2 + cellW, y: margin * 2 + cellH }
+  ];
+
+  for (let i = 0; i < deduped.length; i++) {
+    const r = deduped[i];
+    const slotIdx = i % 4;
+    if (i > 0 && slotIdx === 0) doc.addPage();
+
+    const { x, y } = slots[slotIdx];
+
+    // Outer card border
+    doc.setDrawColor(180, 180, 180);
+    doc.rect(x, y, cellW, cellH);
+
+    // Top metadata header background
+    doc.setFillColor(240, 244, 248);
+    doc.rect(x, y, cellW, headerH, "FD");
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text(`${r.auditId}  |  ${r.date || "No Date"} ${r.time || ""}  |  PKR ${r.amount || 0}`, x + 2, y + 4.5);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.text(`TID: ${r.tid || "N/A"}  |  ${r.bank || "Unknown Bank"}`.slice(0, 58), x + 2, y + 9.2);
+    doc.text(`Sender: ${r.senderTitle || "N/A"} (${r.senderAccount || "N/A"})`.slice(0, 58), x + 2, y + 13.8);
+    doc.text(`Covers (${r.passesCount}): ${r.coveredStudents}`.slice(0, 60), x + 2, y + 18.5);
+
+    // Draw Screenshot fitted proportionally inside remaining cell area
+    if (r.dataUrl) {
+      const imgProps = doc.getImageProperties(r.dataUrl);
+      const availW = cellW - 4;
+      const availH = cellH - headerH - 4;
+      const scale = Math.min(availW / imgProps.width, availH / imgProps.height);
+      const drawW = imgProps.width * scale;
+      const drawH = imgProps.height * scale;
+      const drawX = x + 2 + (availW - drawW) / 2;
+      const drawY = y + headerH + 2 + (availH - drawH) / 2;
+      doc.addImage(r.dataUrl, "JPEG", drawX, drawY, drawW, drawH);
+    }
+  }
+
+  doc.save(`CSA_4PerPage_Audit_Booklet_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+function exportBackupJSON() {
+  const blob = new Blob([JSON.stringify({ records, rosterMap })], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `CSA_Notebook_Backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importBackupJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
+    const parsed = JSON.parse(evt.target.result);
+    if (parsed.records) records = parsed.records;
+    if (parsed.rosterMap) rosterMap = parsed.rosterMap;
+    await localforage.setItem("CSA_ROSTER", rosterMap);
+    await persistRecords();
+    alert(`Restored ${records.length} screenshots into your Notebook!`);
+  };
+  reader.readAsText(file);
+}
+
+async function clearAllData() {
+  if (!confirm("Are you sure you want to clear all saved screenshots from this browser?")) return;
+  records = [];
+  rosterMap = {};
+  await localforage.clear();
+  renderTable();
+}
+
+function openModal(id) {
+  const rec = records.find(r => r.id === id);
+  if (!rec) return;
+  document.getElementById("modalTitle").innerText = `${rec.student} — ${rec.fileName}`;
+  document.getElementById("modalImg").src = rec.dataUrl;
+  document.getElementById("imgModal").classList.remove("hidden");
+  document.getElementById("imgModal").classList.add("flex");
+}
+
+function closeModal() {
+  document.getElementById("imgModal").classList.add("hidden");
+  document.getElementById("imgModal").classList.remove("flex");
+}
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 session_start();
 if (!isset($_SESSION['admin'])) { header("Location: admin_login.php"); exit(); }
 
-if (($_SESSION['admin_role'] ?? '') !== 'super_admin') {
+if (!in_array($_SESSION['admin_role'] ?? '', ['super_admin', 'super_super_admin'], true)) {
     die("<h1 style='color:red; text-align:center; margin-top:50px;'>ACCESS DENIED: Audit privileges required.</h1>");
 }
 

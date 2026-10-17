@@ -58,6 +58,19 @@ if ((isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST')
     log_admin_action('FORM_SUBMIT', $details);
 }
 
+// Synchronize admin role from database if logged in to reflect any role updates immediately
+if (isset($_SESSION['admin_id']) && isset($conn) && $conn instanceof mysqli) {
+    $uid = intval($_SESSION['admin_id']);
+    $roleQ = $conn->query("SELECT role FROM admin_users WHERE id = $uid LIMIT 1");
+    if ($roleQ && $rRow = $roleQ->fetch_assoc()) {
+        $_SESSION['admin_role'] = $rRow['role'];
+    }
+}
+
+$tz = getenv('APP_TIMEZONE') ?: 'Asia/Karachi';
+$adminUser = $_SESSION['admin_full_name'] ?? ($_SESSION['admin'] ?? 'Administrator');
+$adminRole = $_SESSION['admin_role'] ?? 'moderator';
+
 // Navigation structure
 $navItems = [
     ['label' => 'Dashboard', 'href' => 'index.php', 'icon' => 'fas fa-th-large'],
@@ -72,16 +85,22 @@ $navItems = [
     ['label' => 'Elections', 'href' => 'manage_elections.php', 'icon' => 'fas fa-vote-yea'],
     ['label' => 'Email Broadcast', 'href' => 'email_center.php', 'icon' => 'fas fa-paper-plane'],
     ['label' => 'Contact Inquiries', 'href' => 'manage_contacts.php', 'icon' => 'fas fa-envelope-open-text'],
-    ['label' => 'Logs', 'href' => 'view_logs.php', 'icon' => 'fas fa-file-alt'],
 ];
 
-if (($_SESSION['admin_role'] ?? '') === 'super_admin') {
-    $navItems[] = ['label' => 'Staff & Access', 'href' => 'manage_admins.php', 'icon' => 'fas fa-shield-alt'];
+// Super Super Admin ONLY navigation items
+if ($adminRole === 'super_super_admin') {
+    // Insert CSA Audit Reconciler right after Social Passes
+    array_splice($navItems, 3, 0, [
+        ['label' => 'CSA Audit Reconciler', 'href' => 'csa_audit_notebook.php', 'icon' => 'fas fa-balance-scale']
+    ]);
+    // Append Logs
+    $navItems[] = ['label' => 'Logs', 'href' => 'view_logs.php', 'icon' => 'fas fa-file-alt'];
 }
 
-$tz = getenv('APP_TIMEZONE') ?: 'Asia/Karachi';
-$adminUser = $_SESSION['admin_full_name'] ?? ($_SESSION['admin'] ?? 'Administrator');
-$adminRole = $_SESSION['admin_role'] ?? 'moderator';
+// Staff & Access: Super Admin & Super Super Admin
+if (in_array($adminRole, ['super_admin', 'super_super_admin'], true)) {
+    $navItems[] = ['label' => 'Staff & Access', 'href' => 'manage_admins.php', 'icon' => 'fas fa-shield-alt'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -148,8 +167,12 @@ $adminRole = $_SESSION['admin_role'] ?? 'moderator';
                 <span style="font-size: 9px; color: var(--text-muted); font-family: var(--font-mono); letter-spacing: 0.1em; display: block;">LOGGED IN AS</span>
                 <span style="font-size: 13px; font-weight: 600; color: #fff;"><?php echo htmlspecialchars($adminUser); ?></span>
             </div>
-            <?php if ($adminRole === 'super_admin'): ?>
+            <?php if ($adminRole === 'super_super_admin'): ?>
+                <span class="badge font-mono text-[10px]" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 0 10px rgba(139,92,246,0.5);">Super+</span>
+            <?php elseif ($adminRole === 'super_admin'): ?>
                 <span class="badge bg-warning text-dark font-mono text-[10px]">Super</span>
+            <?php else: ?>
+                <span class="badge bg-secondary font-mono text-[10px]">Moderator</span>
             <?php endif; ?>
         </div>
         <a href="../index" target="_blank" class="d-flex align-items-center justify-content-center gap-1 text-decoration-none py-1.5 px-2 rounded" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); border: 1px solid var(--line); background: #080b0d;">
