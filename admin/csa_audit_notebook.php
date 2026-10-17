@@ -20,7 +20,7 @@ if (($_SESSION['admin_role'] ?? '') !== 'super_super_admin') {
     exit();
 }
 
-$geminiDefaultKey = getenv('GEMINI_API_KEY') ?: base64_decode("QVEuQWI4Uk42SzlubVZjUFRBSllia1RTUHA1dEhsT1U2UUU0WUtqa2MwQjRZQzVtbm9WRnc=");
+$geminiDefaultKey = getenv('GEMINI_API_KEY') ?: base64_decode("QVEuQWI4Uk42SzlubVZjUFRBSllia1RTU3A1dEhsT1U2UUU0WUtqa2MwQjRZQzVtbm9WRnc=");
 ?>
 
 <!-- Dependencies -->
@@ -184,8 +184,11 @@ $geminiDefaultKey = getenv('GEMINI_API_KEY') ?: base64_decode("QVEuQWI4Uk42Szlub
           <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
           <option value="gemini-3.5-flash">gemini-3.5-flash</option>
         </select>
-        <button onclick="saveApiKey()" class="btn btn-sm btn-outline-success">
+        <button onclick="saveApiKey()" class="btn btn-sm btn-outline-success" title="Save API Key locally">
           <i class="fas fa-save"></i>
+        </button>
+        <button onclick="resetDefaultApiKey()" class="btn btn-sm btn-outline-warning" title="Reset to Verified Sentec Default API Key">
+          <i class="fas fa-undo"></i>
         </button>
       </div>
     </div>
@@ -389,10 +392,17 @@ localforage.config({ name: "SENTEC_NED_CSA_Audit", storeName: "csa_receipts" });
 let records = [];
 let rosterMap = {};
 let isQueueRunning = false;
+const defaultVerifiedKey = <?= json_encode($geminiDefaultKey) ?>;
 
 window.addEventListener("DOMContentLoaded", async () => {
   const savedKey = localStorage.getItem("SENTEC_CSA_GEMINI_KEY");
-  if (savedKey) document.getElementById("apiKeyInput").value = savedKey;
+  // If the browser cached the typo key with TSPp or empty/short key, automatically replace with verified key
+  if (!savedKey || savedKey.includes("TSPp5t") || savedKey.length < 25) {
+    localStorage.setItem("SENTEC_CSA_GEMINI_KEY", defaultVerifiedKey);
+    document.getElementById("apiKeyInput").value = defaultVerifiedKey;
+  } else {
+    document.getElementById("apiKeyInput").value = savedKey;
+  }
 
   const savedRecords = await localforage.getItem("CSA_RECORDS");
   const savedRoster = await localforage.getItem("CSA_ROSTER");
@@ -409,6 +419,12 @@ function saveApiKey() {
   const key = document.getElementById("apiKeyInput").value.trim();
   localStorage.setItem("SENTEC_CSA_GEMINI_KEY", key);
   alert("Gemini API Key saved locally!");
+}
+
+function resetDefaultApiKey() {
+  localStorage.setItem("SENTEC_CSA_GEMINI_KEY", defaultVerifiedKey);
+  document.getElementById("apiKeyInput").value = defaultVerifiedKey;
+  alert("Reset to verified Google Gemini API Key!");
 }
 
 async function persistRecords() {
