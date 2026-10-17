@@ -250,15 +250,20 @@ $admins = $conn->query("SELECT * FROM admin_users ORDER BY
                                         <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1.5" onclick="togglePass(<?php echo $a['id']; ?>)" title="Show/Hide Password">
                                             <i class="fas fa-eye" id="pass_icon_<?php echo $a['id']; ?>" style="font-size: 11px;"></i>
                                         </button>
+                                        <button type="button" class="btn btn-sm btn-outline-info py-0 px-1.5" onclick="copyPass('<?php echo htmlspecialchars(addslashes($a['plain_password'])); ?>', this)" title="Copy Password">
+                                            <i class="fas fa-copy" style="font-size: 11px;"></i>
+                                        </button>
                                         <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1.5" onclick="openResetModal(<?php echo $a['id']; ?>, '<?php echo htmlspecialchars(addslashes($a['username'])); ?>')" title="Change Password">
                                             <i class="fas fa-key" style="font-size: 11px;"></i>
                                         </button>
                                     </div>
                                 <?php else: ?>
                                     <div class="d-flex align-items-center gap-1.5">
-                                        <span class="badge bg-dark border border-secondary font-mono text-muted" style="font-size: 10px;" title="Password was created before migration; set new password or it will record on their next login">Hashed</span>
-                                        <button type="button" class="btn btn-sm btn-outline-warning py-0 px-2" onclick="openResetModal(<?php echo $a['id']; ?>, '<?php echo htmlspecialchars(addslashes($a['username'])); ?>')" title="Set plain password now">
-                                            <i class="fas fa-key me-1" style="font-size: 10px;"></i>Set
+                                        <span class="badge bg-dark border border-secondary font-mono text-muted" style="font-size: 10px;" title="Legacy one-way hash (pre-migration). Click 'Set Pass' to assign one or wait until they next log in.">
+                                            <i class="fas fa-lock me-1 text-secondary"></i>Legacy Hash
+                                        </span>
+                                        <button type="button" class="btn btn-sm btn-outline-warning py-0 px-2" onclick="openResetModal(<?php echo $a['id']; ?>, '<?php echo htmlspecialchars(addslashes($a['username'])); ?>')" title="Set plain password now so it is viewable">
+                                            <i class="fas fa-key me-1" style="font-size: 10px;"></i>Set Pass
                                         </button>
                                     </div>
                                 <?php endif; ?>
@@ -367,6 +372,16 @@ function generateRandomPass() {
         pass += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     document.getElementById('modalNewPass').value = pass;
+}
+
+function copyPass(pass, btn) {
+    navigator.clipboard.writeText(pass).then(function() {
+        const origHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check text-success" style="font-size: 11px;"></i>';
+        setTimeout(() => { btn.innerHTML = origHtml; }, 1500);
+    }).catch(function() {
+        prompt("Copy password:", pass);
+    });
 }
 </script>
 <?php endif; ?>
